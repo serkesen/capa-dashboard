@@ -21,4 +21,4 @@ jobs:
           SUPABASE_URL: https://raxdbwdrbygdsgpqlxqc.supabase.co
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-          BACKFILL_DAYS: ${{ github.event.inputs.backfill_days || '4' }}
+          BACKFILL_DAYS: ${{ inputs.backfill_days || '4' }}

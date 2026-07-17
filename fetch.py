@@ -29,6 +29,7 @@ def upsert(table, rows, conflict):
 today = dt.date.today()
 start = (today - dt.timedelta(days=BACKFILL)).isoformat()
 end = today.isoformat()
+print('BACKFILL', BACKFILL, start, end)
 
 def gsc(dims):
     out, sr = [], 0
