@@ -1,0 +1,24 @@
+name: fetch
+on:
+  schedule:
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+    inputs:
+      backfill_days:
+        description: 'Kac gun geriye'
+        default: '4'
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -q requests google-auth
+      - run: python fetch.py
+        env:
+          SUPABASE_URL: https://raxdbwdrbygdsgpqlxqc.supabase.co
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+          BACKFILL_DAYS: ${{ github.event.inputs.backfill_days || '4' }}
