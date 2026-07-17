@@ -317,8 +317,8 @@ function multiLine(sel,dates,series){
   svg.addEventListener('mouseleave',()=>{xh.style.display='none';tt.style.display='none';});
 }
 function convChart(rows){
-  const dates=[...new Set(inRange(DB.site).map(r=>r.date))].sort();
-  const useDates=dates.length?dates:[...new Set(rows.map(r=>r.date))].sort();
+  const dates=[...new Set([...inRange(DB.site).map(r=>r.date),...rows.map(r=>r.date)])].sort();
+  const useDates=dates;
   const s=[
     {label:'Randevu',color:col('--s1'),data:useDates.map(d=>sum(rows.filter(r=>r.date===d&&r.event_name==='randevu_tamamlandi'),'count'))},
     {label:'Telefon',color:col('--s2'),data:useDates.map(d=>sum(rows.filter(r=>r.date===d&&r.event_name==='telefon_tiklama'),'count'))}
