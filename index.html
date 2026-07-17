@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Çapa Ortodonti · Pazarlama Dashboard</title>
+<style>
+:root{
+  color-scheme:light;
+  --surface-1:#fcfcfb; --plane:#f9f9f7;
+  --ink-1:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,.10);
+  --s1:#2a78d6; --s2:#008300; --s3:#e87ba4; --s4:#eda100; --other:#898781;
+  --good:#006300; --bad:#d03b3b;
+  --brand-grad:linear-gradient(135deg,#1c74d4,#134c8f,#0f3f79);
+  --brand-navy:#0f335f; --brand-teal:#0f9b8e; --brand-orange:#d9752b;
+}
+@media (prefers-color-scheme:dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme:dark;
+    --surface-1:#1a1a19; --plane:#0d0d0d;
+    --ink-1:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,.10);
+    --s1:#3987e5; --s2:#008300; --s3:#d55181; --s4:#c98500;
+    --good:#0ca30c;
+  }
+}
+*{box-sizing:border-box;margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--plane);color:var(--ink-1);font-size:14px;line-height:1.45}
+header{background:var(--brand-grad);color:#fff;padding:18px 16px 14px}
+header h1{font-size:17px;font-weight:700;letter-spacing:-.01em}
+header .sub{font-size:12px;color:#cfe2f7;margin-top:2px}
+.wrap{max-width:1140px;margin:0 auto;padding:0 12px 48px}
+header .hwrap{max-width:1140px;margin:0 auto;padding:0 4px}
+.filters{display:flex;gap:8px;margin:14px 0 4px;flex-wrap:wrap}
+.filters button{border:1px solid var(--ring);background:var(--surface-1);color:var(--ink-2);padding:7px 14px;border-radius:8px;font-size:13px;cursor:pointer}
+.filters button.on{color:var(--ink-1);font-weight:700;border-color:var(--axis)}
+.filters button.on::before{content:"✓ ";font-weight:700}
+.note{font-size:12px;color:var(--muted);margin:6px 2px 14px}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+@media(min-width:700px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.tile{background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;padding:12px 14px}
+.tile .l{font-size:12px;color:var(--ink-2)}
+.tile .v{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-top:2px}
+.tile .d{font-size:12px;margin-top:2px;color:var(--muted)}
+.tile .d.up{color:var(--good)} .tile .d.down{color:var(--bad)}
+.card{background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;padding:14px;margin-bottom:14px}
+.card h2{font-size:14px;font-weight:700;margin-bottom:2px}
+.card .ch{font-size:12px;color:var(--muted);margin-bottom:8px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin:4px 0 6px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+svg{display:block;width:100%}
+.tt{position:fixed;pointer-events:none;background:var(--surface-1);border:1px solid var(--ring);box-shadow:0 4px 14px rgba(0,0,0,.12);border-radius:8px;padding:8px 10px;font-size:12px;z-index:9;display:none;max-width:260px}
+.tt b{display:block;margin-bottom:2px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--muted);font-weight:600;font-size:12px;padding:6px 8px;border-bottom:1px solid var(--grid)}
+td{padding:7px 8px;border-bottom:1px solid var(--grid);vertical-align:top}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.chip{display:inline-block;font-size:11px;border:1px solid var(--ring);border-radius:99px;padding:1px 8px;color:var(--ink-2)}
+.chip.b{color:var(--brand-teal);border-color:var(--brand-teal)}
+.cl-item{display:flex;gap:10px;padding:8px 2px;border-bottom:1px solid var(--grid);align-items:baseline}
+.cl-item:last-child{border-bottom:0}
+.cl-date{font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.cl-cat{font-size:11px;border-radius:99px;padding:1px 8px;border:1px solid var(--ring);color:var(--ink-2);white-space:nowrap}
+.err{background:#fff3f3;color:#9d2626;border:1px solid #e6b8b8;border-radius:10px;padding:10px 12px;margin:12px 0;font-size:13px;display:none}
+.grid2{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:900px){.grid2{grid-template-columns:1fr 1fr}}
+.tscroll{overflow-x:auto}
+footer{font-size:11px;color:var(--muted);text-align:center;padding:18px 0}
+</style>
+</head>
+<body>
+<header><div class="hwrap">
+  <h1>Çapa Ortodonti — Dijital Pazarlama Dashboard</h1>
+  <div class="sub">GSC + GA4 günlük otomatik veri · değişiklik günlüğü işaretli</div>
+</div></header>
+<div class="wrap">
+  <div class="filters" id="filters">
+    <button data-d="7">Son 7 gün</button>
+    <button data-d="14">Son 14 gün</button>
+    <button data-d="28" class="on">Son 28 gün</button>
+    <button data-d="0">Tümü</button>
+  </div>
+  <div class="note">GSC verisi ~2-3 gün gecikmeli gelir · Veri başlangıcı: 12 Tem 2026 (property kurulumu) · Son güncelleme her sabah 06:30</div>
+  <div class="err" id="err"></div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card">
+    <h2>Tıklar (GSC)</h2><div class="ch">Günlük — dikey çizgiler: yapılan SEO aksiyonları (üzerine gel)</div>
+    <div id="ch_clicks"></div>
+  </div>
+  <div class="card">
+    <h2>Gösterimler (GSC)</h2><div class="ch">Günlük</div>
+    <div id="ch_impr"></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h2>Oturumlar — kanal bazında (GA4)</h2><div class="ch">Günlük</div>
+      <div class="legend" id="lg_ch"></div>
+      <div id="ch_channels"></div>
+    </div>
+    <div class="card">
+      <h2>Dönüşümler (GA4)</h2><div class="ch">Randevu + telefon tıklama, günlük</div>
+      <div class="legend" id="lg_conv"></div>
+      <div id="ch_conv"></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card"><h2>En çok gösterim alan sayfalar</h2><div class="ch">Seçili dönem toplamı</div>
+      <div class="tscroll"><table id="tb_pages"></table></div></div>
+    <div class="card"><h2>En çok tıklanan sorgular</h2><div class="ch">Seçili dönem · <span class="chip b">markalı</span> = çapa/capa içeren</div>
+      <div class="tscroll"><table id="tb_queries"></table></div></div>
+  </div>
+
+  <div class="card"><h2>Değişiklik günlüğü</h2><div class="ch">Yapılan işler — grafiklerdeki dikey işaretler</div>
+    <div id="changelog"></div></div>
+
+  <footer>Çapa Ortodonti · capa-dashboard · veri: Google Search Console + GA4 → Supabase</footer>
+</div>
+<div class="tt" id="tt"></div>
+<script>
+const SB='https://raxdbwdrbygdsgpqlxqc.supabase.co/rest/v1/';
+const KEY='sb_publishable_mMbn5St0zmOOMH8pr5KeGQ_lhI4-C1Q';
+const H={apikey:KEY,Authorization:'Bearer '+KEY};
+const $=s=>document.querySelector(s);
+const fmt=n=>n.toLocaleString('tr-TR');
+const fmtP=n=>(n*100).toLocaleString('tr-TR',{maximumFractionDigits:1})+'%';
+const CS=getComputedStyle(document.documentElement);
+const col=v=>CS.getPropertyValue(v).trim();
+let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[]};
+let RANGE=28;
+
+async function q(path){
+  const r=await fetch(SB+path,{headers:H});
+  if(!r.ok)throw new Error(path.split('?')[0]+' → HTTP '+r.status);
+  return r.json();
+}
+async function load(){
+  try{
+    const [site,chan,ev,cl,pages,queries]=await Promise.all([
+      q('gsc_site_daily?order=date&limit=10000'),
+      q('ga4_channel_daily?order=date&limit=10000'),
+      q('ga4_event_daily?order=date&limit=10000'),
+      q('change_log?order=date&limit=1000'),
+      q('gsc_page_daily?order=date&limit=10000'),
+      q('gsc_query_daily?order=date&limit=10000')
+    ]);
+    DB={site,chan,ev,cl,pages,queries};
+    render();
+  }catch(e){
+    const el=$('#err');el.style.display='block';
+    el.textContent='Veri alınamadı: '+e.message;
+  }
+}
+function inRange(rows){
+  if(RANGE===0)return rows;
+  if(!DB.site.length)return rows;
+  const last=DB.site[DB.site.length-1].date;
+  const cut=new Date(last);cut.setDate(cut.getDate()-RANGE+1);
+  const c=cut.toISOString().slice(0,10);
+  return rows.filter(r=>r.date>=c);
+}
+function prevRange(rows){
+  if(RANGE===0)return[];
+  const last=DB.site[DB.site.length-1]?.date;if(!last)return[];
+  const end=new Date(last);end.setDate(end.getDate()-RANGE);
+  const start=new Date(last);start.setDate(start.getDate()-2*RANGE+1);
+  const a=start.toISOString().slice(0,10),b=end.toISOString().slice(0,10);
+  return rows.filter(r=>r.date>=a&&r.date<=b);
+}
+const sum=(rows,k)=>rows.reduce((t,r)=>t+(+r[k]||0),0);
+
+function tile(label,val,prev,fmtF,invert){
+  let d='';
+  if(prev!=null&&prev!==0&&RANGE!==0){
+    const pct=(val-prev)/prev*100;
+    const good=invert?pct<0:pct>0;
+    const cls=Math.abs(pct)<0.5?'':(good?'up':'down');
+    const arrow=pct>0?'↑':(pct<0?'↓':'→');
+    d=`<div class="d ${cls}">${arrow} ${Math.abs(pct).toLocaleString('tr-TR',{maximumFractionDigits:0})}% önceki döneme göre</div>`;
+  }else if(RANGE!==0){d='<div class="d">önceki dönem verisi yok</div>';}
+  return `<div class="tile"><div class="l">${label}</div><div class="v">${fmtF(val)}</div>${d}</div>`;
+}
+
+function render(){
+  const site=inRange(DB.site),siteP=prevRange(DB.site);
+  const ev=inRange(DB.ev),evP=prevRange(DB.ev);
+  const chan=inRange(DB.chan),chanP=prevRange(DB.chan);
+  const clicks=sum(site,'clicks'),impr=sum(site,'impressions');
+  const ctr=impr?clicks/impr:0;
+  const pos=site.length?site.reduce((t,r)=>t+ +r.position,0)/site.length:0;
+  const pClicks=sum(siteP,'clicks'),pImpr=sum(siteP,'impressions');
+  const pCtr=pImpr?pClicks/pImpr:null;
+  const pPos=siteP.length?siteP.reduce((t,r)=>t+ +r.position,0)/siteP.length:null;
+  const sess=sum(chan,'sessions'),pSess=sum(chanP,'sessions');
+  const cnt=n=>rows=>sum(rows.filter(r=>r.event_name===n),'count');
+  const rnd=cnt('randevu_tamamlandi')(ev),pRnd=cnt('randevu_tamamlandi')(evP);
+  const tel=cnt('telefon_tiklama')(ev),pTel=cnt('telefon_tiklama')(evP);
+  $('#kpis').innerHTML=
+    tile('Tık (GSC)',clicks,pClicks,fmt)+
+    tile('Gösterim (GSC)',impr,pImpr,fmt)+
+    tile('CTR',ctr,pCtr,fmtP)+
+    tile('Ort. Pozisyon',pos,pPos,n=>n.toLocaleString('tr-TR',{maximumFractionDigits:1}),true)+
+    tile('Oturum (GA4)',sess,pSess,fmt)+
+    tile('Randevu ⭐',rnd,pRnd,fmt)+
+    tile('Telefon Tıklama',tel,pTel,fmt)+
+    `<div class="tile"><div class="l">SEO Aksiyonu</div><div class="v">${DB.cl.length}</div><div class="d">değişiklik günlüğünde</div></div>`;
+
+  lineChart('#ch_clicks',site.map(r=>({x:r.date,y:+r.clicks})),col('--s1'),'Tık',true);
+  lineChart('#ch_impr',site.map(r=>({x:r.date,y:+r.impressions})),col('--s1'),'Gösterim',true);
+  channelsChart(chan);
+  convChart(ev);
+  pagesTable(inRange(DB.pages));
+  queriesTable(inRange(DB.queries));
+  changelogList();
+}
+
+/* ---------- charts (SVG) ---------- */
+const M={t:14,r:10,b:26,l:44};
+function scale(vals,h){const mx=Math.max(1,...vals);return v=>h-(v/mx)*h;}
+function xPos(i,n,w){return n<2?w/2:i*(w/(n-1));}
+function axisLabels(dates){
+  const n=dates.length;if(!n)return[];
+  const step=Math.max(1,Math.round(n/5));
+  return dates.map((d,i)=>i%step===0?{i,t:d.slice(5).replace('-','/')}:null).filter(Boolean);
+}
+function markers(dates){
+  const set={};DB.cl.forEach(c=>{(set[c.date]=set[c.date]||[]).push(c.title);});
+  return dates.map((d,i)=>set[d]?{i,titles:set[d]}:null).filter(Boolean);
+}
+function lineChart(sel,data,color,name,withMarkers){
+  const el=$(sel);const W=el.clientWidth||600,Hh=200;
+  const w=W-M.l-M.r,h=Hh-M.t-M.b;
+  if(!data.length){el.innerHTML='<div class="ch">veri yok</div>';return;}
+  const ys=scale(data.map(d=>d.y),h);
+  const pts=data.map((d,i)=>[M.l+xPos(i,data.length,w),M.t+ys(d.y)]);
+  const path=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const mx=Math.max(1,...data.map(d=>d.y));
+  const gridY=[0,.5,1].map(f=>M.t+h-f*h);
+  const gl=gridY.map((y,gi)=>`<line x1="${M.l}" x2="${W-M.r}" y1="${y}" y2="${y}" stroke="${col('--grid')}" stroke-width="1"/><text x="${M.l-6}" y="${y+4}" text-anchor="end" font-size="10" fill="${col('--muted')}">${fmt(Math.round(mx*[0,.5,1][gi]))}</text>`).join('');
+  const xl=axisLabels(data.map(d=>d.x)).map(o=>`<text x="${M.l+xPos(o.i,data.length,w)}" y="${Hh-8}" text-anchor="middle" font-size="10" fill="${col('--muted')}">${o.t}</text>`).join('');
+  const mk=withMarkers?markers(data.map(d=>d.x)).map(o=>{
+    const x=M.l+xPos(o.i,data.length,w);
+    return `<line class="mk" data-i="${o.i}" x1="${x}" x2="${x}" y1="${M.t}" y2="${M.t+h}" stroke="${col('--brand-orange')}" stroke-width="1.5" stroke-dasharray="3 3" opacity=".8"/>`;
+  }).join(''):'';
+  const dots=pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="2.5" fill="${color}"/>`).join('');
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${Hh}" height="${Hh}">
+    ${gl}<line x1="${M.l}" x2="${W-M.r}" y1="${M.t+h}" y2="${M.t+h}" stroke="${col('--axis')}"/>
+    ${mk}<path d="${path}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>
+    ${data.length<=45?dots:''}${xl}
+    <rect class="hover" x="${M.l}" y="${M.t}" width="${w}" height="${h}" fill="transparent"/>
+    <line class="xh" y1="${M.t}" y2="${M.t+h}" stroke="${col('--axis')}" stroke-width="1" style="display:none"/>
+  </svg>`;
+  hoverLine(el,data,name,w);
+}
+function hoverLine(el,data,name,w){
+  const svg=el.querySelector('svg'),xh=svg.querySelector('.xh'),tt=$('#tt');
+  const mkMap={};DB.cl.forEach(c=>{(mkMap[c.date]=mkMap[c.date]||[]).push(c.title);});
+  svg.addEventListener('mousemove',e=>{
+    const r=svg.getBoundingClientRect();
+    const sx=(e.clientX-r.left)*(svg.viewBox.baseVal.width/r.width);
+    const i=Math.max(0,Math.min(data.length-1,Math.round((sx-M.l)/(w/Math.max(1,data.length-1)))));
+    const x=M.l+xPos(i,data.length,w);
+    xh.setAttribute('x1',x);xh.setAttribute('x2',x);xh.style.display='block';
+    const d=data[i];
+    const marks=mkMap[d.x]?`<div style="color:${col('--brand-orange')};margin-top:3px">⚑ ${mkMap[d.x].join('<br>⚑ ')}</div>`:'';
+    tt.innerHTML=`<b>${d.x}</b>${name}: ${fmt(d.y)}${marks}`;
+    tt.style.display='block';
+    tt.style.left=Math.min(window.innerWidth-270,e.clientX+14)+'px';
+    tt.style.top=(e.clientY+14)+'px';
+  });
+  svg.addEventListener('mouseleave',()=>{xh.style.display='none';$('#tt').style.display='none';});
+}
+const CHMAP=[['Organic Search','Organik Arama','--s1'],['Direct','Direct','--s2'],['Referral','Referral','--s3'],['Organic Social','Sosyal','--s4']];
+function channelsChart(rows){
+  const dates=[...new Set(rows.map(r=>r.date))].sort();
+  const known=CHMAP.map(c=>c[0]);
+  const series=CHMAP.map(([k,label,cv])=>({label,color:col(cv),data:dates.map(d=>sum(rows.filter(r=>r.date===d&&r.channel===k),'sessions'))}));
+  const other={label:'Diğer',color:col('--other'),data:dates.map(d=>sum(rows.filter(r=>r.date===d&&!known.includes(r.channel)),'sessions'))};
+  if(other.data.some(v=>v>0))series.push(other);
+  const used=series.filter(s=>s.data.some(v=>v>0));
+  $('#lg_ch').innerHTML=used.map(s=>`<span><i style="background:${s.color}"></i>${s.label}</span>`).join('');
+  multiLine('#ch_channels',dates,used);
+}
+function multiLine(sel,dates,series){
+  const el=$(sel);const W=el.clientWidth||500,Hh=200;
+  const w=W-M.l-M.r,h=Hh-M.t-M.b;
+  if(!dates.length){el.innerHTML='<div class="ch">veri yok</div>';return;}
+  const mx=Math.max(1,...series.flatMap(s=>s.data));
+  const y=v=>M.t+h-(v/mx)*h;
+  const gl=[0,.5,1].map(f=>`<line x1="${M.l}" x2="${W-M.r}" y1="${y(mx*f)}" y2="${y(mx*f)}" stroke="${col('--grid')}"/><text x="${M.l-6}" y="${y(mx*f)+4}" text-anchor="end" font-size="10" fill="${col('--muted')}">${fmt(Math.round(mx*f))}</text>`).join('');
+  const xl=axisLabels(dates).map(o=>`<text x="${M.l+xPos(o.i,dates.length,w)}" y="${Hh-8}" text-anchor="middle" font-size="10" fill="${col('--muted')}">${o.t}</text>`).join('');
+  const paths=series.map(s=>{
+    const p=s.data.map((v,i)=>((i?'L':'M')+(M.l+xPos(i,dates.length,w)).toFixed(1)+' '+y(v).toFixed(1))).join(' ');
+    return `<path d="${p}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round"/>`;
+  }).join('');
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${Hh}" height="${Hh}">${gl}
+    <line x1="${M.l}" x2="${W-M.r}" y1="${M.t+h}" y2="${M.t+h}" stroke="${col('--axis')}"/>
+    ${paths}${xl}
+    <line class="xh" y1="${M.t}" y2="${M.t+h}" stroke="${col('--axis')}" style="display:none"/>
+  </svg>`;
+  const svg=el.querySelector('svg'),xh=svg.querySelector('.xh'),tt=$('#tt');
+  svg.addEventListener('mousemove',e=>{
+    const r=svg.getBoundingClientRect();
+    const sx=(e.clientX-r.left)*(svg.viewBox.baseVal.width/r.width);
+    const i=Math.max(0,Math.min(dates.length-1,Math.round((sx-M.l)/(w/Math.max(1,dates.length-1)))));
+    const x=M.l+xPos(i,dates.length,w);
+    xh.setAttribute('x1',x);xh.setAttribute('x2',x);xh.style.display='block';
+    tt.innerHTML=`<b>${dates[i]}</b>`+series.map(s=>`<span style="color:${s.color}">●</span> ${s.label}: ${fmt(s.data[i])}`).join('<br>');
+    tt.style.display='block';
+    tt.style.left=Math.min(window.innerWidth-270,e.clientX+14)+'px';tt.style.top=(e.clientY+14)+'px';
+  });
+  svg.addEventListener('mouseleave',()=>{xh.style.display='none';tt.style.display='none';});
+}
+function convChart(rows){
+  const dates=[...new Set(inRange(DB.site).map(r=>r.date))].sort();
+  const useDates=dates.length?dates:[...new Set(rows.map(r=>r.date))].sort();
+  const s=[
+    {label:'Randevu',color:col('--s1'),data:useDates.map(d=>sum(rows.filter(r=>r.date===d&&r.event_name==='randevu_tamamlandi'),'count'))},
+    {label:'Telefon',color:col('--s2'),data:useDates.map(d=>sum(rows.filter(r=>r.date===d&&r.event_name==='telefon_tiklama'),'count'))}
+  ];
+  $('#lg_conv').innerHTML=s.map(x=>`<span><i style="background:${x.color}"></i>${x.label}</span>`).join('');
+  const el=$('#ch_conv');const W=el.clientWidth||500,Hh=200;
+  const w=W-M.l-M.r,h=Hh-M.t-M.b;
+  if(!useDates.length){el.innerHTML='<div class="ch">veri yok</div>';return;}
+  const mx=Math.max(1,...s.flatMap(x=>x.data));
+  const y=v=>M.t+h-(v/mx)*h;
+  const n=useDates.length,slot=w/n,bw=Math.max(3,Math.min(14,(slot-4)/2));
+  const bars=useDates.map((d,i)=>{
+    const cx=M.l+slot*i+slot/2;
+    return s.map((x,si)=>{
+      const v=x.data[i];if(!v)return'';
+      const bx=cx-bw-1+si*(bw+2);
+      return `<rect x="${bx.toFixed(1)}" y="${y(v).toFixed(1)}" width="${bw.toFixed(1)}" height="${(M.t+h-y(v)).toFixed(1)}" rx="3" fill="${x.color}"/>`;
+    }).join('');
+  }).join('');
+  const gl=[0,.5,1].map(f=>`<line x1="${M.l}" x2="${W-M.r}" y1="${y(mx*f)}" y2="${y(mx*f)}" stroke="${col('--grid')}"/><text x="${M.l-6}" y="${y(mx*f)+4}" text-anchor="end" font-size="10" fill="${col('--muted')}">${Math.round(mx*f)}</text>`).join('');
+  const xl=axisLabels(useDates).map(o=>`<text x="${M.l+slot*o.i+slot/2}" y="${Hh-8}" text-anchor="middle" font-size="10" fill="${col('--muted')}">${o.t}</text>`).join('');
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${Hh}" height="${Hh}">${gl}
+   <line x1="${M.l}" x2="${W-M.r}" y1="${M.t+h}" y2="${M.t+h}" stroke="${col('--axis')}"/>${bars}${xl}</svg>`;
+}
+function pagesTable(rows){
+  const agg={};rows.forEach(r=>{
+    const p=r.page.replace('https://capaortodonti.com','')||'/';
+    const a=agg[p]=agg[p]||{c:0,i:0,pos:0,n:0};
+    a.c+=+r.clicks;a.i+=+r.impressions;a.pos+=+r.position;a.n++;
+  });
+  const top=Object.entries(agg).sort((a,b)=>b[1].i-a[1].i).slice(0,10);
+  $('#tb_pages').innerHTML='<tr><th>Sayfa</th><th class="num">Tık</th><th class="num">Gösterim</th><th class="num">Poz.</th></tr>'+
+    top.map(([p,a])=>`<tr><td style="word-break:break-all">${p}</td><td class="num">${fmt(a.c)}</td><td class="num">${fmt(a.i)}</td><td class="num">${(a.pos/a.n).toFixed(1)}</td></tr>`).join('');
+}
+function queriesTable(rows){
+  const agg={};rows.forEach(r=>{
+    const a=agg[r.query]=agg[r.query]||{c:0,i:0,b:r.branded};
+    a.c+=+r.clicks;a.i+=+r.impressions;
+  });
+  const top=Object.entries(agg).sort((a,b)=>b[1].c-a[1].c||b[1].i-a[1].i).slice(0,10);
+  $('#tb_queries').innerHTML='<tr><th>Sorgu</th><th class="num">Tık</th><th class="num">Gösterim</th></tr>'+
+    top.map(([qq,a])=>`<tr><td>${qq} ${a.b?'<span class="chip b">markalı</span>':''}</td><td class="num">${fmt(a.c)}</td><td class="num">${fmt(a.i)}</td></tr>`).join('');
+}
+function changelogList(){
+  $('#changelog').innerHTML=[...DB.cl].reverse().map(c=>
+    `<div class="cl-item"><span class="cl-date">${c.date}</span><span class="cl-cat">${c.category}</span><span><b>${c.title}</b>${c.description?' — <span style="color:var(--ink-2)">'+c.description+'</span>':''}</span></div>`
+  ).join('')||'<div class="ch">kayıt yok</div>';
+}
+$('#filters').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  document.querySelectorAll('#filters button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');RANGE=+b.dataset.d;render();
+});
+addEventListener('resize',()=>{if(DB.site.length)render();});
+load();
+</script>
+</body>
+</html>
