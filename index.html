@@ -89,6 +89,12 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:18px 0}
   <div class="kpis" id="kpis"></div>
 
   <div class="card">
+    <h2>Aksiyon Skor Kartı</h2>
+    <div class="ch">Her SEO aksiyonu için önce/sonra 14 gün (günlük ort. GSC) — ✅ iyileşme · ➖ nötr · ❌ geriledi · ⏳ veri birikiyor (GSC ~2-3 gün geride; korelasyondur, tek başına kanıt değildir)</div>
+    <div class="tscroll"><table id="tb_score"></table></div>
+  </div>
+
+  <div class="card">
     <h2>Tıklar (GSC)</h2><div class="ch">Günlük — dikey çizgiler: yapılan SEO aksiyonları (üzerine gel)</div>
     <div id="ch_clicks"></div>
   </div>
@@ -217,6 +223,48 @@ function render(){
   pagesTable(inRange(DB.pages));
   queriesTable(inRange(DB.queries));
   changelogList();
+  scoreCard();
+}
+
+/* ---------- Aksiyon Skor Kartı (D1) ---------- */
+function dayAgg(rows){
+  const by={};rows.forEach(r=>{const d=by[r.date]=by[r.date]||{c:0,i:0,p:0,n:0};
+    d.c+=+r.clicks;d.i+=+r.impressions;d.p+=+r.position;d.n++;});
+  return Object.entries(by).map(([date,v])=>({date,c:v.c,i:v.i,p:v.p/v.n}));
+}
+function winStats(days,a,b){
+  const w=days.filter(d=>d.date>=a&&d.date<=b);
+  if(!w.length)return null;
+  return {n:w.length,
+    c:w.reduce((t,d)=>t+d.c,0)/w.length,
+    i:w.reduce((t,d)=>t+d.i,0)/w.length,
+    p:w.reduce((t,d)=>t+d.p,0)/w.length};
+}
+function shiftDate(s,n){const d=new Date(s);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);}
+function scoreCard(){
+  const site=dayAgg(DB.site.map(r=>({date:r.date,clicks:r.clicks,impressions:r.impressions,position:r.position})));
+  const rows=[...DB.cl].reverse().map(c=>{
+    let days=site, scope='site geneli';
+    if(c.target_url){
+      const pr=DB.pages.filter(r=>r.page.endsWith(c.target_url));
+      if(pr.length){days=dayAgg(pr);scope=c.target_url;}
+    }
+    const before=winStats(days, shiftDate(c.date,-14), shiftDate(c.date,-1));
+    const after=winStats(days, c.date, shiftDate(c.date,13));
+    let st='⏳', detay='veri birikiyor';
+    if(after&&after.n>=3&&before&&before.n>=3){
+      const di=before.i?(after.i-before.i)/before.i*100:0;
+      const dc=before.c?(after.c-before.c)/before.c*100:(after.c>0?100:0);
+      const dp=after.p-before.p; // negatif = iyi
+      if(di>=10||dc>=20||dp<=-0.5)st='✅';
+      else if(di<=-10||dp>=0.5)st='❌';
+      else st='➖';
+      detay=`gösterim ${di>0?'+':''}${di.toFixed(0)}% · tık ${dc>0?'+':''}${dc.toFixed(0)}% · poz ${dp>0?'+':''}${dp.toFixed(1)}`;
+    }else if(after&&after.n>0){detay=`veri birikiyor (${after.n}/14 gün)`;}
+    return {c,st,detay,scope};
+  });
+  $('#tb_score').innerHTML='<tr><th></th><th>Tarih</th><th>Aksiyon</th><th>Kapsam</th><th>Önce→Sonra (günlük ort.)</th></tr>'+
+    rows.map(r=>`<tr><td style="font-size:16px">${r.st}</td><td class="num" style="white-space:nowrap">${r.c.date}</td><td><b>${r.c.title}</b></td><td style="color:var(--muted);word-break:break-all">${r.scope}</td><td>${r.detay}</td></tr>`).join('');
 }
 
 /* ---------- charts (SVG) ---------- */
