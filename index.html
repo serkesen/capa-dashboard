@@ -261,7 +261,7 @@ async function load(){
 }
 
 /* ---------- dönem yardımcıları ---------- */
-function lastDate(){return DB.site.length?DB.site[DB.site.length-1].date:(DB.ev.length?DB.ev[DB.ev.length-1].date:null);}
+function lastDate(){let m=null;[DB.site,DB.ev,DB.chan].forEach(rows=>{if(rows.length){const d=rows[rows.length-1].date;if(!m||d>m)m=d;}});return m;}
 function rangeBounds(){
   const last=lastDate();if(!last)return null;
   if(RANGE===0)return{a:'0000-01-01',b:last,pa:null,pb:null,last};
@@ -363,10 +363,10 @@ function renderContext(){
   const sess=sum(chanI,'sessions'),sessP=sum(chanP,'sessions');
 
   $('#kpi_ctx').innerHTML=
+    tile('Oturum (GA4)',sess,fmt,{rows:DB.chan,prev:sessP,exp:'Toplam ziyaret (tüm kanallar)'})+
     tile('Tık (toplam)',clicks,fmt,{rows:DB.site,prev:clicksP})+
     tile('Gösterim',impr,fmt,{rows:DB.site,prev:imprP})+
-    tile('CTR',ctr,fmtP,{rows:DB.site,prev:ctrP})+
-    tile('Ort. pozisyon',pos,n=>n.toLocaleString('tr-TR',{maximumFractionDigits:1}),{rows:DB.site,prev:posP,invert:1,exp:'düşük = daha iyi'});
+    tile('CTR',ctr,fmtP,{rows:DB.site,prev:ctrP});
 
   lineChart('#ch_clicks',siteI.map(r=>({x:r.date,y:+r.clicks})),col('--s1'),'Tık',true);
   badge('#b_clicks',DB.site,hasPrev(DB.site),clicks,clicksP,false);
