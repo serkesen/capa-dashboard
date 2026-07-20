@@ -112,4 +112,26 @@ if len(chk.json()) == 0:
           (max(d8(r['dimensionValues'][0]['value']) for r in brows) if brows else '-'))
 else:
     print('BASELINE skip (dolu)')
+
+# --- Tek seferlik teshis: eski property landing-page dususu (zirve vs son) ---
+# ga4_page_compare bostaysa eski property'nin iki donem landing-page oturumlarini
+# bir kez ceker (hangi sayfalar dustu analizi). Bir kez calisir, sonra atlar.
+chk2 = requests.get(SB_URL + '/rest/v1/ga4_page_compare?select=page&limit=1',
+    headers={'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY}, timeout=30)
+chk2.raise_for_status()
+if len(chk2.json()) == 0:
+    for period, ps, pe in [('peak', '2025-02-01', '2025-04-30'),
+                           ('recent', '2026-04-01', '2026-06-30')]:
+        prows = ga4({'dateRanges': [{'startDate': ps, 'endDate': pe}],
+            'dimensions': [{'name': 'landingPagePlusQueryString'}],
+            'metrics': [{'name': 'sessions'}], 'limit': 100000}, prop=OLD_PROP)
+        agg = {}
+        for r in prows:
+            pg = r['dimensionValues'][0]['value'].split('?')[0][:300]
+            agg[pg] = agg.get(pg, 0) + int(r['metricValues'][0]['value'])
+        upsert('ga4_page_compare', [{'period': period, 'page': pg, 'sessions': s}
+            for pg, s in agg.items()], 'period,page')
+    print('PAGE_COMPARE done')
+else:
+    print('PAGE_COMPARE skip (dolu)')
 print('OK')
