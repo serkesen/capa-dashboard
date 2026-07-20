@@ -69,12 +69,25 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 @media(min-width:900px){.grid2{grid-template-columns:1fr 1fr}}
 .tscroll{overflow-x:auto}
 footer{font-size:11px;color:var(--muted);text-align:center;padding:18px 0}
+#login{position:fixed;inset:0;background:var(--plane);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+#login .box{background:var(--surface-1);border:1px solid var(--ring);border-radius:14px;padding:24px;width:100%;max-width:340px}
+#login h2{font-size:16px;font-weight:700;margin-bottom:4px}
+#login p{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.4}
+#login input{width:100%;padding:10px 12px;margin-bottom:10px;border:1px solid var(--ring);border-radius:8px;background:var(--plane);color:var(--ink-1);font-size:14px}
+#login button{width:100%;padding:10px;border:0;border-radius:8px;background:var(--brand-navy);color:#fff;font-weight:700;font-size:14px;cursor:pointer}
+#login button:disabled{opacity:.6;cursor:default}
+#login .lerr{color:var(--bad);font-size:12px;margin-top:8px;min-height:16px}
+#logout{background:rgba(255,255,255,.16);color:#fff;border:0;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;white-space:nowrap}
+body.locked .wrap,body.locked #tt{display:none}
 </style>
 </head>
-<body>
-<header><div class="hwrap">
-  <h1>Çapa Ortodonti — Dijital Pazarlama Dashboard</h1>
-  <div class="sub">GSC + GA4 günlük otomatik veri · değişiklik günlüğü işaretli</div>
+<body class="locked">
+<header><div class="hwrap" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+  <div>
+    <h1>Çapa Ortodonti — Dijital Pazarlama Dashboard</h1>
+    <div class="sub">GSC + GA4 günlük otomatik veri · değişiklik günlüğü işaretli</div>
+  </div>
+  <button id="logout" onclick="doLogout()" style="display:none">Çıkış</button>
 </div></header>
 <div class="wrap">
   <div class="filters" id="filters">
@@ -134,10 +147,22 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:18px 0}
   <footer>Çapa Ortodonti · capa-dashboard · veri: Google Search Console + GA4 → Supabase</footer>
 </div>
 <div class="tt" id="tt"></div>
+<div id="login"><div class="box">
+  <h2>Çapa Dashboard</h2>
+  <p>Bu panel özeldir. Devam etmek için giriş yapın.</p>
+  <input id="lg_email" type="email" placeholder="E-posta" autocomplete="username">
+  <input id="lg_pw" type="password" placeholder="Şifre" autocomplete="current-password">
+  <button onclick="doLogin(this)">Giriş yap</button>
+  <div class="lerr" id="lg_err"></div>
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SB='https://raxdbwdrbygdsgpqlxqc.supabase.co/rest/v1/';
+const SB_ROOT='https://raxdbwdrbygdsgpqlxqc.supabase.co';
+const SB=SB_ROOT+'/rest/v1/';
 const KEY='sb_publishable_mMbn5St0zmOOMH8pr5KeGQ_lhI4-C1Q';
-const H={apikey:KEY,Authorization:'Bearer '+KEY};
+const sbc=supabase.createClient(SB_ROOT,KEY);
+let ACCESS=null;
+const H=()=>({apikey:KEY,Authorization:'Bearer '+(ACCESS||KEY)});
 const $=s=>document.querySelector(s);
 const fmt=n=>n.toLocaleString('tr-TR');
 const fmtP=n=>(n*100).toLocaleString('tr-TR',{maximumFractionDigits:1})+'%';
@@ -147,7 +172,7 @@ let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[]};
 let RANGE=28;
 
 async function q(path){
-  const r=await fetch(SB+path,{headers:H});
+  const r=await fetch(SB+path,{headers:H()});
   if(!r.ok)throw new Error(path.split('?')[0]+' → HTTP '+r.status);
   return r.json();
 }
@@ -442,7 +467,27 @@ $('#filters').addEventListener('click',e=>{
   b.classList.add('on');RANGE=+b.dataset.d;render();
 });
 addEventListener('resize',()=>{if(DB.site.length)render();});
-load();
+
+/* ---------- Auth (tenant #1) ---------- */
+function showLogin(){document.body.classList.add('locked');$('#login').style.display='flex';$('#logout').style.display='none';}
+function showApp(){document.body.classList.remove('locked');$('#login').style.display='none';$('#logout').style.display='inline-block';}
+async function doLogin(btn){
+  const email=$('#lg_email').value.trim(),password=$('#lg_pw').value;
+  $('#lg_err').textContent='';btn.disabled=true;btn.textContent='Giriş yapılıyor…';
+  const {data,error}=await sbc.auth.signInWithPassword({email,password});
+  btn.disabled=false;btn.textContent='Giriş yap';
+  if(error){$('#lg_err').textContent='Giriş başarısız: '+error.message;return;}
+  ACCESS=data.session.access_token;showApp();load();
+}
+async function doLogout(){await sbc.auth.signOut();ACCESS=null;showLogin();}
+async function boot(){
+  try{
+    const {data:{session}}=await sbc.auth.getSession();
+    if(session){ACCESS=session.access_token;showApp();load();return;}
+  }catch(e){}
+  showLogin();
+}
+boot();
 </script>
 </body>
 </html>
