@@ -210,6 +210,13 @@ body.locked .wrap,body.locked #tt{display:none}
         <div id="ch_history"></div>
       </div>
     </div>
+
+    <div class="card">
+      <h2>Trafik düşüşü teşhisi — en çok düşen sayfalar <span class="badge flat" id="b_decline"></span></h2>
+      <div class="ch">Zirve (Şub–Nis 2025) → Son (Nis–Haz 2026) landing-page oturum farkı. Düşüşün çoğu alakasız genel-sağlık içeriğinde (hasta niyeti düşük); ticari sayfalar zaten hep küçüktü.</div>
+      <div class="tscroll"><table id="tb_decline"></table></div>
+      <a class="det" href="#/detay/dusen">Tüm sayfalar →</a>
+    </div>
     <div class="grid2">
       <div class="card"><h2>En çok gösterim alan sayfalar</h2><div class="ch">Seçili dönem toplamı (ilk 8).</div>
         <div class="tscroll"><table id="tb_pages"></table></div>
@@ -259,7 +266,7 @@ const CS=getComputedStyle(document.documentElement);
 const col=v=>CS.getPropertyValue(v).trim();
 const CUTOVER='2026-07-14';
 const COMMERCIAL=/(dis-teli|invisalign|seffaf-plak|bonding|implant|ortodonti|gulus|beyazlat|protez|kanal-ted|pedodont|zirkon|periodont|estetik|dolgu|dis-cek|kaplama|apare|braket)/i;
-let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[]};
+let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[]};
 let RANGE=28;
 let GOALS={};
 
@@ -270,7 +277,7 @@ async function q(path){
 }
 async function load(){
   try{
-    const [site,chan,ev,cl,pages,queries,base,targets]=await Promise.all([
+    const [site,chan,ev,cl,pages,queries,base,targets,pagecmp]=await Promise.all([
       q('gsc_site_daily?order=date&limit=10000'),
       q('ga4_channel_daily?order=date&limit=10000'),
       q('ga4_event_daily?order=date&limit=10000'),
@@ -278,9 +285,10 @@ async function load(){
       q('gsc_page_daily?order=date&limit=100000'),
       q('gsc_query_daily?order=date&limit=100000'),
       q('ga4_baseline_daily?order=date&limit=100000'),
-      q('targets?select=*')
+      q('targets?select=*'),
+      q('ga4_page_compare?select=*&limit=100000')
     ]);
-    DB={site,chan,ev,cl,pages,queries,base};
+    DB={site,chan,ev,cl,pages,queries,base,pagecmp};
     GOALS={};(targets||[]).forEach(t=>GOALS[t.metric_key]=+t.monthly_target);
     route();
   }catch(e){
@@ -407,6 +415,10 @@ function renderContext(){
   historyChart();
   pagesTable(pageAgg(inR(DB.pages),8));
   queriesTable(queryAgg(inR(DB.queries),8));
+  declineTable(declineData(10));
+  const pt=(DB.pagecmp||[]).filter(r=>r.period==='peak').reduce((t,r)=>t+ +r.sessions,0);
+  const rt=(DB.pagecmp||[]).filter(r=>r.period==='recent').reduce((t,r)=>t+ +r.sessions,0);
+  const bd=$('#b_decline');if(bd){if(!pt){bd.className='badge flat';bd.textContent='veri yok';}else{bd.className='badge '+(rt<pt?'down':'up');bd.textContent='%'+Math.round((rt-pt)/pt*100)+' · '+fmt(pt)+'→'+fmt(rt);}}
   changelogList();
 }
 
@@ -569,6 +581,21 @@ function changelogList(){
   $('#changelog').innerHTML=[...DB.cl].reverse().map(c=>'<div class="cl-item"><span class="cl-date">'+c.date+'</span><span class="cl-cat">'+(c.category||'')+'</span><span><b>'+c.title+'</b>'+(c.description?' — <span style="color:var(--ink-2)">'+c.description+'</span>':'')+'</span></div>').join('')||'<div class="ch">kayıt yok</div>';
 }
 
+/* ---------- düşen sayfalar teşhisi (Faz C) ---------- */
+function declineData(n){
+  const pk={},rc={};
+  (DB.pagecmp||[]).forEach(r=>{if(r.period==='peak')pk[r.page]=+r.sessions;else if(r.period==='recent')rc[r.page]=+r.sessions;});
+  const pgs=new Set([...Object.keys(pk),...Object.keys(rc)]);
+  const arr=[...pgs].map(p=>({p,peak:pk[p]||0,recent:rc[p]||0,delta:(rc[p]||0)-(pk[p]||0)})).sort((a,b)=>a.delta-b.delta);
+  return n?arr.slice(0,n):arr;
+}
+function declineRow(r){
+  return '<tr><td style="word-break:break-all">'+(isComm(r.p)?'<span class="chip b">ticari</span> ':'')+r.p+'</td><td class="num">'+fmt(r.peak)+'</td><td class="num">'+fmt(r.recent)+'</td><td class="num" style="color:'+(r.delta<0?col('--bad'):col('--good'))+'">'+(r.delta>0?'+':'')+fmt(r.delta)+'</td></tr>';
+}
+function declineTable(rows){
+  const el=$('#tb_decline');if(!el)return;
+  el.innerHTML='<tr><th>Sayfa</th><th class="num">Zirve</th><th class="num">Son</th><th class="num">Değişim</th></tr>'+(rows.length?rows.map(declineRow).join(''):'<tr><td colspan="4" style="color:var(--muted)">veri yok</td></tr>');
+}
 /* ---------- drill-down / hash-route ---------- */
 function route(){
   const h=location.hash;
@@ -594,6 +621,11 @@ function renderDetail(){
     let a=queryAgg(inR(DB.queries),0);if(term)a=a.filter(x=>x.q.toLowerCase().includes(term));
     cols=['Sorgu','Tık','Gösterim'];
     rows=a.map(x=>'<tr><td>'+x.q+' '+(x.b?'<span class="chip b">markalı</span>':'')+'</td><td class="num">'+fmt(x.c)+'</td><td class="num">'+fmt(x.i)+'</td></tr>');
+  }else if(CURDETAIL==='dusen'){
+    head='Trafik düşüşü — tüm sayfalar';sub='Zirve (2025 Şub-Nis) → Son (2026 Nis-Haz) · en çok düşen üstte';
+    let a=declineData(0);if(term)a=a.filter(x=>x.p.toLowerCase().includes(term));
+    cols=['Sayfa','Zirve','Son','Değişim'];
+    rows=a.map(declineRow);
   }else{head='Detay';sub='';}
   $('#d_head').textContent=head;$('#d_sub').textContent=sub;
   $('#d_table').innerHTML='<tr>'+cols.map((c,i)=>'<th'+(i?' class="num"':'')+'>'+c+'</th>').join('')+'</tr>'+rows.join('')+(rows.length?'':'<tr><td colspan="'+cols.length+'" style="color:var(--muted)">kayıt yok</td></tr>');
