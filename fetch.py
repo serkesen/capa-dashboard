@@ -4,9 +4,11 @@ import google.auth.transport.requests
 
 SITE = 'sc-domain:capaortodonti.com'
 PROP = '545364640'
+OLD_PROP = '355419399'   # eski (donmus) GA4 property - tek seferlik baseline
 SB_URL = os.environ['SUPABASE_URL'].rstrip('/')
 SB_KEY = os.environ['SUPABASE_SERVICE_KEY']
 BACKFILL = int(os.environ.get('BACKFILL_DAYS', '4'))
+BASELINE_DAYS = int(os.environ.get('BASELINE_DAYS', '540'))
 BRAND = ('capa', 'çapa')
 
 creds = service_account.Credentials.from_service_account_info(
@@ -60,9 +62,9 @@ upsert('gsc_query_daily', [{'date': r['keys'][0], 'query': r['keys'][1],
     'branded': any(b in r['keys'][1].lower() for b in BRAND)}
     for r in gsc(['date', 'query'])], 'date,query')
 
-def ga4(body):
+def ga4(body, prop=PROP):
     r = requests.post(
-        'https://analyticsdata.googleapis.com/v1beta/properties/' + PROP + ':runReport',
+        'https://analyticsdata.googleapis.com/v1beta/properties/' + prop + ':runReport',
         headers=GH, json=body, timeout=120)
     r.raise_for_status()
     return r.json().get('rows', [])
@@ -87,4 +89,27 @@ upsert('ga4_event_daily', [{'date': d8(r['dimensionValues'][0]['value']),
     'event_name': r['dimensionValues'][1]['value'], 'dim1': '', 'dim2': '',
     'count': int(r['metricValues'][0]['value'])} for r in rows],
     'date,event_name,dim1,dim2')
+
+# --- Tek seferlik baseline: eski (donmus) GA4 property 355419399 ---
+# ga4_baseline_daily bostaysa eski property'nin gecmis trafigini bir kez ceker,
+# sonraki calismalarda dolu oldugu icin atlar. Yeni property'nin canli
+# tablolarina dokunmaz.
+chk = requests.get(SB_URL + '/rest/v1/ga4_baseline_daily?select=date&limit=1',
+    headers={'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY}, timeout=30)
+chk.raise_for_status()
+if len(chk.json()) == 0:
+    bstart = (today - dt.timedelta(days=BASELINE_DAYS)).isoformat()
+    brows = ga4({'dateRanges': [{'startDate': bstart, 'endDate': end}],
+        'dimensions': [{'name': 'date'}, {'name': 'sessionDefaultChannelGroup'}],
+        'metrics': [{'name': 'sessions'}, {'name': 'totalUsers'}], 'limit': 100000},
+        prop=OLD_PROP)
+    upsert('ga4_baseline_daily', [{'date': d8(r['dimensionValues'][0]['value']),
+        'channel': r['dimensionValues'][1]['value'],
+        'sessions': int(r['metricValues'][0]['value']),
+        'users': int(r['metricValues'][1]['value'])} for r in brows], 'date,channel')
+    print('BASELINE rows', len(brows),
+          'range', (min(d8(r['dimensionValues'][0]['value']) for r in brows) if brows else '-'),
+          (max(d8(r['dimensionValues'][0]['value']) for r in brows) if brows else '-'))
+else:
+    print('BASELINE skip (dolu)')
 print('OK')
