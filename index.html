@@ -83,7 +83,7 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:18px 0}
     <button data-d="28" class="on">Son 28 gün</button>
     <button data-d="0">Tümü</button>
   </div>
-  <div class="note">GSC verisi ~2-3 gün gecikmeli gelir · Veri başlangıcı: 12 Tem 2026 (property kurulumu) · Son güncelleme her sabah 06:30</div>
+  <div class="note">GSC ve dönüşüm verisi 12 Tem 2026'dan (yeni property) · trafik geçmişi eski GA4 ile 2025-01'e kadar (alttaki 18 aylık grafik) · GSC ~2-3 gün gecikmeli · güncelleme her sabah 06:30</div>
   <div class="err" id="err"></div>
 
   <div class="kpis" id="kpis"></div>
@@ -115,6 +115,12 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:18px 0}
     </div>
   </div>
 
+  <div class="card">
+    <h2>Trafik trendi — 18 aylık geçmiş</h2>
+    <div class="ch">Eski GA4 (2025-01 → 13 Tem 2026) + yeni GA4 (14 Tem'den) birleşik oturum · 7 günlük ortalama · dönem filtresinden bağımsız, tüm geçmiş</div>
+    <div id="ch_history"></div>
+  </div>
+
   <div class="grid2">
     <div class="card"><h2>En çok gösterim alan sayfalar</h2><div class="ch">Seçili dönem toplamı</div>
       <div class="tscroll"><table id="tb_pages"></table></div></div>
@@ -137,7 +143,7 @@ const fmt=n=>n.toLocaleString('tr-TR');
 const fmtP=n=>(n*100).toLocaleString('tr-TR',{maximumFractionDigits:1})+'%';
 const CS=getComputedStyle(document.documentElement);
 const col=v=>CS.getPropertyValue(v).trim();
-let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[]};
+let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[]};
 let RANGE=28;
 
 async function q(path){
@@ -147,15 +153,16 @@ async function q(path){
 }
 async function load(){
   try{
-    const [site,chan,ev,cl,pages,queries]=await Promise.all([
+    const [site,chan,ev,cl,pages,queries,base]=await Promise.all([
       q('gsc_site_daily?order=date&limit=10000'),
       q('ga4_channel_daily?order=date&limit=10000'),
       q('ga4_event_daily?order=date&limit=10000'),
       q('change_log?order=date&limit=1000'),
       q('gsc_page_daily?order=date&limit=10000'),
-      q('gsc_query_daily?order=date&limit=10000')
+      q('gsc_query_daily?order=date&limit=10000'),
+      q('ga4_baseline_daily?order=date&limit=100000')
     ]);
-    DB={site,chan,ev,cl,pages,queries};
+    DB={site,chan,ev,cl,pages,queries,base};
     render();
   }catch(e){
     const el=$('#err');el.style.display='block';
@@ -220,6 +227,7 @@ function render(){
   lineChart('#ch_impr',site.map(r=>({x:r.date,y:+r.impressions})),col('--s1'),'Gösterim',true);
   channelsChart(chan);
   convChart(ev);
+  historyChart();
   pagesTable(inRange(DB.pages));
   queriesTable(inRange(DB.queries));
   changelogList();
@@ -390,6 +398,19 @@ function convChart(rows){
   const xl=axisLabels(useDates).map(o=>`<text x="${M.l+slot*o.i+slot/2}" y="${Hh-8}" text-anchor="middle" font-size="10" fill="${col('--muted')}">${o.t}</text>`).join('');
   el.innerHTML=`<svg viewBox="0 0 ${W} ${Hh}" height="${Hh}">${gl}
    <line x1="${M.l}" x2="${W-M.r}" y1="${M.t+h}" y2="${M.t+h}" stroke="${col('--axis')}"/>${bars}${xl}</svg>`;
+}
+function historyChart(){
+  const CUT='2026-07-14'; // eski property 13 Tem'de durdu, yeni 14 Tem'den net
+  const day={};
+  DB.base.forEach(r=>{if(r.date<CUT)day[r.date]=(day[r.date]||0)+(+r.sessions||0);});
+  DB.chan.forEach(r=>{if(r.date>=CUT)day[r.date]=(day[r.date]||0)+(+r.sessions||0);});
+  const dates=Object.keys(day).sort();
+  const el=$('#ch_history');if(!el)return;
+  if(!dates.length){el.innerHTML='<div class="ch">veri yok</div>';return;}
+  const raw=dates.map(d=>day[d]);
+  const ma=raw.map((_,i)=>{const a=Math.max(0,i-6),w=raw.slice(a,i+1);return w.reduce((t,v)=>t+v,0)/w.length;});
+  const data=dates.map((d,i)=>({x:d,y:Math.round(ma[i])}));
+  lineChart('#ch_history',data,col('--brand-teal'),'Oturum (7g ort.)',false);
 }
 function pagesTable(rows){
   const agg={};rows.forEach(r=>{
