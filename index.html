@@ -184,7 +184,7 @@ body.locked .wrap,body.locked #tt{display:none}
 <div class="grid2">
 <div class="card">
 <h2>Arama tıkları (GSC) <span class="badge" id="b_clicks"></span></h2>
-<div class="ch"><b>Ne:</b> Google aramadan gelen tık. <b>Oku:</b> SEO'nun getirdiği trafik · dikey çizgiler = yaptığımız işler (üzerine gel).</div>
+<div class="ch"><b>Ne:</b> Google aramadan gelen tık. <b>Oku:</b> SEO'nun getirdiği trafik · dikey çizgiler = yaptığımız işler. <b>Not:</b> GSC verisi ~2-3 gün gecikmeli — son günler grafikte henüz boş olabilir.</div>
 <div id="ch_clicks"></div>
 </div>
 <div class="card">
@@ -401,8 +401,10 @@ function commClicksRange(a,b){let t=0;for(const r of DB.pages){if(r.date>=a&&r.d
 function brandClicksRange(a,b){let t=0;for(const r of DB.queries){if(r.date>=a&&r.date<=b&&r.branded)t+=(+r.clicks||0);}return t;}
 function seriesRange(rows,valfn){
 const by={};W.buckets.forEach(b=>by[b]=0);
-for(const r of rows){if(r.date>=W.chart.a&&r.date<=W.chart.b){const b=bucketOf(r.date,W.bucket);if(b in by)by[b]+=(valfn(r)||0);}}
-return W.buckets.map(b=>({x:b,y:by[b],lbl:bucketLabel(b,W.bucket)}));
+let lastD=null;
+for(const r of rows){if(r.date>=W.chart.a&&r.date<=W.chart.b){if(lastD==null||r.date>lastD)lastD=r.date;const b=bucketOf(r.date,W.bucket);if(b in by)by[b]+=(valfn(r)||0);}}
+const lastB=lastD?bucketOf(lastD,W.bucket):null;
+return W.buckets.map(b=>({x:b,y:(lastB&&b>lastB)?null:by[b],lbl:bucketLabel(b,W.bucket)}));
 }
 /* önceki eş grafik dönemi, cur nokta sayısına hizalı (overlay için) */
 function prevSeriesRange(rows,valfn){
@@ -563,10 +565,10 @@ const el=$(sel);if(!el)return;const Wd=el.clientWidth||600,Hh=200;
 const w=Wd-M.l-M.r,h=Hh-M.t-M.b;
 if(!data.length){el.innerHTML='<div class="ch">veri yok</div>';return;}
 const hasP=prev&&prev.some(v=>v!=null);
-const mx=Math.max(1,...data.map(d=>d.y),...(hasP?prev.filter(v=>v!=null):[]));
+const mx=Math.max(1,...data.map(d=>d.y).filter(v=>v!=null),...(hasP?prev.filter(v=>v!=null):[]));
 const ys=v=>M.t+h-(v/mx)*h;
-const pts=data.map((d,i)=>[M.l+xPos(i,data.length,w),ys(d.y)]);
-const path=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+const pts=data.map((d,i)=>d.y==null?null:[M.l+xPos(i,data.length,w),ys(d.y)]);
+let path='',pen=false;pts.forEach(p=>{if(p==null){pen=false;return;}path+=(pen?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)+' ';pen=true;});
 const gl=[0,.5,1].map((f)=>{const y=M.t+h-f*h;return '<line x1="'+M.l+'" x2="'+(Wd-M.r)+'" y1="'+y+'" y2="'+y+'" stroke="'+col('--grid')+'"/><text x="'+(M.l-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="10" fill="'+col('--muted')+'">'+fmt(mx*f)+'</text>';}).join('');
 const xl=axisLabelsArr(data.map(d=>d.lbl)).map(o=>'<text x="'+(M.l+xPos(o.i,data.length,w))+'" y="'+(Hh-8)+'" text-anchor="middle" font-size="10" fill="'+col('--muted')+'">'+o.t+'</text>').join('');
 const mk=withMarkers?markers(data).map(o=>{const x=M.l+xPos(o.i,data.length,w);return '<line x1="'+x+'" x2="'+x+'" y1="'+M.t+'" y2="'+(M.t+h)+'" stroke="'+col('--brand-orange')+'" stroke-width="1.5" stroke-dasharray="3 3" opacity=".8"/>';}).join(''):'';
@@ -574,7 +576,7 @@ let vl='';
 if(vlineDate){const vb=bucketOf(vlineDate,BK);let idx=-1;for(let i=0;i<data.length;i++){if(data[i].x>=vb){idx=i;break;}}if(idx>0){const x=M.l+xPos(idx,data.length,w);vl='<line x1="'+x+'" x2="'+x+'" y1="'+M.t+'" y2="'+(M.t+h)+'" stroke="'+col('--brand-orange')+'" stroke-width="1.5" opacity=".7"/><text x="'+x+'" y="'+(M.t+9)+'" text-anchor="middle" font-size="9" fill="'+col('--brand-orange')+'">devir</text>';}}
 let pv='';
 if(hasP){let dp='',pen=false;prev.forEach((v,i)=>{if(v==null){pen=false;return;}const x=M.l+xPos(i,data.length,w),y=ys(v);dp+=(pen?'L':'M')+x.toFixed(1)+' '+y.toFixed(1)+' ';pen=true;});pv='<path d="'+dp+'" fill="none" stroke="'+col('--muted')+'" stroke-width="1.5" stroke-dasharray="4 3" opacity=".5" stroke-linejoin="round"/>';}
-const dots=pts.map(p=>'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2.5" fill="'+color+'"/>').join('');
+const dots=pts.map(p=>p==null?'':'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2.5" fill="'+color+'"/>').join('');
 el.innerHTML='<svg viewBox="0 0 '+Wd+' '+Hh+'" height="'+Hh+'">'+gl+'<line x1="'+M.l+'" x2="'+(Wd-M.r)+'" y1="'+(M.t+h)+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'"/>'+mk+vl+pv+'<path d="'+path+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round"/>'+(data.length<=45?dots:'')+xl+'<line class="xh" y1="'+M.t+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'" style="display:none"/></svg>';
 hoverLine(el,data,name,w,prev);
 }
@@ -589,7 +591,7 @@ const x=M.l+xPos(i,data.length,w);
 xh.setAttribute('x1',x);xh.setAttribute('x2',x);xh.style.display='block';
 const d=data[i];const marks=mkMap[d.x]?'<div style="color:'+col('--brand-orange')+';margin-top:3px">⚑ '+mkMap[d.x].join('<br>⚑ ')+'</div>':'';
 const pline=(prev&&prev[i]!=null)?'<br><span style="color:var(--muted)">önceki dönem: '+fmt(prev[i])+'</span>':'';
-tt.innerHTML='<b>'+d.lbl+'</b>'+name+': '+fmt(d.y)+pline+marks;tt.style.display='block';
+tt.innerHTML='<b>'+d.lbl+'</b>'+name+': '+(d.y==null?'veri yok':fmt(d.y))+pline+marks;tt.style.display='block';
 tt.style.left=Math.min(window.innerWidth-270,e.clientX+14)+'px';tt.style.top=(e.clientY+14)+'px';
 });
 svg.addEventListener('mouseleave',()=>{xh.style.display='none';$('#tt').style.display='none';});
