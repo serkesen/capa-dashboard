@@ -313,22 +313,31 @@ year: {bucket:'month',nbuckets:0,  label:'Tüm geçmiş',   cmp:'kıyas yok (tü
 };
 
 async function q(path){
-const r=await fetch(SB+path,{headers:H()});
+const size=1000;let off=0,all=[];
+const sep=path.includes('?')?'&':'?';
+while(true){
+const r=await fetch(SB+path+sep+'limit='+size+'&offset='+off,{headers:H()});
 if(!r.ok)throw new Error(path.split('?')[0]+' → HTTP '+r.status);
-return r.json();
+const chunk=await r.json();
+if(!Array.isArray(chunk))return chunk;
+all=all.concat(chunk);
+if(chunk.length<size)break;
+off+=size;
+}
+return all;
 }
 async function load(){
 try{
 const [site,chan,ev,cl,pages,queries,base,targets,pagecmp]=await Promise.all([
-q('gsc_site_daily?order=date&limit=10000'),
-q('ga4_channel_daily?order=date&limit=10000'),
-q('ga4_event_daily?order=date&limit=10000'),
-q('change_log?order=date&limit=1000'),
-q('gsc_page_daily?order=date&limit=100000'),
-q('gsc_query_daily?order=date&limit=100000'),
-q('ga4_baseline_daily?order=date&limit=100000'),
-q('targets?select=*'),
-q('ga4_page_compare?select=*&limit=100000')
+q('gsc_site_daily?order=date'),
+q('ga4_channel_daily?order=date'),
+q('ga4_event_daily?order=date'),
+q('change_log?order=date'),
+q('gsc_page_daily?order=date'),
+q('gsc_query_daily?order=date'),
+q('ga4_baseline_daily?order=date'),
+q('targets?select=*&order=metric_key'),
+q('ga4_page_compare?select=*&order=page')
 ]);
 DB={site,chan,ev,cl,pages,queries,base,pagecmp};
 GOALS={};(targets||[]).forEach(t=>GOALS[t.metric_key]=+t.monthly_target);
