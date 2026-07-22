@@ -32,39 +32,47 @@ body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--
 header{background:var(--brand-grad);color:#fff;padding:18px 16px 14px}
 header h1{font-size:17px;font-weight:700;letter-spacing:-.01em}
 header .sub{font-size:12px;color:#cfe2f7;margin-top:2px}
-.wrap{max-width:1140px;margin:0 auto;padding:0 12px 48px}
+.wrap{max-width:1140px;margin:0 auto;padding:14px 12px 48px}
 header .hwrap{max-width:1140px;margin:0 auto;padding:0 4px}
-
-/* ---- tarih seçici ---- */
-.picker{position:sticky;top:0;z-index:8;background:var(--plane);padding:12px 0 6px;margin-bottom:2px}
-.seg{display:inline-flex;background:var(--surface-1);border:1px solid var(--ring);border-radius:10px;padding:3px;gap:2px}
-.seg button{border:0;background:transparent;color:var(--ink-2);padding:7px 15px;border-radius:8px;font-size:13px;cursor:pointer;font-weight:600}
-.seg button.on{background:var(--brand-navy);color:#fff}
-.pickrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.gbtn{border:1px solid var(--ring);background:var(--surface-1);color:var(--ink-2);padding:8px 13px;border-radius:9px;font-size:13px;cursor:pointer}
-.cmp{font-size:12px;color:var(--muted)}
-#custombar{display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
-#custombar.on{display:flex}
-#custombar label{font-size:12px;color:var(--muted)}
-#custombar input{padding:7px 10px;border:1px solid var(--ring);border-radius:8px;background:var(--surface-1);color:var(--ink-1);font-size:13px}
-#custombar button{border:0;background:var(--brand-navy);color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer}
-.note{font-size:12px;color:var(--muted);margin:10px 2px 4px;line-height:1.5}
+.note{font-size:12px;color:var(--muted);margin:6px 2px 4px;line-height:1.5}
+.note b{color:var(--ink-2)}
 
 /* ---- aşama başlıkları ---- */
-.stage{margin:26px 2px 12px;display:flex;align-items:flex-start;gap:11px}
+.stage{margin:24px 2px 12px;display:flex;align-items:flex-start;gap:11px}
 .stage .n{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--brand-navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
 .stage .st{font-size:15px;font-weight:700;color:var(--ink-1);letter-spacing:-.01em}
 .stage .sq{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
 
-.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:6px}
-@media(min-width:760px){.kpis{grid-template-columns:repeat(4,1fr)}}
+/* ---- dönem şeridi (Ziyaret) ---- */
+.periods{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:0 0 8px}
+@media(min-width:600px){.periods{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:920px){.periods{grid-template-columns:repeat(7,1fr)}}
+.pbox{display:flex;flex-direction:column;align-items:flex-start;gap:1px;background:var(--surface-1);border:1px solid var(--ring);border-radius:11px;padding:10px 12px;cursor:pointer;text-align:left;font-family:inherit;transition:border-color .1s}
+.pbox:hover{border-color:var(--axis)}
+.pbox.on{border-color:var(--brand-navy);box-shadow:inset 0 0 0 1px var(--brand-navy);background:var(--ctxbg)}
+.pbox .pl{font-size:12px;color:var(--ink-2);font-weight:600}
+.pbox .pv{font-size:20px;font-weight:700;letter-spacing:-.02em;color:var(--ink-1);font-variant-numeric:tabular-nums}
+.pbox .pd{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap}
+.pbox .pd.up{color:var(--good)} .pbox .pd.down{color:var(--bad)}
+.pbox.pcustom{justify-content:center}
+.pbox.pcustom .pv{font-size:14px;color:var(--s1);font-weight:600}
+#custombar{display:none;gap:8px;align-items:center;flex-wrap:wrap;margin:2px 0 10px;padding:10px 12px;background:var(--ctxbg);border:1px dashed var(--grid);border-radius:11px}
+#custombar.on{display:flex}
+#custombar label{font-size:12px;color:var(--muted)}
+#custombar input{padding:7px 10px;border:1px solid var(--ring);border-radius:8px;background:var(--surface-1);color:var(--ink-1);font-size:13px}
+#custombar button{border:0;background:var(--brand-navy);color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer}
+
+.kpis3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:2px 0 6px}
+@media(max-width:520px){.kpis3{grid-template-columns:1fr}}
 .tile{background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;padding:12px 14px;position:relative}
 .tile.star{border-color:var(--brand-orange)}
 .tile .l{font-size:12px;color:var(--ink-2);display:flex;align-items:center;gap:4px}
-.tile .v{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-top:2px}
+.tile .v{font-size:24px;font-weight:700;letter-spacing:-.02em;margin-top:2px;font-variant-numeric:tabular-nums}
 .tile .exp{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.35}
 .tile .d{font-size:12px;margin-top:5px;color:var(--muted);font-weight:600}
 .tile .d.up{color:var(--good)} .tile .d.down{color:var(--bad)}
+.tile .goal{font-size:11px;margin-top:3px;font-weight:600}
+.tile .goal.g-ok{color:var(--good)} .tile .goal.g-warn{color:var(--brand-orange)} .tile .goal.g-bad{color:var(--bad)}
 .card{background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;padding:14px;margin-bottom:14px}
 .card h2{font-size:14px;font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .card .badge{font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px}
@@ -102,6 +110,8 @@ details.ctx>summary .q{display:block;font-weight:400;color:var(--muted);margin-t
 details.ctx[open]>summary{border-bottom:1px solid var(--grid);margin-bottom:12px}
 details.ctx .card{background:var(--plane)}
 footer{font-size:11px;color:var(--muted);text-align:center;padding:18px 0}
+#gbtnrow{display:flex;justify-content:flex-end;margin:0 2px 6px}
+.gbtn{border:1px solid var(--ring);background:var(--surface-1);color:var(--ink-2);padding:7px 12px;border-radius:9px;font-size:13px;cursor:pointer}
 #login{position:fixed;inset:0;background:var(--plane);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
 #login .box{background:var(--surface-1);border:1px solid var(--ring);border-radius:14px;padding:24px;width:100%;max-width:340px}
 #login h2{font-size:16px;font-weight:700;margin-bottom:4px}
@@ -111,57 +121,35 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:18px 0}
 #login button:disabled{opacity:.6;cursor:default}
 #login .lerr{color:var(--bad);font-size:12px;margin-top:8px;min-height:16px}
 #logout{background:rgba(255,255,255,.16);color:#fff;border:0;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;white-space:nowrap}
-body.locked .wrap,body.locked #tt,body.locked .picker{display:none}
+body.locked .wrap,body.locked #tt{display:none}
 .backlink{display:inline-block;margin:14px 2px 4px;font-size:13px;color:var(--s1);cursor:pointer;text-decoration:none}
 .dhead{font-size:17px;font-weight:700;margin:8px 2px 2px}
 .dsub{font-size:12px;color:var(--muted);margin:0 2px 14px}
 .searchbox{width:100%;max-width:360px;padding:8px 12px;margin-bottom:12px;border:1px solid var(--ring);border-radius:8px;background:var(--surface-1);color:var(--ink-1);font-size:13px}
-#goalpanel{display:none;background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;padding:14px;margin:10px 0 4px}
+#goalpanel{display:none;background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;padding:14px;margin:6px 0}
 #goalpanel.on{display:block}
 #goalpanel h3{font-size:13px;font-weight:700;margin-bottom:2px}
 #goalpanel .gsub{font-size:12px;color:var(--muted);margin-bottom:12px}
 .grow{display:grid;grid-template-columns:1fr;gap:10px}
-@media(min-width:760px){.grow{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:700px){.grow{grid-template-columns:repeat(4,1fr)}}
 .gfield label{display:block;font-size:12px;color:var(--ink-2);margin-bottom:4px}
 .gfield input{width:100%;padding:8px 10px;border:1px solid var(--ring);border-radius:8px;background:var(--plane);color:var(--ink-1);font-size:14px}
 #goalpanel .gsave{margin-top:12px;background:var(--brand-navy);color:#fff;border:0;border-radius:8px;padding:8px 16px;font-weight:700;font-size:13px;cursor:pointer}
 #goalpanel .gsave:disabled{opacity:.6}
 #goalpanel .gstatus{font-size:12px;color:var(--muted);margin-left:10px}
-.tile .goal{font-size:11px;margin-top:3px;font-weight:600}
-.tile .goal.g-ok{color:var(--good)} .tile .goal.g-warn{color:var(--brand-orange)} .tile .goal.g-bad{color:var(--bad)}
 </style>
 </head>
 <body class="locked">
 <header><div class="hwrap" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
 <div>
 <h1>Çapa Ortodonti — Dijital Pazarlama Dashboard</h1>
-<div class="sub">Gün · hafta · ay · yıl seç — aşamalar sırayla: ne kadar trafik → nereden → kaç hasta. Her değer önceki döneme kıyaslı.</div>
+<div class="sub">Ziyaret dönem kutusuna tıkla — tüm grafikler o döneme göre çizilir. Her değer önceki eş döneme kıyaslı.</div>
 </div>
 <button id="logout" onclick="doLogout()" style="display:none">Çıkış</button>
 </div></header>
 
-<div class="picker" id="picker">
-<div class="hwrap">
-<div class="pickrow">
-<div class="seg" id="granseg">
-<button data-g="day" class="on">Gün</button>
-<button data-g="week">Hafta</button>
-<button data-g="month">Ay</button>
-<button data-g="year">Yıl</button>
-<button data-g="custom">Özel</button>
-</div>
-<button class="gbtn" onclick="toggleGoals()">🎯 Hedefler</button>
-<span class="cmp" id="cmpnote"></span>
-</div>
-<div id="custombar">
-<label>Başlangıç <input id="c_a" type="date"></label>
-<label>Bitiş <input id="c_b" type="date"></label>
-<button onclick="applyCustom()">Uygula</button>
-</div>
-</div>
-</div>
-
 <div class="wrap" id="mainview">
+<div id="gbtnrow"><button class="gbtn" onclick="toggleGoals()">🎯 Hedefler</button></div>
 <div id="goalpanel">
 <h3>🎯 Aylık hedefler</h3>
 <div class="gsub">Aylık hedef gir; dashboard seçili döneme göre "hedef temposu %" ve dönüşüm grafiğinde hedef çizgisi gösterir. Boş/0 = hedef yok.</div>
@@ -173,18 +161,24 @@ body.locked .wrap,body.locked #tt,body.locked .picker{display:none}
 </div>
 <button class="gsave" onclick="saveGoals(this)">Kaydet</button><span class="gstatus" id="g_status"></span>
 </div>
-<div class="note" id="rangenote"></div>
 <div class="err" id="err"></div>
 
-<!-- ===== AŞAMA 1 · ÖZET ===== -->
-<div class="stage"><span class="n">1</span><div><div class="st">Bu dönem — tek bakışta</div><div class="sq">Seçili aralığın karnesi. Her kutunun altındaki ok, bir önceki eş dönemle kıyası gösterir (yeşil = arttı, kırmızı = azaldı).</div></div></div>
-<div class="kpis" id="kpi_summary"></div>
+<!-- ===== AŞAMA 1 · ZİYARET DÖNEM SEÇ ===== -->
+<div class="stage"><span class="n">1</span><div><div class="st">Ziyaret — dönem seç</div><div class="sq">Bir kutuya tıkla: o pencerenin toplam ziyareti + önceki eş döneme göre değişim (sayı ve %). Seçtiğin dönem aşağıdaki tüm grafiklere uygulanır.</div></div></div>
+<div class="periods" id="periodrow"></div>
+<div id="custombar">
+<label>Başlangıç <input id="c_a" type="date"></label>
+<label>Bitiş <input id="c_b" type="date"></label>
+<button onclick="applyCustom()">Uygula</button>
+</div>
+<div class="note" id="rangenote"></div>
+<div class="kpis3" id="kpi_secondary"></div>
 
 <!-- ===== AŞAMA 2 · NE KADAR TRAFİK ===== -->
-<div class="stage"><span class="n">2</span><div><div class="st">Ne kadar trafik aldık?</div><div class="sq">Toplam ilgi: siteye kaç ziyaret, aramada kaç tık/gösterim. Yükselen çizgi = büyüyen erişim.</div></div></div>
+<div class="stage"><span class="n">2</span><div><div class="st">Ne kadar trafik aldık?</div><div class="sq">Seçili dönemde siteye kaç ziyaret, aramada kaç tık/gösterim. Yükselen çizgi = büyüyen erişim.</div></div></div>
 <div class="card">
 <h2>Ziyaretler (GA4) <span class="badge" id="b_sess"></span></h2>
-<div class="ch"><b>Ne:</b> siteye gelen toplam ziyaret. <b>Neden:</b> tüm işin girişi — kaç kişiye ulaştığımız. <b>Oku:</b> çizgi yükseliyorsa daha çok kişi geliyor · turuncu çizgi = 14 Tem ölçüm devri (öncesi/sonrası birleşik).</div>
+<div class="ch"><b>Ne:</b> siteye gelen toplam ziyaret. <b>Oku:</b> çizgi yükseliyorsa daha çok kişi geliyor · turuncu çizgi = 14 Tem ölçüm devri (öncesi/sonrası birleşik).</div>
 <div id="ch_sess"></div>
 </div>
 <div class="grid2">
@@ -204,7 +198,7 @@ body.locked .wrap,body.locked #tt,body.locked .picker{display:none}
 <div class="stage"><span class="n">3</span><div><div class="st">Trafik nereden geliyor?</div><div class="sq">Aynı trafiğin kaynağı: hangi kanaldan, ne tür aramadan. Hasta-niyetli kaynak mı yoksa rastgele mi?</div></div></div>
 <div class="card">
 <h2>Ziyaret kaynağı — kanal bazında (GA4)</h2>
-<div class="ch"><b>Ne:</b> ziyaretler nereden geldi — organik arama, doğrudan giriş, sosyal, yönlendirme. <b>Oku:</b> organik (mavi) yükselişi = SEO çalışıyor. <b>Not:</b> kanal verisi 14 Tem ölçüm devrinden beri var.</div>
+<div class="ch"><b>Ne:</b> ziyaretler nereden geldi — organik arama, doğrudan, sosyal, yönlendirme. <b>Oku:</b> organik (mavi) yükselişi = SEO çalışıyor. <b>Not:</b> kanal verisi 14 Tem ölçüm devrinden beri var.</div>
 <div class="legend" id="lg_ch"></div>
 <div id="ch_channels"></div>
 </div>
@@ -227,7 +221,7 @@ body.locked .wrap,body.locked #tt,body.locked .picker{display:none}
 <div class="stage"><span class="n">4</span><div><div class="st">Kaç hastaya dönüştü?</div><div class="sq">Huninin dibi — asıl iş sonucu. Trafik ne olursa olsun, bunlar artmalı.</div></div></div>
 <div class="card">
 <h2>Dönüşümler — Randevu ⭐ + Telefon <span class="badge" id="b_conv"></span></h2>
-<div class="ch"><b>Ne:</b> online randevu talebi (⭐) ve telefona tıklama. <b>Neden:</b> hasta kazanımına en yakın ölçü — para buradan gelir. <b>Oku:</b> turuncu kesik çizgi = randevu hedefi (Hedefler'den).</div>
+<div class="ch"><b>Ne:</b> online randevu talebi (⭐) ve telefona tıklama. <b>Neden:</b> hasta kazanımına en yakın ölçü. <b>Oku:</b> turuncu kesik çizgi = randevu hedefi (Hedefler'den).</div>
 <div class="legend" id="lg_conv"></div>
 <div id="ch_conv"></div>
 </div>
@@ -242,7 +236,7 @@ body.locked .wrap,body.locked #tt,body.locked .picker{display:none}
 <div class="card"><h2>Değişiklik günlüğü</h2><div class="ch">Yapılan işlerin kronolojik listesi.</div>
 <div id="changelog"></div></div>
 
-<!-- ===== DETAY TABLOLAR (bağlam) ===== -->
+<!-- ===== DETAY TABLOLAR ===== -->
 <details class="ctx" id="ctxbox">
 <summary>Detay tablolar — sayfalar, sorgular, düşüş teşhisi
 <span class="q">Seçili döneme ait sıralı listeler + uzun vadeli trafik düşüşü teşhisi. İncelemek istersen aç.</span>
@@ -257,7 +251,7 @@ body.locked .wrap,body.locked #tt,body.locked .picker{display:none}
 </div>
 <div class="card">
 <h2>Trafik düşüşü teşhisi — en çok düşen sayfalar <span class="badge flat" id="b_decline"></span></h2>
-<div class="ch">Zirve (Şub–Nis 2025) → Son (Nis–Haz 2026) landing-page oturum farkı. Düşüşün çoğu alakasız genel-sağlık içeriğinde (hasta niyeti düşük); ticari sayfalar zaten hep küçüktü. <b>Dönem filtresinden bağımsız.</b></div>
+<div class="ch">Zirve (Şub–Nis 2025) → Son (Nis–Haz 2026) landing-page oturum farkı. Düşüşün çoğu alakasız genel-sağlık içeriğinde. <b>Dönem filtresinden bağımsız.</b></div>
 <div class="tscroll"><table id="tb_decline"></table></div>
 <a class="det" href="#/detay/dusen">Tüm sayfalar →</a>
 </div>
@@ -266,7 +260,7 @@ body.locked .wrap,body.locked #tt,body.locked .picker{display:none}
 <footer>Çapa Ortodonti · capa-dashboard · veri: Google Search Console + GA4 → Supabase · özel/giriş korumalı</footer>
 </div>
 
-<!-- ===== DETAY (drill-down, hash-route) ===== -->
+<!-- ===== DETAY (drill-down) ===== -->
 <div class="wrap" id="detailview" style="display:none">
 <a class="backlink" href="#" onclick="location.hash='';return false">← panele dön</a>
 <div class="dhead" id="d_head"></div>
@@ -301,16 +295,21 @@ const CUTOVER='2026-07-14';
 const AYK=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
 const COMMERCIAL=/(dis-teli|invisalign|seffaf-plak|bonding|implant|ortodonti|gulus|beyazlat|protez|kanal-ted|pedodont|zirkon|periodont|estetik|dolgu|dis-cek|kaplama|apare|braket)/i;
 let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[]};
-let GRAN='day';
-let CUSTOM=null;
 let GOALS={};
 
-const GRANCFG={
-day:  {bucket:'day',  nbuckets:30, label:'Son 30 gün',  cmp:'önceki 30 güne göre',  note:'Her nokta bir gün.'},
-week: {bucket:'week', nbuckets:12, label:'Son 12 hafta', cmp:'önceki 12 haftaya göre',note:'Her nokta bir hafta (Pazartesi başlangıçlı).'},
-month:{bucket:'month',nbuckets:12, label:'Son 12 ay',    cmp:'önceki 12 aya göre',   note:'Her nokta bir ay.'},
-year: {bucket:'month',nbuckets:0,  label:'Tüm geçmiş',   cmp:'kıyas yok (tüm dönem)',note:'Tüm veri, aylık noktalar — uzun vadeli bakış.'}
-};
+/* dönemler: days = KPI penceresi (gün), chartDays = grafik penceresi, bucket = granülarite */
+const PERIODS=[
+{key:'gun',  label:'Gün',   days:1,   chartDays:14, bucket:'day'},
+{key:'hafta',label:'Hafta', days:7,   chartDays:7,  bucket:'day'},
+{key:'ay',   label:'Ay',    days:30,  chartDays:30, bucket:'day'},
+{key:'3ay',  label:'3 Ay',  days:90,  chartDays:90, bucket:'week'},
+{key:'6ay',  label:'6 Ay',  days:180, chartDays:180,bucket:'week'},
+{key:'yil',  label:'1 Yıl', days:365, chartDays:365,bucket:'month'}
+];
+let PERIOD='ay';
+let CUSTOM=null;
+let SESS=[];         // sessionDaily önbelleği
+let W=null,BK='day'; // aktif pencere + bucket
 
 async function q(path){
 const size=1000;let off=0,all=[];
@@ -348,171 +347,179 @@ el.textContent='Veri alınamadı: '+e.message;
 }
 }
 
-/* ---------- granülarite / bucketing ---------- */
-function weekStart(dateStr){
-const d=new Date(dateStr+'T00:00:00Z');
-const day=(d.getUTCDay()+6)%7; // Pazartesi=0
-d.setUTCDate(d.getUTCDate()-day);
-return d.toISOString().slice(0,10);
-}
-function bucketOf(dateStr,bucket){
-if(bucket==='day')return dateStr;
-if(bucket==='week')return weekStart(dateStr);
-return dateStr.slice(0,7); // month
-}
+/* ---------- tarih / bucket yardımcıları ---------- */
+function shiftDate(s,n){const d=new Date(s+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}
+function shiftMonthKey(mk,n){let y=+mk.slice(0,4),m=+mk.slice(5,7)-1+n;y+=Math.floor(m/12);m=((m%12)+12)%12;return y+'-'+String(m+1).padStart(2,'0');}
+function weekStart(dateStr){const d=new Date(dateStr+'T00:00:00Z');const day=(d.getUTCDay()+6)%7;d.setUTCDate(d.getUTCDate()-day);return d.toISOString().slice(0,10);}
+function bucketOf(dateStr,bucket){if(bucket==='day')return dateStr;if(bucket==='week')return weekStart(dateStr);return dateStr.slice(0,7);}
 function bucketLabel(key,bucket){
 if(bucket==='day')return key.slice(8)+'.'+key.slice(5,7);
 if(bucket==='week'){const d=new Date(key+'T00:00:00Z');return d.getUTCDate()+' '+AYK[d.getUTCMonth()];}
 const p=key.split('-');return AYK[+p[1]-1]+" '"+p[0].slice(2);
 }
-function allBuckets(bucket){
-const set=new Set();
-[DB.site,DB.chan,DB.ev,DB.pages,DB.queries].forEach(rows=>rows.forEach(r=>set.add(bucketOf(r.date,bucket))));
-DB.base.forEach(r=>{if(r.date<CUTOVER)set.add(bucketOf(r.date,bucket));});
-return [...set].sort();
+function bucketsInRange(a,b,bucket){
+const out=[];
+if(bucket==='day'){let d=a;while(d<=b){out.push(d);d=shiftDate(d,1);}}
+else if(bucket==='week'){let w=weekStart(a);const wb=weekStart(b);while(w<=wb){out.push(w);w=shiftDate(w,7);}}
+else{let m=a.slice(0,7);const mb=b.slice(0,7);while(m<=mb){out.push(m);m=shiftMonthKey(m,1);}}
+return out;
 }
-function activeWindow(){
-if(GRAN==='custom'&&CUSTOM){
-const all=allBuckets('day');
-const cur=all.filter(d=>d>=CUSTOM.a&&d<=CUSTOM.b);
-const len=cur.length||1;const idx=cur.length?all.indexOf(cur[0]):all.length;
-const prev=idx>0?all.slice(Math.max(0,idx-len),idx):[];
-return{cur,prev,bucket:'day'};
+function lastDataDate(){
+let m=null;const scan=rows=>rows.forEach(r=>{if(!m||r.date>m)m=r.date;});
+scan(DB.site);scan(DB.chan);scan(DB.ev);scan(DB.base);scan(DB.pages);scan(DB.queries);
+return m||new Date().toISOString().slice(0,10);
 }
-const cfg=GRANCFG[GRAN];const all=allBuckets(cfg.bucket);
-if(!cfg.nbuckets)return{cur:all,prev:[],bucket:cfg.bucket};
-const cur=all.slice(-cfg.nbuckets),prev=all.slice(-2*cfg.nbuckets,-cfg.nbuckets);
-return{cur,prev,bucket:cfg.bucket};
-}
-let WIN=null,BK='day';
-function inWin(rows){const s=new Set(WIN.cur);return rows.filter(r=>s.has(bucketOf(r.date,BK)));}
-function prevWin(rows){const s=new Set(WIN.prev);return rows.filter(r=>s.has(bucketOf(r.date,BK)));}
-const sum=(rows,k)=>rows.reduce((t,r)=>t+(+r[k]||0),0);
-function bucketSeries(rows,valfn){
-const by={};WIN.cur.forEach(b=>by[b]=0);
-rows.forEach(r=>{const b=bucketOf(r.date,BK);if(b in by)by[b]+=(valfn(r)||0);});
-return WIN.cur.map(b=>({x:b,y:by[b],lbl:bucketLabel(b,BK)}));
-}
-const hasPrev=()=>WIN.prev.length>0;
-
-function deltaStr(cur,prev,invert){
-if(prev==null||prev===0)return{cls:'flat',txt:'—'};
-const pct=(cur-prev)/prev*100;
-const good=invert?pct<0:pct>0;
-const cls=Math.abs(pct)<0.5?'flat':(good?'up':'down');
-const arrow=pct>0?'↑':(pct<0?'↓':'→');
-return{cls,txt:arrow+' %'+Math.abs(pct).toLocaleString('tr-TR',{maximumFractionDigits:0})};
-}
-function tile(label,val,fmtF,opts){
-opts=opts||{};
-let d='';
-if(!hasPrev()){
-d='<div class="d">'+(GRAN==='year'?'tüm dönem':'kıyas için geçmiş birikiyor')+'</div>';
-}else if(opts.prev!=null){
-const s=deltaStr(val,opts.prev,opts.invert);
-d='<div class="d '+s.cls+'">'+s.txt+' önceki döneme göre</div>';
-}
-let g='';
-if(opts.goalKey){const gi=goalInfo(opts.goalKey,val);if(gi)g='<div class="goal '+gi.cls+'">🎯 hedef temposu %'+gi.pct+' <span style="color:var(--muted);font-weight:400">(dönem hedefi '+fmt(gi.expected)+')</span></div>';}
-return '<div class="tile'+(opts.star?' star':'')+'"><div class="l">'+(opts.star?'⭐ ':'')+label+'</div><div class="v">'+fmtF(val)+'</div>'+
-(opts.exp?'<div class="exp">'+opts.exp+'</div>':'')+d+g+'</div>';
-}
-function badge(sel,cur,prev,invert){
-const el=$(sel);if(!el)return;
-if(!hasPrev()){el.className='badge flat';el.textContent=(GRAN==='year')?'tüm dönem':'geçmiş birikiyor';return;}
-const s=deltaStr(cur,prev,invert);el.className='badge '+s.cls;el.textContent=s.txt;
-}
-
-/* ---------- alt-küme yardımcıları ---------- */
-const isComm=p=>COMMERCIAL.test(p||'');
-const evCount=(rows,name)=>sum(rows.filter(r=>r.event_name===name),'count');
-const commClicks=rows=>sum(rows.filter(r=>isComm(r.page)),'clicks');
-const brandClicks=rows=>sum(rows.filter(r=>r.branded),'clicks');
 function sessionDaily(){
 const day={};
 DB.base.forEach(r=>{if(r.date<CUTOVER)day[r.date]=(day[r.date]||0)+(+r.sessions||0);});
 DB.chan.forEach(r=>{if(r.date>=CUTOVER)day[r.date]=(day[r.date]||0)+(+r.sessions||0);});
 return Object.entries(day).map(([date,sessions])=>({date,sessions}));
 }
-
-/* ---------- render orkestrasyon ---------- */
-function render(){
-WIN=activeWindow();BK=WIN.bucket;
-const cfg=GRANCFG[GRAN]||{};
-if(GRAN==='custom'&&CUSTOM){
-$('#cmpnote').textContent='kıyas: eş uzunlukta önceki aralık';
-$('#rangenote').innerHTML='<b>'+CUSTOM.a+' → '+CUSTOM.b+'</b> · günlük · '+(hasPrev()?'önceki eş dönemle kıyaslı.':'öncesi için yeterli veri yok.');
-}else{
-$('#cmpnote').textContent=hasPrev()?('kıyas: '+cfg.cmp):(GRAN==='year'?'tüm dönem · kıyas yok':'kıyas: geçmiş birikiyor');
-$('#rangenote').innerHTML='<b>'+cfg.label+'</b> · '+cfg.note+' Yeşil = iyileşme, kırmızı = kötüleşme; seçili dönem bir öncekiyle kıyaslanır.';
+/* pencere: seçili döneme göre KPI + önceki + grafik aralığı */
+function curWin(){
+const end=lastDataDate();
+if(PERIOD==='custom'&&CUSTOM){
+const a=CUSTOM.a,b=CUSTOM.b;
+const days=Math.round((new Date(b+'T00:00:00Z')-new Date(a+'T00:00:00Z'))/864e5)+1;
+const bucket=days<=62?'day':(days<=180?'week':'month');
+const prevB=shiftDate(a,-1),prevA=shiftDate(a,-days);
+return{kpi:{a,b},prev:{a:prevA,b:prevB},chart:{a,b},bucket,buckets:bucketsInRange(a,b,bucket),days,label:'Özel'};
+}
+const p=PERIODS.find(x=>x.key===PERIOD)||PERIODS[2];
+const kpiA=shiftDate(end,-(p.days-1)),kpiB=end;
+const prevB=shiftDate(kpiA,-1),prevA=shiftDate(kpiA,-p.days);
+const chA=shiftDate(end,-(p.chartDays-1)),chB=end;
+return{kpi:{a:kpiA,b:kpiB},prev:{a:prevA,b:prevB},chart:{a:chA,b:chB},bucket:p.bucket,buckets:bucketsInRange(chA,chB,p.bucket),days:p.days,label:p.label};
 }
 
-const sess=sessionDaily();
-const sessI=inWin(sess),sessP=prevWin(sess);
-const sSum=sum(sessI,'sessions'),sSumP=sum(sessP,'sessions');
-const evI=inWin(DB.ev),evP=prevWin(DB.ev);
-const rnd=evCount(evI,'randevu_tamamlandi'),rndP=evCount(evP,'randevu_tamamlandi');
-const tel=evCount(evI,'telefon_tiklama'),telP=evCount(evP,'telefon_tiklama');
-const pageI=inWin(DB.pages),pageP=prevWin(DB.pages);
-const qI=inWin(DB.queries),qP=prevWin(DB.queries);
-const siteI=inWin(DB.site),siteP=prevWin(DB.site);
-const comm=commClicks(pageI),commP=commClicks(pageP);
-const brand=brandClicks(qI),brandP=brandClicks(qP);
-const clicks=sum(siteI,'clicks'),clicksP=sum(siteP,'clicks');
-const impr=sum(siteI,'impressions'),imprP=sum(siteP,'impressions');
+/* ---------- toplam / seri / delta ---------- */
+const isComm=p=>COMMERCIAL.test(p||'');
+function sumRange(rows,key,a,b){let t=0;for(const r of rows){if(r.date>=a&&r.date<=b)t+=(+r[key]||0);}return t;}
+function evCountRange(name,a,b){let t=0;for(const r of DB.ev){if(r.event_name===name&&r.date>=a&&r.date<=b)t+=(+r.count||0);}return t;}
+function commClicksRange(a,b){let t=0;for(const r of DB.pages){if(r.date>=a&&r.date<=b&&isComm(r.page))t+=(+r.clicks||0);}return t;}
+function brandClicksRange(a,b){let t=0;for(const r of DB.queries){if(r.date>=a&&r.date<=b&&r.branded)t+=(+r.clicks||0);}return t;}
+function seriesRange(rows,valfn){
+const by={};W.buckets.forEach(b=>by[b]=0);
+for(const r of rows){if(r.date>=W.chart.a&&r.date<=W.chart.b){const b=bucketOf(r.date,W.bucket);if(b in by)by[b]+=(valfn(r)||0);}}
+return W.buckets.map(b=>({x:b,y:by[b],lbl:bucketLabel(b,W.bucket)}));
+}
+const hasPrevData=()=>{const e=earliestDate();return e!=null&&e<=W.prev.b;};
+function earliestDate(){
+let m=null;const scan=rows=>rows.forEach(r=>{if(m==null||r.date<m)m=r.date;});
+scan(DB.base);scan(DB.chan);scan(DB.site);
+return m;
+}
+function pct(cur,prev){if(prev==null||prev===0)return null;return (cur-prev)/prev*100;}
+function deltaFull(cur,prev){
+const p=pct(cur,prev);
+if(p==null){return{cls:'flat',txt:(cur>0?'yeni':'—'),has:false};}
+const d=cur-prev;const cls=Math.abs(p)<0.5?'flat':(p>0?'up':'down');
+const arrow=d>0?'↑':(d<0?'↓':'→');
+return{cls,arrow,txt:arrow+' '+(d>0?'+':'')+fmt(d)+' (%'+Math.abs(p).toLocaleString('tr-TR',{maximumFractionDigits:0})+')',has:true};
+}
+function tile(label,val,fmtF,opts){
+opts=opts||{};let d='';
+if(opts.prev!=null){
+if(!hasPrevData()){d='<div class="d">kıyas için geçmiş yok</div>';}
+else{const s=deltaFull(val,opts.prev);d='<div class="d '+s.cls+'">'+s.txt+' önceki döneme göre</div>';}
+}
+let g='';
+if(opts.goalKey){const gi=goalInfo(opts.goalKey,val);if(gi)g='<div class="goal '+gi.cls+'">🎯 hedef temposu %'+gi.pct+' <span style="color:var(--muted);font-weight:400">(dönem hedefi '+fmt(gi.expected)+')</span></div>';}
+return '<div class="tile'+(opts.star?' star':'')+'"><div class="l">'+(opts.star?'⭐ ':'')+label+'</div><div class="v">'+fmtF(val)+'</div>'+
+(opts.exp?'<div class="exp">'+opts.exp+'</div>':'')+d+g+'</div>';
+}
+function badge(sel,cur,prev){
+const el=$(sel);if(!el)return;
+if(!hasPrevData()){el.className='badge flat';el.textContent='geçmiş yok';return;}
+const s=deltaFull(cur,prev);el.className='badge '+s.cls;el.textContent=s.txt;
+}
 
-/* AŞAMA 1 — özet */
-$('#kpi_summary').innerHTML=
-tile('Ziyaret (GA4)',sSum,fmt,{prev:sSumP,exp:'Siteye toplam ziyaret'})+
+/* ---------- dönem şeridi ---------- */
+function periodBoxes(){
+const end=lastDataDate();
+const boxes=PERIODS.map(p=>{
+const kpiA=shiftDate(end,-(p.days-1)),kpiB=end;
+const prevB=shiftDate(kpiA,-1),prevA=shiftDate(kpiA,-p.days);
+const cur=sumRange(SESS,'sessions',kpiA,kpiB);
+const prev=sumRange(SESS,'sessions',prevA,prevB);
+const s=deltaFull(cur,prev);
+const on=(PERIOD===p.key)?' on':'';
+return '<button class="pbox'+on+'" data-p="'+p.key+'"><span class="pl">'+p.label+'</span><span class="pv">'+fmt(cur)+'</span><span class="pd '+s.cls+'">'+(s.has?s.txt:'—')+'</span></button>';
+}).join('');
+const on=(PERIOD==='custom')?' on':'';
+const cust='<button class="pbox pcustom'+on+'" data-p="custom"><span class="pl">📅 Özel</span><span class="pv">tarih seç</span></button>';
+$('#periodrow').innerHTML=boxes+cust;
+}
+
+/* ---------- render ---------- */
+function render(){
+SESS=sessionDaily();
+W=curWin();BK=W.bucket;
+periodBoxes();
+
+const fmtD=s=>s.slice(8)+'.'+s.slice(5,7)+'.'+s.slice(0,4);
+if(PERIOD==='custom'&&CUSTOM){
+$('#rangenote').innerHTML='<b>'+fmtD(W.kpi.a)+' → '+fmtD(W.kpi.b)+'</b> ('+W.days+' gün) · '+(hasPrevData()?'önceki eş dönemle kıyaslı.':'öncesi için yeterli veri yok.');
+}else{
+$('#rangenote').innerHTML='Seçili: <b>'+W.label+'</b> · toplam '+W.kpi.a.slice(5)+'…'+W.kpi.b.slice(5)+' aralığı · grafik '+(BK==='day'?'günlük':BK==='week'?'haftalık':'aylık')+' · önceki eş döneme kıyaslı.';
+}
+
+/* ikincil KPI: Randevu / Telefon / Tedavi (seçili dönem) */
+const rnd=evCountRange('randevu_tamamlandi',W.kpi.a,W.kpi.b),rndP=evCountRange('randevu_tamamlandi',W.prev.a,W.prev.b);
+const tel=evCountRange('telefon_tiklama',W.kpi.a,W.kpi.b),telP=evCountRange('telefon_tiklama',W.prev.a,W.prev.b);
+const comm=commClicksRange(W.kpi.a,W.kpi.b),commP=commClicksRange(W.prev.a,W.prev.b);
+$('#kpi_secondary').innerHTML=
 tile('Randevu',rnd,fmt,{prev:rndP,star:1,goalKey:'randevu',exp:'Online formdan tamamlanan talep'})+
 tile('Telefon tıklama',tel,fmt,{prev:telP,goalKey:'telefon',exp:'tel: linkine tıklama'})+
 tile('Tedavi sayfası tıkı',comm,fmt,{prev:commP,goalKey:'ticari_tik',exp:'Tedavi sayfalarına arama tıkı'});
 
-/* AŞAMA 2 — ne kadar trafik */
-lineChart('#ch_sess',bucketSeries(sess,r=>+r.sessions),col('--brand-teal'),'Ziyaret',false,CUTOVER);
-badge('#b_sess',sSum,sSumP,false);
-lineChart('#ch_clicks',bucketSeries(DB.site,r=>+r.clicks),col('--s1'),'Tık',true);
-badge('#b_clicks',clicks,clicksP,false);
-lineChart('#ch_impr',bucketSeries(DB.site,r=>+r.impressions),col('--s1'),'Gösterim',false);
-badge('#b_impr',impr,imprP,false);
+/* aşama 2 — trafik hacmi */
+const sc=sumRange(SESS,'sessions',W.kpi.a,W.kpi.b),sp=sumRange(SESS,'sessions',W.prev.a,W.prev.b);
+lineChart('#ch_sess',seriesRange(SESS,r=>+r.sessions),col('--brand-teal'),'Ziyaret',false,CUTOVER);
+badge('#b_sess',sc,sp);
+const cl=sumRange(DB.site,'clicks',W.kpi.a,W.kpi.b),clP=sumRange(DB.site,'clicks',W.prev.a,W.prev.b);
+lineChart('#ch_clicks',seriesRange(DB.site,r=>+r.clicks),col('--s1'),'Tık',true);
+badge('#b_clicks',cl,clP);
+const im=sumRange(DB.site,'impressions',W.kpi.a,W.kpi.b),imP=sumRange(DB.site,'impressions',W.prev.a,W.prev.b);
+lineChart('#ch_impr',seriesRange(DB.site,r=>+r.impressions),col('--s1'),'Gösterim',false);
+badge('#b_impr',im,imP);
 
-/* AŞAMA 3 — trafik nereden */
+/* aşama 3 — kaynak */
 channelsChart();
-lineChart('#ch_comm',bucketSeries(DB.pages,r=>isComm(r.page)?+r.clicks:0),col('--brand-teal'),'Ticari tık',false);
-badge('#b_comm',comm,commP,false);
-lineChart('#ch_brand',bucketSeries(DB.queries,r=>r.branded?+r.clicks:0),col('--s1'),'Markalı tık',false);
-badge('#b_brand',brand,brandP,false);
+lineChart('#ch_comm',seriesRange(DB.pages,r=>isComm(r.page)?+r.clicks:0),col('--brand-teal'),'Ticari tık',false);
+badge('#b_comm',comm,commP);
+const br=brandClicksRange(W.kpi.a,W.kpi.b),brP=brandClicksRange(W.prev.a,W.prev.b);
+lineChart('#ch_brand',seriesRange(DB.queries,r=>r.branded?+r.clicks:0),col('--s1'),'Markalı tık',false);
+badge('#b_brand',br,brP);
 
-/* AŞAMA 4 — dönüşüm */
+/* aşama 4 — dönüşüm */
 convChart();
-badge('#b_conv',rnd+tel,rndP+telP,false);
+badge('#b_conv',rnd+tel,rndP+telP);
 $('#lg_conv').innerHTML=[['Randevu','--s1'],['Telefon','--s2']].map(x=>'<span><i style="background:'+col(x[1])+'"></i>'+x[0]+'</span>').join('');
 
-/* AŞAMA 5 — aksiyon */
+/* aşama 5 */
 scoreCard();
 changelogList();
 
 /* detay tablolar */
-pagesTable(pageAgg(pageI,8));
-queriesTable(queryAgg(qI,8));
+pagesTable(pageAgg(rangeRows(DB.pages),8));
+queriesTable(queryAgg(rangeRows(DB.queries),8));
 declineTable(declineData(10));
 const pt=(DB.pagecmp||[]).filter(r=>r.period==='peak').reduce((t,r)=>t+ +r.sessions,0);
 const rt=(DB.pagecmp||[]).filter(r=>r.period==='recent').reduce((t,r)=>t+ +r.sessions,0);
 const bd=$('#b_decline');if(bd){if(!pt){bd.className='badge flat';bd.textContent='veri yok';}else{bd.className='badge '+(rt<pt?'down':'up');bd.textContent='%'+Math.round((rt-pt)/pt*100)+' · '+fmt(pt)+'→'+fmt(rt);}}
 }
+function rangeRows(rows){return rows.filter(r=>r.date>=W.kpi.a&&r.date<=W.kpi.b);}
 
 /* ---------- Skor Kartı (dönemden bağımsız) ---------- */
 function dayAgg(rows){
-const by={};rows.forEach(r=>{const d=by[r.date]=by[r.date]||{c:0,i:0,p:0,n:0};
-d.c+=+r.clicks;d.i+=+r.impressions;d.p+=+r.position;d.n++;});
+const by={};rows.forEach(r=>{const d=by[r.date]=by[r.date]||{c:0,i:0,p:0,n:0};d.c+=+r.clicks;d.i+=+r.impressions;d.p+=+r.position;d.n++;});
 return Object.entries(by).map(([date,v])=>({date,c:v.c,i:v.i,p:v.p/v.n}));
 }
 function winStats(days,a,b){
-const w=days.filter(d=>d.date>=a&&d.date<=b);
-if(!w.length)return null;
+const w=days.filter(d=>d.date>=a&&d.date<=b);if(!w.length)return null;
 return {n:w.length,c:w.reduce((t,d)=>t+d.c,0)/w.length,i:w.reduce((t,d)=>t+d.i,0)/w.length,p:w.reduce((t,d)=>t+d.p,0)/w.length};
 }
-function shiftDate(s,n){const d=new Date(s+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}
 function scoreCard(){
 const site=dayAgg(DB.site.map(r=>({date:r.date,clicks:r.clicks,impressions:r.impressions,position:r.position})));
 const rows=[...DB.cl].reverse().map(c=>{
@@ -542,20 +549,20 @@ function axisLabelsArr(labels){const n=labels.length;if(!n)return[];const step=M
 function markerSet(){const set={};DB.cl.forEach(c=>{const b=bucketOf(c.date,BK);(set[b]=set[b]||[]).push(c.title);});return set;}
 function markers(data){const set=markerSet();return data.map((d,i)=>set[d.x]?{i,titles:set[d.x]}:null).filter(Boolean);}
 function lineChart(sel,data,color,name,withMarkers,vlineDate){
-const el=$(sel);if(!el)return;const W=el.clientWidth||600,Hh=200;
-const w=W-M.l-M.r,h=Hh-M.t-M.b;
+const el=$(sel);if(!el)return;const Wd=el.clientWidth||600,Hh=200;
+const w=Wd-M.l-M.r,h=Hh-M.t-M.b;
 if(!data.length){el.innerHTML='<div class="ch">veri yok</div>';return;}
 const ys=scale(data.map(d=>d.y),h);
 const pts=data.map((d,i)=>[M.l+xPos(i,data.length,w),M.t+ys(d.y)]);
 const path=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
 const mx=Math.max(1,...data.map(d=>d.y));
-const gl=[0,.5,1].map((f)=>{const y=M.t+h-f*h;return '<line x1="'+M.l+'" x2="'+(W-M.r)+'" y1="'+y+'" y2="'+y+'" stroke="'+col('--grid')+'"/><text x="'+(M.l-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="10" fill="'+col('--muted')+'">'+fmt(mx*f)+'</text>';}).join('');
+const gl=[0,.5,1].map((f)=>{const y=M.t+h-f*h;return '<line x1="'+M.l+'" x2="'+(Wd-M.r)+'" y1="'+y+'" y2="'+y+'" stroke="'+col('--grid')+'"/><text x="'+(M.l-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="10" fill="'+col('--muted')+'">'+fmt(mx*f)+'</text>';}).join('');
 const xl=axisLabelsArr(data.map(d=>d.lbl)).map(o=>'<text x="'+(M.l+xPos(o.i,data.length,w))+'" y="'+(Hh-8)+'" text-anchor="middle" font-size="10" fill="'+col('--muted')+'">'+o.t+'</text>').join('');
 const mk=withMarkers?markers(data).map(o=>{const x=M.l+xPos(o.i,data.length,w);return '<line x1="'+x+'" x2="'+x+'" y1="'+M.t+'" y2="'+(M.t+h)+'" stroke="'+col('--brand-orange')+'" stroke-width="1.5" stroke-dasharray="3 3" opacity=".8"/>';}).join(''):'';
 let vl='';
 if(vlineDate){const vb=bucketOf(vlineDate,BK);let idx=-1;for(let i=0;i<data.length;i++){if(data[i].x>=vb){idx=i;break;}}if(idx>0){const x=M.l+xPos(idx,data.length,w);vl='<line x1="'+x+'" x2="'+x+'" y1="'+M.t+'" y2="'+(M.t+h)+'" stroke="'+col('--brand-orange')+'" stroke-width="1.5" opacity=".7"/><text x="'+x+'" y="'+(M.t+9)+'" text-anchor="middle" font-size="9" fill="'+col('--brand-orange')+'">devir</text>';}}
 const dots=pts.map(p=>'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2.5" fill="'+color+'"/>').join('');
-el.innerHTML='<svg viewBox="0 0 '+W+' '+Hh+'" height="'+Hh+'">'+gl+'<line x1="'+M.l+'" x2="'+(W-M.r)+'" y1="'+(M.t+h)+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'"/>'+mk+vl+'<path d="'+path+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round"/>'+(data.length<=45?dots:'')+xl+'<line class="xh" y1="'+M.t+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'" style="display:none"/></svg>';
+el.innerHTML='<svg viewBox="0 0 '+Wd+' '+Hh+'" height="'+Hh+'">'+gl+'<line x1="'+M.l+'" x2="'+(Wd-M.r)+'" y1="'+(M.t+h)+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'"/>'+mk+vl+'<path d="'+path+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round"/>'+(data.length<=45?dots:'')+xl+'<line class="xh" y1="'+M.t+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'" style="display:none"/></svg>';
 hoverLine(el,data,name,w);
 }
 function hoverLine(el,data,name,w){
@@ -576,24 +583,24 @@ svg.addEventListener('mouseleave',()=>{xh.style.display='none';$('#tt').style.di
 const CHMAP=[['Organic Search','Organik','--s1'],['Direct','Direct','--s2'],['Referral','Referral','--s3'],['Organic Social','Sosyal','--s4']];
 function channelsChart(){
 const known=CHMAP.map(c=>c[0]);
-const labels=WIN.cur.map(b=>bucketLabel(b,BK));
-const series=CHMAP.map(([k,label,cv])=>({label,color:col(cv),data:bucketSeries(DB.chan,r=>r.channel===k?+r.sessions:0).map(p=>p.y)}));
-const other={label:'Diğer',color:col('--other'),data:bucketSeries(DB.chan,r=>!known.includes(r.channel)?+r.sessions:0).map(p=>p.y)};
+const labels=W.buckets.map(b=>bucketLabel(b,W.bucket));
+const series=CHMAP.map(([k,label,cv])=>({label,color:col(cv),data:seriesRange(DB.chan,r=>r.channel===k?+r.sessions:0).map(p=>p.y)}));
+const other={label:'Diğer',color:col('--other'),data:seriesRange(DB.chan,r=>!known.includes(r.channel)?+r.sessions:0).map(p=>p.y)};
 if(other.data.some(v=>v>0))series.push(other);
 const used=series.filter(s=>s.data.some(v=>v>0));
 $('#lg_ch').innerHTML=used.length?used.map(s=>'<span><i style="background:'+s.color+'"></i>'+s.label+'</span>').join(''):'';
 multiLine('#ch_channels',labels,used);
 }
 function multiLine(sel,labels,series){
-const el=$(sel);if(!el)return;const W=el.clientWidth||500,Hh=200;
-const w=W-M.l-M.r,h=Hh-M.t-M.b;
+const el=$(sel);if(!el)return;const Wd=el.clientWidth||500,Hh=200;
+const w=Wd-M.l-M.r,h=Hh-M.t-M.b;
 if(!labels.length||!series.length){el.innerHTML='<div class="ch">veri yok</div>';return;}
 const mx=Math.max(1,...series.flatMap(s=>s.data));
 const y=v=>M.t+h-(v/mx)*h;
-const gl=[0,.5,1].map(f=>'<line x1="'+M.l+'" x2="'+(W-M.r)+'" y1="'+y(mx*f)+'" y2="'+y(mx*f)+'" stroke="'+col('--grid')+'"/><text x="'+(M.l-6)+'" y="'+(y(mx*f)+4)+'" text-anchor="end" font-size="10" fill="'+col('--muted')+'">'+fmt(mx*f)+'</text>').join('');
+const gl=[0,.5,1].map(f=>'<line x1="'+M.l+'" x2="'+(Wd-M.r)+'" y1="'+y(mx*f)+'" y2="'+y(mx*f)+'" stroke="'+col('--grid')+'"/><text x="'+(M.l-6)+'" y="'+(y(mx*f)+4)+'" text-anchor="end" font-size="10" fill="'+col('--muted')+'">'+fmt(mx*f)+'</text>').join('');
 const xl=axisLabelsArr(labels).map(o=>'<text x="'+(M.l+xPos(o.i,labels.length,w))+'" y="'+(Hh-8)+'" text-anchor="middle" font-size="10" fill="'+col('--muted')+'">'+o.t+'</text>').join('');
 const paths=series.map(s=>{const p=s.data.map((v,i)=>((i?'L':'M')+(M.l+xPos(i,labels.length,w)).toFixed(1)+' '+y(v).toFixed(1))).join(' ');return '<path d="'+p+'" fill="none" stroke="'+s.color+'" stroke-width="2" stroke-linejoin="round"/>';}).join('');
-el.innerHTML='<svg viewBox="0 0 '+W+' '+Hh+'" height="'+Hh+'">'+gl+'<line x1="'+M.l+'" x2="'+(W-M.r)+'" y1="'+(M.t+h)+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'"/>'+paths+xl+'<line class="xh" y1="'+M.t+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'" style="display:none"/></svg>';
+el.innerHTML='<svg viewBox="0 0 '+Wd+' '+Hh+'" height="'+Hh+'">'+gl+'<line x1="'+M.l+'" x2="'+(Wd-M.r)+'" y1="'+(M.t+h)+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'"/>'+paths+xl+'<line class="xh" y1="'+M.t+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'" style="display:none"/></svg>';
 const svg=el.querySelector('svg'),xh=svg.querySelector('.xh'),tt=$('#tt');
 svg.addEventListener('mousemove',e=>{
 const r=svg.getBoundingClientRect();const sx=(e.clientX-r.left)*(svg.viewBox.baseVal.width/r.width);
@@ -605,22 +612,22 @@ tt.style.display='block';tt.style.left=Math.min(window.innerWidth-270,e.clientX+
 svg.addEventListener('mouseleave',()=>{xh.style.display='none';tt.style.display='none';});
 }
 function convChart(){
-const labels=WIN.cur.map(b=>bucketLabel(b,BK));
-const rndData=bucketSeries(DB.ev,r=>r.event_name==='randevu_tamamlandi'?+r.count:0).map(p=>p.y);
-const telData=bucketSeries(DB.ev,r=>r.event_name==='telefon_tiklama'?+r.count:0).map(p=>p.y);
+const labels=W.buckets.map(b=>bucketLabel(b,W.bucket));
+const rndData=seriesRange(DB.ev,r=>r.event_name==='randevu_tamamlandi'?+r.count:0).map(p=>p.y);
+const telData=seriesRange(DB.ev,r=>r.event_name==='telefon_tiklama'?+r.count:0).map(p=>p.y);
 const s=[{label:'Randevu',color:col('--s1'),data:rndData},{label:'Telefon',color:col('--s2'),data:telData}];
-const el=$('#ch_conv');if(!el)return;const W=el.clientWidth||500,Hh=200;
-const w=W-M.l-M.r,h=Hh-M.t-M.b;
+const el=$('#ch_conv');if(!el)return;const Wd=el.clientWidth||500,Hh=200;
+const w=Wd-M.l-M.r,h=Hh-M.t-M.b;
 if(!labels.length){el.innerHTML='<div class="ch">veri yok</div>';return;}
 const mx=Math.max(1,...s.flatMap(x=>x.data));const y=v=>M.t+h-(v/mx)*h;
 const n=labels.length,slot=w/n,bw=Math.max(3,Math.min(14,(slot-4)/2));
 const bars=labels.map((d,i)=>{const cx=M.l+slot*i+slot/2;return s.map((x,si)=>{const v=x.data[i];if(!v)return'';const bx=cx-bw-1+si*(bw+2);return '<rect x="'+bx.toFixed(1)+'" y="'+y(v).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(M.t+h-y(v)).toFixed(1)+'" rx="3" fill="'+x.color+'"/>';}).join('');}).join('');
-const gl=[0,.5,1].map(f=>'<line x1="'+M.l+'" x2="'+(W-M.r)+'" y1="'+y(mx*f)+'" y2="'+y(mx*f)+'" stroke="'+col('--grid')+'"/><text x="'+(M.l-6)+'" y="'+(y(mx*f)+4)+'" text-anchor="end" font-size="10" fill="'+col('--muted')+'">'+Math.round(mx*f)+'</text>').join('');
+const gl=[0,.5,1].map(f=>'<line x1="'+M.l+'" x2="'+(Wd-M.r)+'" y1="'+y(mx*f)+'" y2="'+y(mx*f)+'" stroke="'+col('--grid')+'"/><text x="'+(M.l-6)+'" y="'+(y(mx*f)+4)+'" text-anchor="end" font-size="10" fill="'+col('--muted')+'">'+Math.round(mx*f)+'</text>').join('');
 const xl=axisLabelsArr(labels).map(o=>'<text x="'+(M.l+slot*o.i+slot/2)+'" y="'+(Hh-8)+'" text-anchor="middle" font-size="10" fill="'+col('--muted')+'">'+o.t+'</text>').join('');
 let gline='';
-if(GOALS.randevu>0){const per=BK==='day'?GOALS.randevu/30:(BK==='week'?GOALS.randevu*7/30:GOALS.randevu);if(per<=mx){const gy=y(per);gline='<line x1="'+M.l+'" x2="'+(W-M.r)+'" y1="'+gy+'" y2="'+gy+'" stroke="'+col('--brand-orange')+'" stroke-width="1.5" stroke-dasharray="4 3" opacity=".85"/><text x="'+(W-M.r)+'" y="'+(gy-4)+'" text-anchor="end" font-size="9" fill="'+col('--brand-orange')+'">randevu hedefi</text>';}}
+if(GOALS.randevu>0){const per=BK==='day'?GOALS.randevu/30:(BK==='week'?GOALS.randevu*7/30:GOALS.randevu);if(per<=mx){const gy=y(per);gline='<line x1="'+M.l+'" x2="'+(Wd-M.r)+'" y1="'+gy+'" y2="'+gy+'" stroke="'+col('--brand-orange')+'" stroke-width="1.5" stroke-dasharray="4 3" opacity=".85"/><text x="'+(Wd-M.r)+'" y="'+(gy-4)+'" text-anchor="end" font-size="9" fill="'+col('--brand-orange')+'">randevu hedefi</text>';}}
 const tt=$('#tt');
-el.innerHTML='<svg viewBox="0 0 '+W+' '+Hh+'" height="'+Hh+'">'+gl+'<line x1="'+M.l+'" x2="'+(W-M.r)+'" y1="'+(M.t+h)+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'"/>'+bars+gline+xl+'<line class="xh" y1="'+M.t+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'" style="display:none"/></svg>';
+el.innerHTML='<svg viewBox="0 0 '+Wd+' '+Hh+'" height="'+Hh+'">'+gl+'<line x1="'+M.l+'" x2="'+(Wd-M.r)+'" y1="'+(M.t+h)+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'"/>'+bars+gline+xl+'<line class="xh" y1="'+M.t+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'" style="display:none"/></svg>';
 const svg=el.querySelector('svg'),xh=svg.querySelector('.xh');
 svg.addEventListener('mousemove',e=>{const r=svg.getBoundingClientRect();const sx=(e.clientX-r.left)*(svg.viewBox.baseVal.width/r.width);const i=Math.max(0,Math.min(n-1,Math.floor((sx-M.l)/slot)));const x=M.l+slot*i+slot/2;xh.setAttribute('x1',x);xh.setAttribute('x2',x);xh.style.display='block';tt.innerHTML='<b>'+labels[i]+'</b><span style="color:'+col('--s1')+'">●</span> Randevu: '+fmt(s[0].data[i])+'<br><span style="color:'+col('--s2')+'">●</span> Telefon: '+fmt(s[1].data[i]);tt.style.display='block';tt.style.left=Math.min(window.innerWidth-270,e.clientX+14)+'px';tt.style.top=(e.clientY+14)+'px';});
 svg.addEventListener('mouseleave',()=>{xh.style.display='none';tt.style.display='none';});
@@ -663,14 +670,12 @@ const el=$('#tb_decline');if(!el)return;
 el.innerHTML='<tr><th>Sayfa</th><th class="num">Zirve</th><th class="num">Son</th><th class="num">Değişim</th></tr>'+(rows.length?rows.map(declineRow).join(''):'<tr><td colspan="4" style="color:var(--muted)">veri yok</td></tr>');
 }
 
-/* ---------- drill-down / hash-route ---------- */
+/* ---------- drill-down ---------- */
 function route(){
-const h=location.hash;
-const detail=h.startsWith('#/detay/');
+const h=location.hash;const detail=h.startsWith('#/detay/');
 $('#mainview').style.display=detail?'none':'';
 $('#detailview').style.display=detail?'':'none';
-$('#picker').style.display=detail?'none':'';
-if(detail){WIN=activeWindow();BK=WIN.bucket;renderDetail();}else{render();}
+if(detail){SESS=sessionDaily();W=curWin();BK=W.bucket;renderDetail();}else{render();}
 }
 let CURDETAIL='';
 function renderDetail(){
@@ -680,13 +685,13 @@ let head='',sub='',rows=[],cols=[];
 if(CURDETAIL==='sayfalar'||CURDETAIL==='ticari'){
 head=CURDETAIL==='ticari'?'Ticari sayfalar — tam liste':'Tüm sayfalar — tam liste';
 sub='Seçili dönem toplamı · gösterime göre sıralı'+(CURDETAIL==='ticari'?' · yalnız tedavi sayfaları':'');
-let a=pageAgg(inWin(DB.pages),0);if(CURDETAIL==='ticari')a=a.filter(x=>x.comm);
+let a=pageAgg(rangeRows(DB.pages),0);if(CURDETAIL==='ticari')a=a.filter(x=>x.comm);
 if(term)a=a.filter(x=>x.p.toLowerCase().includes(term));
 cols=['Sayfa','Tık','Gösterim','Poz.'];
 rows=a.map(x=>'<tr><td style="word-break:break-all">'+(x.comm?'<span class="chip b">ticari</span> ':'')+x.p+'</td><td class="num">'+fmt(x.c)+'</td><td class="num">'+fmt(x.i)+'</td><td class="num">'+x.pos.toFixed(1)+'</td></tr>');
 }else if(CURDETAIL==='sorgular'){
 head='Tüm sorgular — tam liste';sub='Seçili dönem · tıka göre sıralı';
-let a=queryAgg(inWin(DB.queries),0);if(term)a=a.filter(x=>x.q.toLowerCase().includes(term));
+let a=queryAgg(rangeRows(DB.queries),0);if(term)a=a.filter(x=>x.q.toLowerCase().includes(term));
 cols=['Sorgu','Tık','Gösterim'];
 rows=a.map(x=>'<tr><td>'+x.q+' '+(x.b?'<span class="chip b">markalı</span>':'')+'</td><td class="num">'+fmt(x.c)+'</td><td class="num">'+fmt(x.i)+'</td></tr>');
 }else if(CURDETAIL==='dusen'){
@@ -701,15 +706,11 @@ $('#d_table').innerHTML='<tr>'+cols.map((c,i)=>'<th'+(i?' class="num"':'')+'>'+c
 
 /* ---------- hedefler ---------- */
 function goalInfo(key,actual){
-const m=GOALS[key];if(!m||m<=0||GRAN==='year')return null;
-let days;
-if(GRAN==='custom'&&CUSTOM){days=(new Date(CUSTOM.b)-new Date(CUSTOM.a))/864e5+1;}
-else if(GRAN==='day')days=WIN.cur.length;
-else if(GRAN==='week')days=WIN.cur.length*7;
-else days=WIN.cur.length*30;
+const m=GOALS[key];if(!m||m<=0)return null;
+const days=W?W.days:30;
 const expected=m*days/30;if(expected<=0)return null;
-const pct=Math.round(actual/expected*100);
-return {pct,cls:pct>=100?'g-ok':(pct>=70?'g-warn':'g-bad'),expected:Math.round(expected)};
+const pc=Math.round(actual/expected*100);
+return {pct:pc,cls:pc>=100?'g-ok':(pc>=70?'g-warn':'g-bad'),expected:Math.round(expected)};
 }
 function toggleGoals(){
 const p=$('#goalpanel');const on=p.classList.toggle('on');
@@ -728,22 +729,19 @@ btn.disabled=false;btn.textContent='Kaydet';
 }
 
 /* ---------- events ---------- */
-$('#granseg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
-document.querySelectorAll('#granseg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
-GRAN=b.dataset.g;
-const cb=$('#custombar');
-if(GRAN==='custom'){cb.classList.add('on');prefillCustom();}else{cb.classList.remove('on');route();}
+$('#periodrow').addEventListener('click',e=>{
+const b=e.target.closest('.pbox');if(!b)return;
+const p=b.dataset.p;
+if(p==='custom'){PERIOD='custom';$('#custombar').classList.add('on');prefillCustom();periodBoxes();if(CUSTOM)render();return;}
+PERIOD=p;$('#custombar').classList.remove('on');render();
 });
 function prefillCustom(){
-const all=allBuckets('day');if(!all.length)return;
-const last=all[all.length-1];const d=new Date(last+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-29);
-$('#c_b').value=last;$('#c_a').value=d.toISOString().slice(0,10);
+const end=lastDataDate();$('#c_b').value=end;$('#c_a').value=shiftDate(end,-29);
 }
 function applyCustom(){
 const a=$('#c_a').value,b=$('#c_b').value;if(!a||!b)return;
-CUSTOM={a:a<b?a:b,b:a<b?b:a};route();
+CUSTOM={a:a<b?a:b,b:a<b?b:a};PERIOD='custom';render();
 }
-$('#ctxbox').addEventListener('toggle',()=>{});
 addEventListener('resize',()=>{if(DB.site.length&&!location.hash.startsWith('#/detay/'))render();});
 addEventListener('hashchange',route);
 
