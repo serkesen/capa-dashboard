@@ -178,7 +178,7 @@ body.locked .wrap,body.locked #tt{display:none}
 <div class="stage"><span class="n">2</span><div><div class="st">Ne kadar trafik aldık?</div><div class="sq">Seçili dönemde siteye kaç ziyaret, aramada kaç tık/gösterim. Yükselen çizgi = büyüyen erişim.</div></div></div>
 <div class="card">
 <h2>Ziyaretler (GA4) <span class="badge" id="b_sess"></span></h2>
-<div class="ch"><b>Ne:</b> siteye gelen toplam ziyaret. <b>Oku:</b> çizgi yükseliyorsa daha çok kişi geliyor · turuncu çizgi = 14 Tem ölçüm devri (öncesi/sonrası birleşik).</div>
+<div class="ch"><b>Ne:</b> siteye gelen toplam ziyaret. <b>Oku:</b> koyu çizgi = bu dönem · <b>soluk kesikli çizgi = önceki eş dönem</b> (aynı gün sayısı, hizalı) · turuncu çizgi = 14 Tem ölçüm devri.</div>
 <div id="ch_sess"></div>
 </div>
 <div class="grid2">
@@ -383,13 +383,14 @@ const a=CUSTOM.a,b=CUSTOM.b;
 const days=Math.round((new Date(b+'T00:00:00Z')-new Date(a+'T00:00:00Z'))/864e5)+1;
 const bucket=days<=62?'day':(days<=180?'week':'month');
 const prevB=shiftDate(a,-1),prevA=shiftDate(a,-days);
-return{kpi:{a,b},prev:{a:prevA,b:prevB},chart:{a,b},bucket,buckets:bucketsInRange(a,b,bucket),days,label:'Özel'};
+return{kpi:{a,b},prev:{a:prevA,b:prevB},chart:{a,b},chartPrev:{a:prevA,b:prevB},bucket,buckets:bucketsInRange(a,b,bucket),days,label:'Özel'};
 }
 const p=PERIODS.find(x=>x.key===PERIOD)||PERIODS[2];
 const kpiA=shiftDate(end,-(p.days-1)),kpiB=end;
 const prevB=shiftDate(kpiA,-1),prevA=shiftDate(kpiA,-p.days);
 const chA=shiftDate(end,-(p.chartDays-1)),chB=end;
-return{kpi:{a:kpiA,b:kpiB},prev:{a:prevA,b:prevB},chart:{a:chA,b:chB},bucket:p.bucket,buckets:bucketsInRange(chA,chB,p.bucket),days:p.days,label:p.label};
+const chpB=shiftDate(chA,-1),chpA=shiftDate(chA,-p.chartDays);
+return{kpi:{a:kpiA,b:kpiB},prev:{a:prevA,b:prevB},chart:{a:chA,b:chB},chartPrev:{a:chpA,b:chpB},bucket:p.bucket,buckets:bucketsInRange(chA,chB,p.bucket),days:p.days,label:p.label};
 }
 
 /* ---------- toplam / seri / delta ---------- */
@@ -402,6 +403,15 @@ function seriesRange(rows,valfn){
 const by={};W.buckets.forEach(b=>by[b]=0);
 for(const r of rows){if(r.date>=W.chart.a&&r.date<=W.chart.b){const b=bucketOf(r.date,W.bucket);if(b in by)by[b]+=(valfn(r)||0);}}
 return W.buckets.map(b=>({x:b,y:by[b],lbl:bucketLabel(b,W.bucket)}));
+}
+/* önceki eş grafik dönemi, cur nokta sayısına hizalı (overlay için) */
+function prevSeriesRange(rows,valfn){
+if(!W.chartPrev)return null;
+const pb=bucketsInRange(W.chartPrev.a,W.chartPrev.b,W.bucket);
+const by={};pb.forEach(b=>by[b]=0);
+for(const r of rows){if(r.date>=W.chartPrev.a&&r.date<=W.chartPrev.b){const b=bucketOf(r.date,W.bucket);if(b in by)by[b]+=(valfn(r)||0);}}
+const vals=pb.map(b=>by[b]);const N=W.buckets.length;
+return Array.from({length:N},(_,i)=>i<vals.length?vals[i]:null);
 }
 const hasPrevData=()=>{const e=earliestDate();return e!=null&&e<=W.prev.b;};
 function earliestDate(){
@@ -475,7 +485,7 @@ tile('Tedavi sayfası tıkı',comm,fmt,{prev:commP,goalKey:'ticari_tik',exp:'Ted
 
 /* aşama 2 — trafik hacmi */
 const sc=sumRange(SESS,'sessions',W.kpi.a,W.kpi.b),sp=sumRange(SESS,'sessions',W.prev.a,W.prev.b);
-lineChart('#ch_sess',seriesRange(SESS,r=>+r.sessions),col('--brand-teal'),'Ziyaret',false,CUTOVER);
+lineChart('#ch_sess',seriesRange(SESS,r=>+r.sessions),col('--brand-teal'),'Ziyaret',false,CUTOVER,prevSeriesRange(SESS,r=>+r.sessions));
 badge('#b_sess',sc,sp);
 const cl=sumRange(DB.site,'clicks',W.kpi.a,W.kpi.b),clP=sumRange(DB.site,'clicks',W.prev.a,W.prev.b);
 lineChart('#ch_clicks',seriesRange(DB.site,r=>+r.clicks),col('--s1'),'Tık',true);
@@ -548,24 +558,27 @@ function xPos(i,n,w){return n<2?w/2:i*(w/(n-1));}
 function axisLabelsArr(labels){const n=labels.length;if(!n)return[];const step=Math.max(1,Math.round(n/5));return labels.map((t,i)=>i%step===0?{i,t}:null).filter(Boolean);}
 function markerSet(){const set={};DB.cl.forEach(c=>{const b=bucketOf(c.date,BK);(set[b]=set[b]||[]).push(c.title);});return set;}
 function markers(data){const set=markerSet();return data.map((d,i)=>set[d.x]?{i,titles:set[d.x]}:null).filter(Boolean);}
-function lineChart(sel,data,color,name,withMarkers,vlineDate){
+function lineChart(sel,data,color,name,withMarkers,vlineDate,prev){
 const el=$(sel);if(!el)return;const Wd=el.clientWidth||600,Hh=200;
 const w=Wd-M.l-M.r,h=Hh-M.t-M.b;
 if(!data.length){el.innerHTML='<div class="ch">veri yok</div>';return;}
-const ys=scale(data.map(d=>d.y),h);
-const pts=data.map((d,i)=>[M.l+xPos(i,data.length,w),M.t+ys(d.y)]);
+const hasP=prev&&prev.some(v=>v!=null);
+const mx=Math.max(1,...data.map(d=>d.y),...(hasP?prev.filter(v=>v!=null):[]));
+const ys=v=>M.t+h-(v/mx)*h;
+const pts=data.map((d,i)=>[M.l+xPos(i,data.length,w),ys(d.y)]);
 const path=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
-const mx=Math.max(1,...data.map(d=>d.y));
 const gl=[0,.5,1].map((f)=>{const y=M.t+h-f*h;return '<line x1="'+M.l+'" x2="'+(Wd-M.r)+'" y1="'+y+'" y2="'+y+'" stroke="'+col('--grid')+'"/><text x="'+(M.l-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="10" fill="'+col('--muted')+'">'+fmt(mx*f)+'</text>';}).join('');
 const xl=axisLabelsArr(data.map(d=>d.lbl)).map(o=>'<text x="'+(M.l+xPos(o.i,data.length,w))+'" y="'+(Hh-8)+'" text-anchor="middle" font-size="10" fill="'+col('--muted')+'">'+o.t+'</text>').join('');
 const mk=withMarkers?markers(data).map(o=>{const x=M.l+xPos(o.i,data.length,w);return '<line x1="'+x+'" x2="'+x+'" y1="'+M.t+'" y2="'+(M.t+h)+'" stroke="'+col('--brand-orange')+'" stroke-width="1.5" stroke-dasharray="3 3" opacity=".8"/>';}).join(''):'';
 let vl='';
 if(vlineDate){const vb=bucketOf(vlineDate,BK);let idx=-1;for(let i=0;i<data.length;i++){if(data[i].x>=vb){idx=i;break;}}if(idx>0){const x=M.l+xPos(idx,data.length,w);vl='<line x1="'+x+'" x2="'+x+'" y1="'+M.t+'" y2="'+(M.t+h)+'" stroke="'+col('--brand-orange')+'" stroke-width="1.5" opacity=".7"/><text x="'+x+'" y="'+(M.t+9)+'" text-anchor="middle" font-size="9" fill="'+col('--brand-orange')+'">devir</text>';}}
+let pv='';
+if(hasP){let dp='',pen=false;prev.forEach((v,i)=>{if(v==null){pen=false;return;}const x=M.l+xPos(i,data.length,w),y=ys(v);dp+=(pen?'L':'M')+x.toFixed(1)+' '+y.toFixed(1)+' ';pen=true;});pv='<path d="'+dp+'" fill="none" stroke="'+col('--muted')+'" stroke-width="1.5" stroke-dasharray="4 3" opacity=".5" stroke-linejoin="round"/>';}
 const dots=pts.map(p=>'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2.5" fill="'+color+'"/>').join('');
-el.innerHTML='<svg viewBox="0 0 '+Wd+' '+Hh+'" height="'+Hh+'">'+gl+'<line x1="'+M.l+'" x2="'+(Wd-M.r)+'" y1="'+(M.t+h)+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'"/>'+mk+vl+'<path d="'+path+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round"/>'+(data.length<=45?dots:'')+xl+'<line class="xh" y1="'+M.t+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'" style="display:none"/></svg>';
-hoverLine(el,data,name,w);
+el.innerHTML='<svg viewBox="0 0 '+Wd+' '+Hh+'" height="'+Hh+'">'+gl+'<line x1="'+M.l+'" x2="'+(Wd-M.r)+'" y1="'+(M.t+h)+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'"/>'+mk+vl+pv+'<path d="'+path+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round"/>'+(data.length<=45?dots:'')+xl+'<line class="xh" y1="'+M.t+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'" style="display:none"/></svg>';
+hoverLine(el,data,name,w,prev);
 }
-function hoverLine(el,data,name,w){
+function hoverLine(el,data,name,w,prev){
 const svg=el.querySelector('svg'),xh=svg.querySelector('.xh'),tt=$('#tt');
 const mkMap=markerSet();
 svg.addEventListener('mousemove',e=>{
@@ -575,7 +588,8 @@ const i=Math.max(0,Math.min(data.length-1,Math.round((sx-M.l)/(w/Math.max(1,data
 const x=M.l+xPos(i,data.length,w);
 xh.setAttribute('x1',x);xh.setAttribute('x2',x);xh.style.display='block';
 const d=data[i];const marks=mkMap[d.x]?'<div style="color:'+col('--brand-orange')+';margin-top:3px">⚑ '+mkMap[d.x].join('<br>⚑ ')+'</div>':'';
-tt.innerHTML='<b>'+d.lbl+'</b>'+name+': '+fmt(d.y)+marks;tt.style.display='block';
+const pline=(prev&&prev[i]!=null)?'<br><span style="color:var(--muted)">önceki dönem: '+fmt(prev[i])+'</span>':'';
+tt.innerHTML='<b>'+d.lbl+'</b>'+name+': '+fmt(d.y)+pline+marks;tt.style.display='block';
 tt.style.left=Math.min(window.innerWidth-270,e.clientX+14)+'px';tt.style.top=(e.clientY+14)+'px';
 });
 svg.addEventListener('mouseleave',()=>{xh.style.display='none';$('#tt').style.display='none';});
