@@ -134,4 +134,40 @@ if len(chk2.json()) == 0:
     print('PAGE_COMPARE done')
 else:
     print('PAGE_COMPARE skip (dolu)')
+
+# --- Meta: Facebook sayfa (+ bagliysa Instagram) takipci snapshot ---
+# META_PAGE_TOKEN secret'i yoksa sessizce atlar; hata cikarsa fetcher'i bozmaz.
+# Takipci toplam sayisidir; her calismada bugunun satiri uzerine yazilir (son snapshot).
+META_TOKEN = os.environ.get('META_PAGE_TOKEN', '').strip()
+META_PAGE = os.environ.get('META_PAGE_ID', '233229654211').strip()
+META_IG = os.environ.get('META_IG_ID', '').strip()
+GRAPH = 'https://graph.facebook.com/v25.0/'
+if META_TOKEN:
+    try:
+        srows = []
+        fb = requests.get(GRAPH + META_PAGE,
+            params={'fields': 'followers_count,fan_count', 'access_token': META_TOKEN},
+            timeout=60).json()
+        if 'error' in fb:
+            print('META fb error', fb['error'].get('message'))
+        else:
+            srows.append({'date': end, 'platform': 'facebook',
+                'followers': fb.get('followers_count', fb.get('fan_count'))})
+        if META_IG:
+            ig = requests.get(GRAPH + META_IG,
+                params={'fields': 'followers_count', 'access_token': META_TOKEN},
+                timeout=60).json()
+            if 'error' in ig:
+                print('META ig error', ig['error'].get('message'))
+            elif 'followers_count' in ig:
+                srows.append({'date': end, 'platform': 'instagram',
+                    'followers': ig['followers_count']})
+        if srows:
+            upsert('meta_social_daily', srows, 'date,platform')
+        print('META', [s['platform'] + ':' + str(s['followers']) for s in srows])
+    except Exception as e:
+        print('META error', repr(e))
+else:
+    print('META skip (token yok)')
+
 print('OK')
