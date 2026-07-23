@@ -142,6 +142,33 @@ META_TOKEN = os.environ.get('META_PAGE_TOKEN', '').strip()
 META_PAGE = os.environ.get('META_PAGE_ID', '233229654211').strip()
 META_IG = os.environ.get('META_IG_ID', '').strip()
 GRAPH = 'https://graph.facebook.com/v25.0/'
+# FB Page insights: read_insights izni gerekir. Izin yoksa / metrik deprecate ise
+# metrik-basi fail-soft atlar (kolon NULL kalir), fetcher'i bozmaz. (date,platform) satirina yazilir.
+FB_INSIGHTS = [
+    ('page_impressions_unique', 'reach'),
+    ('page_impressions', 'views'),
+    ('page_views_total', 'profile_views'),
+    ('page_post_engagements', 'total_interactions'),
+    ('page_fan_adds', 'follower_adds'),
+    ('page_fan_removes', 'follower_removes'),
+    ('page_website_clicks', 'website_clicks'),
+    ('page_call_phone_clicks', 'phone_clicks'),
+    ('page_get_directions_clicks', 'direction_clicks'),
+]
+def fb_insight(metric):
+    try:
+        r = requests.get(GRAPH + META_PAGE + '/insights/' + metric,
+            params={'period': 'day', 'access_token': META_TOKEN}, timeout=60).json()
+        if 'error' in r:
+            print('META insight', metric, 'err', str(r['error'].get('message'))[:70])
+            return None
+        data = r.get('data', [])
+        vals = data[0].get('values', []) if data else []
+        v = vals[-1].get('value') if vals else None
+        return int(v) if isinstance(v, (int, float)) else None
+    except Exception as e:
+        print('META insight', metric, 'exc', repr(e))
+        return None
 if META_TOKEN:
     try:
         srows = []
@@ -151,8 +178,15 @@ if META_TOKEN:
         if 'error' in fb:
             print('META fb error', fb['error'].get('message'))
         else:
-            srows.append({'date': end, 'platform': 'facebook',
-                'followers': fb.get('followers_count', fb.get('fan_count'))})
+            frow = {'date': end, 'platform': 'facebook',
+                'followers': fb.get('followers_count', fb.get('fan_count'))}
+            for _m, _c in FB_INSIGHTS:
+                _v = fb_insight(_m)
+                if _v is not None:
+                    frow[_c] = _v
+            print('META fb insights filled:',
+                sorted(k for k in frow if k not in ('date', 'platform', 'followers')))
+            srows.append(frow)
         if META_IG:
             ig = requests.get(GRAPH + META_IG,
                 params={'fields': 'followers_count', 'access_token': META_TOKEN},
