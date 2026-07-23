@@ -142,18 +142,17 @@ META_TOKEN = os.environ.get('META_PAGE_TOKEN', '').strip()
 META_PAGE = os.environ.get('META_PAGE_ID', '233229654211').strip()
 META_IG = os.environ.get('META_IG_ID', '').strip()
 GRAPH = 'https://graph.facebook.com/v25.0/'
-# FB Page insights: read_insights izni gerekir. Izin yoksa / metrik deprecate ise
-# metrik-basi fail-soft atlar (kolon NULL kalir), fetcher'i bozmaz. (date,platform) satirina yazilir.
+# FB Page insights: pages_read_engagement izni YETIYOR (read_insights GEREKMIYOR; 23 Tem canli Graph API v25 ile dogrulandi).
+# Asagidaki metrikler v25'te gecerli; metrik-basi fail-soft (kolon NULL kalir), fetcher'i bozmaz. (date,platform) satirina yazilir.
+# Not: page_impressions*/reach + page_fan_adds/removes Meta tarafindan KALDIRILDI -> reach FB'de artik yok.
 FB_INSIGHTS = [
-    ('page_impressions_unique', 'reach'),
-    ('page_impressions', 'views'),
-    ('page_views_total', 'profile_views'),
     ('page_post_engagements', 'total_interactions'),
-    ('page_fan_adds', 'follower_adds'),
-    ('page_fan_removes', 'follower_removes'),
-    ('page_website_clicks', 'website_clicks'),
-    ('page_call_phone_clicks', 'phone_clicks'),
-    ('page_get_directions_clicks', 'direction_clicks'),
+    ('page_views_total', 'views'),
+    ('page_daily_follows_unique', 'follower_adds'),
+    ('page_daily_unfollows_unique', 'follower_removes'),
+    ('page_actions_post_reactions_total', 'likes'),
+    ('page_total_actions', 'total_actions'),
+    ('page_video_views', 'video_views'),
 ]
 def fb_insight(metric):
     try:
