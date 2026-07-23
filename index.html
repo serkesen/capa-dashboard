@@ -121,7 +121,11 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:18px 0}
 #login button:disabled{opacity:.6;cursor:default}
 #login .lerr{color:var(--bad);font-size:12px;margin-top:8px;min-height:16px}
 #logout{background:rgba(255,255,255,.16);color:#fff;border:0;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;white-space:nowrap}
-body.locked .wrap,body.locked #tt{display:none}
+body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
+#topnav{max-width:1140px;margin:0 auto;padding:10px 8px 0;display:flex;gap:6px;flex-wrap:wrap}
+#topnav .tab{font-size:13px;font-weight:600;color:var(--ink-2);text-decoration:none;padding:9px 15px;border-radius:11px 11px 0 0;border:1px solid transparent;border-bottom:0}
+#topnav .tab:hover{color:var(--ink-1)}
+#topnav .tab.on{color:var(--ink-1);background:var(--surface-1);border-color:var(--ring)}
 .backlink{display:inline-block;margin:14px 2px 4px;font-size:13px;color:var(--s1);cursor:pointer;text-decoration:none}
 .dhead{font-size:17px;font-weight:700;margin:8px 2px 2px}
 .dsub{font-size:12px;color:var(--muted);margin:0 2px 14px}
@@ -147,6 +151,11 @@ body.locked .wrap,body.locked #tt{display:none}
 </div>
 <button id="logout" onclick="doLogout()" style="display:none">Çıkış</button>
 </div></header>
+
+<nav id="topnav">
+<a class="tab" data-view="seo" href="#">SEO / Trafik</a>
+<a class="tab" data-view="facebook" href="#/sosyal/facebook">Facebook</a>
+</nav>
 
 <div class="wrap" id="mainview">
 <div id="gbtnrow"><button class="gbtn" onclick="toggleGoals()">🎯 Hedefler</button></div>
@@ -269,6 +278,19 @@ body.locked .wrap,body.locked #tt{display:none}
 <div class="card"><div class="tscroll"><table id="d_table"></table></div></div>
 </div>
 
+<!-- ===== SOSYAL · FACEBOOK (Faz 1a) ===== -->
+<div class="wrap" id="sosyalview" style="display:none">
+<div class="stage"><span class="n">1</span><div><div class="st">Facebook · Kitle & Büyüme</div><div class="sq">Özel Çapa Facebook sayfasının takipçi büyümesi. Dönem kutusuna tıkla — trend o pencereye göre çizilir. Kutudaki büyük sayı anlık takipçi; altındaki değişim seçili dönemdeki net artış.</div></div></div>
+<div class="periods" id="fb_periodrow"></div>
+<div class="note" id="fb_rangenote"></div>
+<div class="kpis3" id="fb_kpi"></div>
+<div class="card">
+<h2>Facebook takipçi <span class="badge" id="fb_b_foll"></span></h2>
+<div class="ch"><b>Ne:</b> sayfanın toplam takipçi sayısı (anlık). <b>Oku:</b> yükselen çizgi = büyüyen kitle · <b>soluk kesikli çizgi = önceki eş dönem</b>. <b>Not:</b> takipçi 6 saatte bir ölçülür; ölçüm 23 Tem'de başladı — trend günden güne birikiyor, başta tek nokta görünmesi normaldir.</div>
+<div id="fb_ch_foll"></div>
+</div>
+</div>
+
 <div class="tt" id="tt"></div>
 <div id="login"><div class="box">
 <h2>Çapa Dashboard</h2>
@@ -294,7 +316,7 @@ const col=v=>CS.getPropertyValue(v).trim();
 const CUTOVER='2026-07-14';
 const AYK=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
 const COMMERCIAL=/(dis-teli|invisalign|seffaf-plak|bonding|implant|ortodonti|gulus|beyazlat|protez|kanal-ted|pedodont|zirkon|periodont|estetik|dolgu|dis-cek|kaplama|apare|braket)/i;
-let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[]};
+let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[],fb:[]};
 let GOALS={};
 
 /* dönemler: days = KPI penceresi (gün), chartDays = grafik penceresi, bucket = granülarite */
@@ -327,7 +349,7 @@ return all;
 }
 async function load(){
 try{
-const [site,chan,ev,cl,pages,queries,base,targets,pagecmp]=await Promise.all([
+const [site,chan,ev,cl,pages,queries,base,targets,pagecmp,fb]=await Promise.all([
 q('gsc_site_daily?order=date'),
 q('ga4_channel_daily?order=date'),
 q('ga4_event_daily?order=date'),
@@ -336,9 +358,10 @@ q('gsc_page_daily?order=date'),
 q('gsc_query_daily?order=date'),
 q('ga4_baseline_daily?order=date'),
 q('targets?select=*&order=metric_key'),
-q('ga4_page_compare?select=*&order=page')
+q('ga4_page_compare?select=*&order=page'),
+q('meta_social_daily?platform=eq.facebook&select=date,followers&order=date').catch(()=>[])
 ]);
-DB={site,chan,ev,cl,pages,queries,base,pagecmp};
+DB={site,chan,ev,cl,pages,queries,base,pagecmp,fb};
 GOALS={};(targets||[]).forEach(t=>GOALS[t.metric_key]=+t.monthly_target);
 route();
 }catch(e){
@@ -376,8 +399,8 @@ DB.chan.forEach(r=>{if(r.date>=CUTOVER)day[r.date]=(day[r.date]||0)+(+r.sessions
 return Object.entries(day).map(([date,sessions])=>({date,sessions}));
 }
 /* pencere: seçili döneme göre KPI + önceki + grafik aralığı */
-function curWin(){
-const end=lastDataDate();
+function curWin(endOverride){
+const end=endOverride||lastDataDate();
 if(PERIOD==='custom'&&CUSTOM){
 const a=CUSTOM.a,b=CUSTOM.b;
 const days=Math.round((new Date(b+'T00:00:00Z')-new Date(a+'T00:00:00Z'))/864e5)+1;
@@ -686,12 +709,64 @@ const el=$('#tb_decline');if(!el)return;
 el.innerHTML='<tr><th>Sayfa</th><th class="num">Zirve</th><th class="num">Son</th><th class="num">Değişim</th></tr>'+(rows.length?rows.map(declineRow).join(''):'<tr><td colspan="4" style="color:var(--muted)">veri yok</td></tr>');
 }
 
+/* ---------- Facebook (Sosyal Faz 1a) ---------- */
+function fbLastDate(){let m=null;(DB.fb||[]).forEach(r=>{if(!m||r.date>m)m=r.date;});return m;}
+function fbWin(){return curWin(fbLastDate()||lastDataDate());}
+function bucketEnd(b,bk){if(bk==='day')return b;if(bk==='week')return shiftDate(b,6);const y=+b.slice(0,4),m=+b.slice(5,7);return new Date(Date.UTC(y,m,0)).toISOString().slice(0,10);}
+function fbSnapSeries(rows,key){
+const by={};(rows||[]).forEach(r=>{by[r.date]=+r[key];});
+const dates=Object.keys(by).sort();const lastD=dates[dates.length-1]||null;const lastB=lastD?bucketOf(lastD,W.bucket):null;
+return W.buckets.map(b=>{const end=bucketEnd(b,W.bucket);let v=null;for(const d of dates){if(d<=end)v=by[d];else break;}return {x:b,y:(lastB&&b>lastB)?null:v,lbl:bucketLabel(b,W.bucket)};});
+}
+function fbPrevSnap(rows,key){
+if(!W.chartPrev)return null;
+const pb=bucketsInRange(W.chartPrev.a,W.chartPrev.b,W.bucket);
+const by={};(rows||[]).forEach(r=>{by[r.date]=+r[key];});const dates=Object.keys(by).sort();
+const vals=pb.map(b=>{const end=bucketEnd(b,W.bucket);let v=null;for(const d of dates){if(d<=end)v=by[d];else break;}return v;});
+const N=W.buckets.length;return Array.from({length:N},(_,i)=>i<vals.length?vals[i]:null);
+}
+function fbNet(rows,key,a,b){
+const w=(rows||[]).filter(r=>r.date>=a&&r.date<=b).sort((x,y)=>x.date<y.date?-1:1);
+if(!w.length)return{first:null,last:null,net:null,n:0};
+const first=+w[0][key],last=+w[w.length-1][key];return{first,last,net:last-first,n:w.length};
+}
+function fbCurrent(key){const d=fbLastDate();if(!d)return null;const r=(DB.fb||[]).find(x=>x.date===d);return r?+r[key]:null;}
+function fbNetLabel(nf){
+if(nf.net==null||nf.n<2)return{cls:'flat',txt:'veri birikiyor',has:false};
+const a=nf.net>0?'↑':(nf.net<0?'↓':'→');const p=nf.first?Math.abs(nf.net/nf.first*100):null;
+return{cls:nf.net>0?'up':(nf.net<0?'down':'flat'),txt:a+' '+(nf.net>0?'+':'')+fmt(nf.net)+(p!=null?' (%'+p.toLocaleString('tr-TR',{maximumFractionDigits:1})+')':''),has:true};
+}
+function fbPeriodBoxes(){
+const end=fbLastDate()||lastDataDate();const cur=fbCurrent('followers');
+$('#fb_periodrow').innerHTML=PERIODS.map(p=>{
+const kpiA=shiftDate(end,-(p.days-1)),kpiB=end;const s=fbNetLabel(fbNet(DB.fb,'followers',kpiA,kpiB));
+const on=(PERIOD===p.key)?' on':'';
+return '<button class="pbox'+on+'" data-p="'+p.key+'"><span class="pl">'+p.label+'</span><span class="pv">'+(cur!=null?fmt(cur):'—')+'</span><span class="pd '+s.cls+'">'+s.txt+'</span></button>';
+}).join('');
+}
+function renderFB(){
+if(!DB.fb){$('#fb_kpi').innerHTML='';$('#fb_periodrow').innerHTML='';return;}
+W=fbWin();BK=W.bucket;fbPeriodBoxes();
+const fmtD=s=>s.slice(8)+'.'+s.slice(5,7)+'.'+s.slice(0,4);
+$('#fb_rangenote').innerHTML=(PERIOD==='custom'&&CUSTOM)
+?'<b>'+fmtD(W.kpi.a)+' → '+fmtD(W.kpi.b)+'</b> ('+W.days+' gün) · takipçi net değişimi.'
+:'Seçili: <b>'+W.label+'</b> · grafik '+(BK==='day'?'günlük':BK==='week'?'haftalık':'aylık')+' · takipçi anlık değerdir (toplanmaz).';
+const cur=fbCurrent('followers');const nf=fbNet(DB.fb,'followers',W.kpi.a,W.kpi.b);const s=fbNetLabel(nf);
+$('#fb_kpi').innerHTML='<div class="tile"><div class="l">Facebook takipçi</div><div class="v">'+(cur!=null?fmt(cur):'—')+'</div><div class="exp">Özel Çapa sayfası · anlık toplam takipçi</div><div class="d '+(s.has?s.cls:'')+'">'+(s.has?s.txt+' (seçili dönem)':s.txt)+'</div></div>';
+lineChart('#fb_ch_foll',fbSnapSeries(DB.fb,'followers'),col('--s1'),'Takipçi',false,null,fbPrevSnap(DB.fb,'followers'));
+const bd=$('#fb_b_foll');if(bd){if(s.has){bd.className='badge '+s.cls;bd.textContent=s.txt;}else{bd.className='badge flat';bd.textContent='veri birikiyor';}}
+}
+
 /* ---------- drill-down ---------- */
 function route(){
-const h=location.hash;const detail=h.startsWith('#/detay/');
-$('#mainview').style.display=detail?'none':'';
+const h=location.hash;const detail=h.startsWith('#/detay/');const social=h.startsWith('#/sosyal/');
+$('#mainview').style.display=(detail||social)?'none':'';
 $('#detailview').style.display=detail?'':'none';
-if(detail){SESS=sessionDaily();W=curWin();BK=W.bucket;renderDetail();}else{render();}
+$('#sosyalview').style.display=social?'':'none';
+document.querySelectorAll('#topnav .tab').forEach(t=>t.classList.toggle('on',t.dataset.view===(social?'facebook':'seo')));
+if(detail){SESS=sessionDaily();W=curWin();BK=W.bucket;renderDetail();}
+else if(social){renderFB();}
+else{render();}
 }
 let CURDETAIL='';
 function renderDetail(){
@@ -751,6 +826,10 @@ const p=b.dataset.p;
 if(p==='custom'){PERIOD='custom';$('#custombar').classList.add('on');prefillCustom();periodBoxes();if(CUSTOM)render();return;}
 PERIOD=p;$('#custombar').classList.remove('on');render();
 });
+$('#fb_periodrow').addEventListener('click',e=>{
+const b=e.target.closest('.pbox');if(!b)return;
+PERIOD=b.dataset.p;renderFB();
+});
 function prefillCustom(){
 const end=lastDataDate();$('#c_b').value=end;$('#c_a').value=shiftDate(end,-29);
 }
@@ -758,7 +837,7 @@ function applyCustom(){
 const a=$('#c_a').value,b=$('#c_b').value;if(!a||!b)return;
 CUSTOM={a:a<b?a:b,b:a<b?b:a};PERIOD='custom';render();
 }
-addEventListener('resize',()=>{if(DB.site.length&&!location.hash.startsWith('#/detay/'))render();});
+addEventListener('resize',()=>{const h=location.hash;if(h.startsWith('#/detay/'))return;if(h.startsWith('#/sosyal/')){renderFB();return;}if(DB.site.length)render();});
 addEventListener('hashchange',route);
 
 /* ---------- Auth ---------- */
