@@ -173,6 +173,7 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <a class="tab" data-view="instagram" href="#/sosyal/instagram">Instagram</a>
 <a class="tab" data-view="reklam" href="#/reklam">Reklam</a>
 <a class="tab" data-view="gtm" href="#/gtm">GTM</a>
+<a class="tab" data-view="ga4" href="#/ga4">GA4</a>
 </nav>
 
 <div class="wrap" id="mainview">
@@ -373,6 +374,24 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 </div>
 </div>
 
+<!-- ===== GA4 ===== -->
+<div class="wrap" id="ga4view" style="display:none">
+<div class="stage"><span class="n">1</span><div><div class="st">GA4 · Genel Bakış</div><div class="sq">Google Analytics 4 veri seti: oturum, kullanıcı, etkileşim, süre, bounce + cihaz/coğrafya/sayfa/kullanıcı kırılımları. Dönem kutusuna tıkla.</div></div></div>
+<div class="periods" id="ga4_periodrow"></div>
+<div class="note" id="ga4_rangenote"></div>
+<div class="kpis3" id="ga4_kpi"></div>
+<div class="card"><h2>Oturum seyri</h2><div class="ch"><b>Ne:</b> GA4 oturum sayısı, seçili zaman aralığına göre; <b>soluk kesikli = önceki eş dönem</b>.</div><div id="ga4_ch_sess"></div></div>
+<div class="stage"><span class="n">2</span><div><div class="st">GA4 · Cihaz & Kullanıcı</div><div class="sq">Ziyaretçiler hangi cihazdan geliyor ve yeni mi dönen mi. Mobile-first için cihaz kırılımı kritik.</div></div></div>
+<div class="card"><h2>Cihaz</h2><div class="ch">mobil / masaüstü / tablet — oturum payı.</div><div id="ga4_device"></div></div>
+<div class="card"><h2>Yeni vs dönen</h2><div class="ch">newVsReturning — oturum payı.</div><div id="ga4_usertype"></div></div>
+<div class="stage"><span class="n">3</span><div><div class="st">GA4 · Coğrafya & Landing</div><div class="sq">Ziyaretçiler hangi şehirden geliyor ve siteye hangi sayfadan giriyor (landing).</div></div></div>
+<div class="card"><h2>Şehir</h2><div class="tscroll"><table id="ga4_city"></table></div></div>
+<div class="card"><h2>Landing sayfa</h2><div class="ch"><b>Ne:</b> siteye giriş yapılan sayfa + o girişlerin etkileşim oranı.</div><div class="tscroll"><table id="ga4_landing"></table></div></div>
+<div class="stage"><span class="n">4</span><div><div class="st">GA4 · Teknoloji & Demografi</div><div class="sq">Tarayıcı dağılımı ve (GA4 Google Signals açıksa) yaş/cinsiyet demografisi.</div></div></div>
+<div class="card"><h2>Tarayıcı</h2><div class="tscroll"><table id="ga4_browser"></table></div></div>
+<div class="card"><h2>Demografi</h2><div class="tscroll"><table id="ga4_demo"></table></div></div>
+</div>
+
 <div class="tt" id="tt"></div>
 <div id="login"><div class="box">
 <h2>Çapa Dashboard</h2>
@@ -398,7 +417,7 @@ const col=v=>CS.getPropertyValue(v).trim();
 const CUTOVER='2026-07-14';
 const AYK=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
 const COMMERCIAL=/(dis-teli|invisalign|seffaf-plak|bonding|implant|ortodonti|gulus|beyazlat|protez|kanal-ted|pedodont|zirkon|periodont|estetik|dolgu|dis-cek|kaplama|apare|braket)/i;
-let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[],fb:[],ig:[],ads:[],convsrc:[],funnel:[],gaev:[]};
+let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[],fb:[],ig:[],ads:[],convsrc:[],funnel:[],gaev:[],ov:[],brk:[],land:[],demo:[]};
 let GOALS={};
 
 /* dönemler: days = KPI penceresi (gün), chartDays = grafik penceresi, bucket = granülarite */
@@ -431,7 +450,7 @@ return all;
 }
 async function load(){
 try{
-const [site,chan,ev,cl,pages,queries,base,targets,pagecmp,fb,ig,ads,convsrc,funnel,gaev]=await Promise.all([
+const [site,chan,ev,cl,pages,queries,base,targets,pagecmp,fb,ig,ads,convsrc,funnel,gaev,ov,brk,land,demo]=await Promise.all([
 q('gsc_site_daily?order=date'),
 q('ga4_channel_daily?order=date'),
 q('ga4_event_daily?order=date'),
@@ -446,9 +465,13 @@ q('meta_social_daily?platform=eq.instagram&select=date,followers,reach,profile_v
 q('ads_daily?select=date,platform,campaign,spend,impressions,clicks,leads&order=date').catch(()=>[]),
 q('ga4_conv_source_daily?select=date,event_name,source,medium,campaign,count&order=date').catch(()=>[]),
 q('ga4_funnel_daily?select=date,adim,count&order=date').catch(()=>[]),
-q('ga4_events_all_daily?select=date,event_name,count&order=date').catch(()=>[])
+q('ga4_events_all_daily?select=date,event_name,count&order=date').catch(()=>[]),
+q('ga4_overview_daily?select=date,sessions,users,new_users,pageviews,engaged_sessions,engagement_rate,avg_duration,bounce_rate&order=date').catch(()=>[]),
+q('ga4_breakdown_daily?select=date,kind,label,sessions,users&order=date').catch(()=>[]),
+q('ga4_landing_daily?select=date,landing,sessions,engaged_sessions&order=date').catch(()=>[]),
+q('ga4_demo_daily?select=date,gender,age,users&order=date').catch(()=>[])
 ]);
-DB={site,chan,ev,cl,pages,queries,base,pagecmp,fb,ig,ads,convsrc,funnel,gaev};
+DB={site,chan,ev,cl,pages,queries,base,pagecmp,fb,ig,ads,convsrc,funnel,gaev,ov,brk,land,demo};
 GOALS={};(targets||[]).forEach(t=>GOALS[t.metric_key]=+t.monthly_target);
 route();
 }catch(e){
@@ -1002,18 +1025,58 @@ const rows=gaevRows(a,b),key=['randevu_tamamlandi','telefon_tiklama','randevu_ad
 $('#gtm_events').innerHTML='<tr><th>Event</th><th class="num">Sayı</th></tr>'+(rows.length?rows.map(function(r){return '<tr><td>'+r.name+(key.includes(r.name)?' <span class="chip b">özel</span>':'')+'</td><td class="num">'+fmt(r.count)+'</td></tr>';}).join(''):'<tr><td colspan="2" style="color:var(--muted)">veri yok</td></tr>');
 }
 
+/* ---------- GA4 (genis veri seti) ---------- */
+function ga4LastDate(){let m=null;(DB.ov||[]).forEach(r=>{if(!m||r.date>m)m=r.date;});return m;}
+function ga4Win(){return curWin(ga4LastDate()||lastDataDate());}
+function ovSum(key,a,b){return (DB.ov||[]).filter(r=>r.date>=a&&r.date<=b).reduce((s,r)=>s+(+r[key]||0),0);}
+function fmtDur(s){s=Math.round(s);const m=Math.floor(s/60),ss=s%60;return m+':'+(ss<10?'0':'')+ss;}
+function brkRows(kind,a,b){const by={};(DB.brk||[]).filter(r=>r.kind===kind&&r.date>=a&&r.date<=b).forEach(r=>{by[r.label]=(by[r.label]||0)+(+r.sessions||0);});return Object.entries(by).map(function(e){return {label:e[0],value:e[1]};}).sort((x,y)=>y.value-x.value);}
+function landRows(a,b){const by={};(DB.land||[]).filter(r=>r.date>=a&&r.date<=b).forEach(r=>{const o=by[r.landing]=by[r.landing]||{s:0,e:0};o.s+=+r.sessions||0;o.e+=+r.engaged_sessions||0;});return Object.entries(by).map(function(e){return {landing:e[0],sessions:e[1].s,engaged:e[1].e};}).sort((x,y)=>y.sessions-x.sessions);}
+function shareBars(sel,rows,colorVar){const el=$(sel);if(!el)return;if(!rows.length){el.innerHTML='<div class="ch" style="margin:0">veri yok</div>';return;}const tot=rows.reduce((s,r)=>s+r.value,0)||1,mx=Math.max(1,...rows.map(r=>r.value));el.innerHTML='<div class="funnel">'+rows.map(function(r){const w=Math.max(3,(r.value/mx)*100),pct=Math.round(r.value/tot*100);return '<div class="fstep"><div class="fl">'+r.label+'</div><div class="fbarwrap"><div class="fbar" style="width:'+w.toFixed(1)+'%;background:'+col(colorVar)+'"></div></div><div class="fmeta"><b>'+fmt(r.value)+'</b> <span class="fpct">%'+pct+'</span></div></div>';}).join('')+'</div>';}
+function ga4PeriodBoxes(){const end=ga4LastDate()||lastDataDate();$('#ga4_periodrow').innerHTML=PERIODS.map(function(p){const a=shiftDate(end,-(p.days-1)),b=end,pa=shiftDate(a,-1),ppa=shiftDate(a,-p.days);const cur=ovSum('sessions',a,b),prev=ovSum('sessions',ppa,pa);const s=deltaFull(cur,prev),on=(PERIOD===p.key)?' on':'';return '<button class="pbox'+on+'" data-p="'+p.key+'"><span class="pl">'+p.label+'</span><span class="pv">'+fmt(cur)+'</span><span class="pd '+s.cls+'">'+(s.has?s.txt:'\u2014')+'</span></button>';}).join('');}
+function renderGA4(){
+W=ga4Win();BK=W.bucket;ga4PeriodBoxes();
+const a=W.kpi.a,b=W.kpi.b;
+$('#ga4_rangenote').innerHTML='Seçili: <b>'+W.label+'</b> · metrikler seçili dönem toplamı/ortalaması · dönem kutusundaki sayı = oturum.';
+const sess=ovSum('sessions',a,b),users=ovSum('users',a,b),nu=ovSum('new_users',a,b),pv=ovSum('pageviews',a,b),eng=ovSum('engaged_sessions',a,b);
+const engRate=sess>0?eng/sess:0,bounce=1-engRate;
+const durTot=(DB.ov||[]).filter(r=>r.date>=a&&r.date<=b).reduce((s,r)=>s+(+r.avg_duration||0)*(+r.sessions||0),0),dur=sess>0?durTot/sess:0;
+$('#ga4_kpi').innerHTML=
+reklamTile('Oturum',fmt(sess),'GA4 sessions')+
+reklamTile('Kullanıcı',fmt(users),'toplam (yaklaşık)')+
+reklamTile('Yeni kullanıcı',fmt(nu),'newUsers')+
+reklamTile('Sayfa görüntüleme',fmt(pv),'screenPageViews')+
+reklamTile('Etkileşim oranı','%'+Math.round(engRate*100),'etkileşimli oturum / oturum')+
+reklamTile('Ort. süre',fmtDur(dur),'ortalama oturum süresi')+
+reklamTile('Bounce','%'+Math.round(bounce*100),'1 − etkileşim oranı');
+lineChart('#ga4_ch_sess',seriesRange(DB.ov,r=>+r.sessions),col('--brand-teal'),'Oturum',false,null,prevSeriesRange(DB.ov,r=>+r.sessions));
+shareBars('#ga4_device',brkRows('device',a,b),'--brand-teal');
+shareBars('#ga4_usertype',brkRows('usertype',a,b),'--s1');
+const city=brkRows('city',a,b).slice(0,12);
+$('#ga4_city').innerHTML='<tr><th>Şehir</th><th class="num">Oturum</th></tr>'+(city.length?city.map(function(r){return '<tr><td>'+r.label+'</td><td class="num">'+fmt(r.value)+'</td></tr>';}).join(''):'<tr><td colspan="2" style="color:var(--muted)">veri yok</td></tr>');
+const brw=brkRows('browser',a,b).slice(0,10);
+$('#ga4_browser').innerHTML='<tr><th>Tarayıcı</th><th class="num">Oturum</th></tr>'+(brw.length?brw.map(function(r){return '<tr><td>'+r.label+'</td><td class="num">'+fmt(r.value)+'</td></tr>';}).join(''):'<tr><td colspan="2" style="color:var(--muted)">veri yok</td></tr>');
+const land=landRows(a,b).slice(0,12);
+$('#ga4_landing').innerHTML='<tr><th>Landing sayfa</th><th class="num">Oturum</th><th class="num">Etkileşim</th></tr>'+(land.length?land.map(function(r){return '<tr><td style="word-break:break-all">'+r.landing+'</td><td class="num">'+fmt(r.sessions)+'</td><td class="num">%'+(r.sessions>0?Math.round(r.engaged/r.sessions*100):0)+'</td></tr>';}).join(''):'<tr><td colspan="3" style="color:var(--muted)">veri yok</td></tr>');
+const demo=(DB.demo||[]).filter(r=>r.date>=a&&r.date<=b);
+if(demo.length){const by={};demo.forEach(r=>{const k=r.gender+' · '+r.age;by[k]=(by[k]||0)+(+r.users||0);});const drows=Object.entries(by).map(function(e){return {k:e[0],v:e[1]};}).sort((x,y)=>y.v-x.v);$('#ga4_demo').innerHTML='<tr><th>Cinsiyet · Yaş</th><th class="num">Kullanıcı</th></tr>'+drows.map(function(r){return '<tr><td>'+r.k+'</td><td class="num">'+fmt(r.v)+'</td></tr>';}).join('');}
+else{$('#ga4_demo').innerHTML='<tr><td style="color:var(--muted)">Demografi verisi yok — GA4 tarafında Google Signals kapalı olabilir (yaş/cinsiyet için açılması gerekir).</td></tr>';}
+}
+
 /* ---------- drill-down ---------- */
 function route(){
-const h=location.hash;const detail=h.startsWith('#/detay/');const social=h.startsWith('#/sosyal/');const reklam=h.startsWith('#/reklam');const gtm=h.startsWith('#/gtm');
-$('#mainview').style.display=(detail||social||reklam||gtm)?'none':'';
+const h=location.hash;const detail=h.startsWith('#/detay/');const social=h.startsWith('#/sosyal/');const reklam=h.startsWith('#/reklam');const gtm=h.startsWith('#/gtm');const ga4=h.startsWith('#/ga4');
+$('#mainview').style.display=(detail||social||reklam||gtm||ga4)?'none':'';
 $('#detailview').style.display=detail?'':'none';
 const ig=h.startsWith('#/sosyal/instagram');const fbv=social&&!ig;
 $('#sosyalview').style.display=fbv?'':'none';
 $('#igview').style.display=ig?'':'none';
 $('#reklamview').style.display=reklam?'':'none';
 $('#gtmview').style.display=gtm?'':'none';
-document.querySelectorAll('#topnav .tab').forEach(t=>t.classList.toggle('on',t.dataset.view===(gtm?'gtm':reklam?'reklam':ig?'instagram':fbv?'facebook':'seo')));
+$('#ga4view').style.display=ga4?'':'none';
+document.querySelectorAll('#topnav .tab').forEach(t=>t.classList.toggle('on',t.dataset.view===(ga4?'ga4':gtm?'gtm':reklam?'reklam':ig?'instagram':fbv?'facebook':'seo')));
 if(detail){SESS=sessionDaily();W=curWin();BK=W.bucket;renderDetail();}
+else if(ga4){renderGA4();}
 else if(gtm){renderGTM();}
 else if(reklam){renderReklam();}
 else if(ig){renderIG();}
@@ -1094,6 +1157,10 @@ $('#gtm_periodrow').addEventListener('click',e=>{
 const b=e.target.closest('.pbox');if(!b)return;
 PERIOD=b.dataset.p;renderGTM();
 });
+$('#ga4_periodrow').addEventListener('click',e=>{
+const b=e.target.closest('.pbox');if(!b)return;
+PERIOD=b.dataset.p;renderGA4();
+});
 function prefillCustom(){
 const end=lastDataDate();$('#c_b').value=end;$('#c_a').value=shiftDate(end,-29);
 }
@@ -1101,7 +1168,7 @@ function applyCustom(){
 const a=$('#c_a').value,b=$('#c_b').value;if(!a||!b)return;
 CUSTOM={a:a<b?a:b,b:a<b?b:a};PERIOD='custom';render();
 }
-addEventListener('resize',()=>{const h=location.hash;if(h.startsWith('#/detay/'))return;if(h.startsWith('#/gtm')){renderGTM();return;}if(h.startsWith('#/reklam')){renderReklam();return;}if(h.startsWith('#/sosyal/instagram')){renderIG();return;}if(h.startsWith('#/sosyal/')){renderFB();return;}if(DB.site.length)render();});
+addEventListener('resize',()=>{const h=location.hash;if(h.startsWith('#/detay/'))return;if(h.startsWith('#/ga4')){renderGA4();return;}if(h.startsWith('#/gtm')){renderGTM();return;}if(h.startsWith('#/reklam')){renderReklam();return;}if(h.startsWith('#/sosyal/instagram')){renderIG();return;}if(h.startsWith('#/sosyal/')){renderFB();return;}if(DB.site.length)render();});
 addEventListener('hashchange',route);
 
 /* ---------- Auth ---------- */
