@@ -127,6 +127,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .grid2{display:grid;grid-template-columns:1fr;gap:14px}
 @media(min-width:900px){.grid2{grid-template-columns:1fr 1fr}}
 .tscroll{overflow-x:auto}
+table .mrow{display:none} table.moreopen .mrow{display:table-row}
+.morelink{color:var(--s1);cursor:pointer;font-size:12px;font-weight:600;display:inline-block;padding:3px 0}
+.morerow td{padding-top:8px}
 details.ctx{margin-top:6px;border:1px dashed var(--grid);border-radius:12px;background:var(--ctxbg);padding:0 12px}
 details.ctx>summary{cursor:pointer;padding:12px 2px;font-size:12px;font-weight:700;color:var(--ink-2);list-style:none}
 details.ctx>summary::-webkit-details-marker{display:none}
@@ -395,8 +398,10 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <div class="card"><h2>Yeni vs dönen</h2><div class="ch">newVsReturning — oturum payı.</div><div id="ga4_usertype"></div></div>
 </div>
 <div class="stage"><span class="n">3</span><div><div class="st">GA4 · Coğrafya & Landing</div><div class="sq">Ziyaretçiler hangi şehirden geliyor ve siteye hangi sayfadan giriyor (landing).</div></div></div>
-<div class="card"><h2>Şehir</h2><div class="ch">En çok ziyaretçi gelen şehirler — oturum payı (ilk 8).</div><div id="ga4_city_ch"></div><div class="tscroll"><table id="ga4_city"></table></div></div>
-<div class="card"><h2>Landing sayfa</h2><div class="ch"><b>Ne:</b> siteye giriş yapılan sayfa + o girişlerin etkileşim oranı. Grafik: oturuma göre ilk 8.</div><div id="ga4_land_ch"></div><div class="tscroll"><table id="ga4_landing"></table></div></div>
+<div class="grid2">
+<div class="card"><h2>Şehir</h2><div class="ch">En çok ziyaretçi gelen şehirler — oturum payı (grafik: ilk 4 + Diğer). Tablo 5 satır, "daha fazla" ile açılır.</div><div id="ga4_city_ch"></div><div class="tscroll"><table id="ga4_city"></table></div></div>
+<div class="card"><h2>Landing sayfa</h2><div class="ch"><b>Ne:</b> siteye giriş yapılan sayfa + o girişlerin etkileşim oranı. Grafik: ilk 4 + Diğer; tablo 5 satır, "daha fazla" ile açılır.</div><div id="ga4_land_ch"></div><div class="tscroll"><table id="ga4_landing"></table></div></div>
+</div>
 <div class="stage"><span class="n">4</span><div><div class="st">GA4 · Teknoloji & Demografi</div><div class="sq">Tarayıcı dağılımı ve (GA4 Google Signals açıksa) yaş/cinsiyet demografisi.</div></div></div>
 <div class="card"><h2>Tarayıcı</h2><div class="ch">Tarayıcı dağılımı — oturum payı (ilk 8).</div><div id="ga4_brw_ch"></div><div class="tscroll"><table id="ga4_browser"></table></div></div>
 <div class="card"><h2>Demografi</h2><div class="tscroll"><table id="ga4_demo"></table></div></div>
@@ -1048,6 +1053,9 @@ function brkRows(kind,a,b){const by={};(DB.brk||[]).filter(r=>r.kind===kind&&r.d
 function landRows(a,b){const by={};(DB.land||[]).filter(r=>r.date>=a&&r.date<=b).forEach(r=>{const o=by[r.landing]=by[r.landing]||{s:0,e:0};o.s+=+r.sessions||0;o.e+=+r.engaged_sessions||0;});return Object.entries(by).map(function(e){return {landing:e[0],sessions:e[1].s,engaged:e[1].e};}).sort((x,y)=>y.sessions-x.sessions);}
 function shareBars(sel,rows,colorVar){const el=$(sel);if(!el)return;if(!rows.length){el.innerHTML='<div class="ch" style="margin:0">veri yok</div>';return;}const tot=rows.reduce((s,r)=>s+r.value,0)||1,mx=Math.max(1,...rows.map(r=>r.value));el.innerHTML='<div class="funnel">'+rows.map(function(r){const w=Math.max(3,(r.value/mx)*100),pct=Math.round(r.value/tot*100);return '<div class="fstep"><div class="fl">'+r.label+'</div><div class="fbarwrap"><div class="fbar" style="width:'+w.toFixed(1)+'%;background:'+col(colorVar)+'"></div></div><div class="fmeta"><b>'+fmt(r.value)+'</b> <span class="fpct">%'+pct+'</span></div></div>';}).join('')+'</div>';}
 function ga4PeriodBoxes(){const end=ga4LastDate()||lastDataDate();$('#ga4_periodrow').innerHTML=PERIODS.map(function(p){const a=shiftDate(end,-(p.days-1)),b=end,pa=shiftDate(a,-1),ppa=shiftDate(a,-p.days);const cur=ovSum('sessions',a,b),prev=ovSum('sessions',ppa,pa);const s=deltaFull(cur,prev),on=(PERIOD===p.key)?' on':'';return '<button class="pbox'+on+'" data-p="'+p.key+'"><span class="pl">'+p.label+'</span><span class="pv">'+fmt(cur)+'</span><span class="pd '+s.cls+'">'+(s.has?s.txt:'\u2014')+'</span></button>';}).join('');}
+function top5other(rows){if(!rows||rows.length<=4)return rows||[];var head=rows.slice(0,4);var rest=rows.slice(4).reduce(function(s2,r){return s2+(r.value||0);},0);return head.concat([{label:'Diğer',value:rest}]);}
+function toggleMore(el){var t=el.closest('table');if(!t)return;t.classList.toggle('moreopen');el.textContent=t.classList.contains('moreopen')?'daha az \u25b4':el.dataset.more;}
+function renderExpTable(sel,head,cells,cols){var el=$(sel);if(!el)return;el.classList.remove('moreopen');if(!cells.length){el.innerHTML=head+'<tr><td colspan="'+cols+'" style="color:var(--muted)">veri yok</td></tr>';return;}var body=cells.map(function(c,i){return '<tr'+(i>=5?' class="mrow"':'')+'>'+c+'</tr>';}).join('');var more='';if(cells.length>5){var lbl='daha fazla ('+(cells.length-5)+') \u25be';more='<tr class="morerow"><td colspan="'+cols+'"><span class="morelink" data-more="'+lbl+'" onclick="toggleMore(this)">'+lbl+'</span></td></tr>';}el.innerHTML=head+body+more;}
 function renderGA4(){
 W=ga4Win();BK=W.bucket;ga4PeriodBoxes();
 const a=W.kpi.a,b=W.kpi.b;
@@ -1074,15 +1082,15 @@ $('#ga4_kpicharts').innerHTML=cards.map(function(k){var chip=hasPrev?kd(k.cur,k.
 cards.forEach(function(k){lineChart('#ga4c_'+k.id,k.ser,k.col,k.name,false,null,k.ov,k.f);});
 shareBars('#ga4_device',brkRows('device',a,b),'--brand-teal');
 shareBars('#ga4_usertype',brkRows('usertype',a,b),'--s1');
-const city=brkRows('city',a,b).slice(0,12);
-shareBars('#ga4_city_ch',city.slice(0,8),'--s1');
-$('#ga4_city').innerHTML='<tr><th>Şehir</th><th class="num">Oturum</th></tr>'+(city.length?city.map(function(r){return '<tr><td>'+r.label+'</td><td class="num">'+fmt(r.value)+'</td></tr>';}).join(''):'<tr><td colspan="2" style="color:var(--muted)">veri yok</td></tr>');
+const city=brkRows('city',a,b);
+shareBars('#ga4_city_ch',top5other(city),'--s1');
+renderExpTable('#ga4_city','<tr><th>Şehir</th><th class="num">Oturum</th></tr>',city.map(function(r){return '<td>'+r.label+'</td><td class="num">'+fmt(r.value)+'</td>';}),2);
 const brw=brkRows('browser',a,b).slice(0,10);
 shareBars('#ga4_brw_ch',brw.slice(0,8),'--s3');
 $('#ga4_browser').innerHTML='<tr><th>Tarayıcı</th><th class="num">Oturum</th></tr>'+(brw.length?brw.map(function(r){return '<tr><td>'+r.label+'</td><td class="num">'+fmt(r.value)+'</td></tr>';}).join(''):'<tr><td colspan="2" style="color:var(--muted)">veri yok</td></tr>');
-const land=landRows(a,b).slice(0,12);
-shareBars('#ga4_land_ch',land.slice(0,8).map(function(r){return {label:r.landing,value:r.sessions};}),'--brand-teal');
-$('#ga4_landing').innerHTML='<tr><th>Landing sayfa</th><th class="num">Oturum</th><th class="num">Etkileşim</th></tr>'+(land.length?land.map(function(r){return '<tr><td style="word-break:break-all">'+r.landing+'</td><td class="num">'+fmt(r.sessions)+'</td><td class="num">%'+(r.sessions>0?Math.round(r.engaged/r.sessions*100):0)+'</td></tr>';}).join(''):'<tr><td colspan="3" style="color:var(--muted)">veri yok</td></tr>');
+const land=landRows(a,b);
+shareBars('#ga4_land_ch',top5other(land.map(function(r){return {label:r.landing,value:r.sessions};})),'--brand-teal');
+renderExpTable('#ga4_landing','<tr><th>Landing sayfa</th><th class="num">Oturum</th><th class="num">Etkileşim</th></tr>',land.map(function(r){return '<td style="word-break:break-all">'+r.landing+'</td><td class="num">'+fmt(r.sessions)+'</td><td class="num">%'+(r.sessions>0?Math.round(r.engaged/r.sessions*100):0)+'</td>';}),3);
 const demo=(DB.demo||[]).filter(r=>r.date>=a&&r.date<=b);
 if(demo.length){const by={};demo.forEach(r=>{const k=r.gender+' · '+r.age;by[k]=(by[k]||0)+(+r.users||0);});const drows=Object.entries(by).map(function(e){return {k:e[0],v:e[1]};}).sort((x,y)=>y.v-x.v);$('#ga4_demo').innerHTML='<tr><th>Cinsiyet · Yaş</th><th class="num">Kullanıcı</th></tr>'+drows.map(function(r){return '<tr><td>'+r.k+'</td><td class="num">'+fmt(r.v)+'</td></tr>';}).join('');}
 else{$('#ga4_demo').innerHTML='<tr><td style="color:var(--muted)">Demografi verisi yok — GA4 tarafında Google Signals kapalı olabilir (yaş/cinsiyet için açılması gerekir).</td></tr>';}
