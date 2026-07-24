@@ -310,6 +310,11 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <div class="ch"><b>Ne:</b> seçili dönemde <b>net takipçi değişimi</b> (kazanılan − kaybedilen). <b>Oku:</b> yeşil çubuk = net artış · kırmızı çubuk = net azalış. Anlık toplam takipçi yukarıdaki büyük sayıdadır. <b>Not:</b> çubuklar 6 saatte bir ölçümden türetilir; en az 2 ölçüm gerekir.</div>
 <div id="ig_ch_foll"></div>
 </div>
+<div class="card">
+<h2>Instagram takipçi sayısı (seyir)</h2>
+<div class="ch"><b>Ne:</b> hesabın toplam takipçi sayısının zaman içindeki seyri (anlık değer). <b>Oku:</b> yükselen çizgi = büyüyen kitle · <b>soluk kesikli çizgi = önceki eş dönem</b>. Üstteki büyük sayı en güncel değerdir.</div>
+<div id="ig_ch_count"></div>
+</div>
 <div class="stage"><span class="n">2</span><div><div class="st">Instagram · Etkileşim & Erişim</div><div class="sq">Her insight metriği seçili dönemde <b>günlük grafik</b> olarak; kartın sağ üstündeki sayı dönem toplamıdır. Facebook'ta bu veriler yok; Instagram'da API üzerinden geliyor.</div></div></div>
 <div class="igcharts" id="ig_insights"></div>
 </div>
@@ -837,6 +842,7 @@ $('#ig_rangenote').innerHTML=(PERIOD==='custom'&&CUSTOM)
 const cur=igCurrent('followers');const nf=fbNet(DB.ig,'followers',W.kpi.a,W.kpi.b);const s=fbNetLabel(nf);
 $('#ig_kpi').innerHTML='<div class="tile"><div class="l">Instagram takipçi</div><div class="v">'+(cur!=null?fmt(cur):'—')+'</div><div class="exp">@capaortodonti · anlık toplam takipçi</div><div class="d '+(s.has?s.cls:'')+'">'+(s.has?s.txt+' (seçili dönem)':s.txt)+'</div></div>';
 netBarChart('#ig_ch_foll',fbNetSeries(DB.ig,'followers'),'Net takipçi');
+lineChart('#ig_ch_count',fbSnapSeries(DB.ig,'followers'),col('--s3'),'Takipçi',false,null,fbPrevSnap(DB.ig,'followers'));
 const bd=$('#ig_b_foll');if(bd){if(s.has){bd.className='badge '+s.cls;bd.textContent=s.txt;}else{bd.className='badge flat';bd.textContent='veri birikiyor';}}
 igInsightCharts();
 }
