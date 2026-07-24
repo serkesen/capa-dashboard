@@ -77,7 +77,10 @@ header .hwrap{max-width:1140px;margin:0 auto;padding:0 4px}
 .mgrid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:6px}
 @media(min-width:640px){.mgrid{grid-template-columns:1fr 1fr}}
 .mchart{background:var(--plane);border:1px solid var(--ring);border-radius:10px;padding:10px 10px 4px}
-.mchart .mh{font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:2px}
+.mchart .mh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px;font-weight:600;color:var(--ink-2)}
+.mchart .mh b{font-size:16px;font-weight:700;letter-spacing:-.01em;color:var(--ink-1);font-variant-numeric:tabular-nums}
+.mchart .mx{font-size:10px;color:var(--muted);margin:1px 0 3px}
+.mchart.hero{grid-column:1/-1}
 .mini{background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;padding:10px 12px}
 .mini .minihd{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:2px}
 .mini .ml{font-size:12px;color:var(--ink-2)}
@@ -383,9 +386,7 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <div class="stage"><span class="n">1</span><div><div class="st">GA4 · Genel Bakış</div><div class="sq">Google Analytics 4 veri seti: oturum, kullanıcı, etkileşim, süre, bounce + cihaz/coğrafya/sayfa/kullanıcı kırılımları. Dönem kutusuna tıkla.</div></div></div>
 <div class="periods" id="ga4_periodrow"></div>
 <div class="note" id="ga4_rangenote"></div>
-<div class="kpis3" id="ga4_kpi"></div>
-<div class="card"><h2>Oturum seyri</h2><div class="ch"><b>Ne:</b> GA4 oturum sayısı, seçili zaman aralığına göre; <b>soluk kesikli = önceki eş dönem</b>.</div><div id="ga4_ch_sess"></div></div>
-<div class="card"><h2>KPI zaman serileri</h2><div class="ch">Yukarıdaki her KPI'nin seçili dönemdeki seyri (döneme göre gün/hafta/ay). Oran ve süre gerçek değer olarak çizilir, toplama değil.</div><div class="mgrid" id="ga4_kpicharts"></div></div>
+<div class="card"><h2>KPI'ler &amp; zaman serileri</h2><div class="ch">Her KPI kendi kutusunda (başlıkta güncel değer) + seçili dönemdeki seyri. Oturum grafiğinde <b>soluk kesikli = önceki eş dönem</b>. Oran ve süre gerçek değer, toplama değil.</div><div class="mgrid" id="ga4_kpicharts"></div></div>
 <div class="stage"><span class="n">2</span><div><div class="st">GA4 · Cihaz & Kullanıcı</div><div class="sq">Ziyaretçiler hangi cihazdan geliyor ve yeni mi dönen mi. Mobile-first için cihaz kırılımı kritik.</div></div></div>
 <div class="grid2">
 <div class="card"><h2>Cihaz</h2><div class="ch">mobil / masaüstü / tablet — oturum payı.</div><div id="ga4_device"></div></div>
@@ -1051,19 +1052,10 @@ $('#ga4_rangenote').innerHTML='Seçili: <b>'+W.label+'</b> · metrikler seçili 
 const sess=ovSum('sessions',a,b),users=ovSum('users',a,b),nu=ovSum('new_users',a,b),pv=ovSum('pageviews',a,b),eng=ovSum('engaged_sessions',a,b);
 const engRate=sess>0?eng/sess:0,bounce=1-engRate;
 const durTot=(DB.ov||[]).filter(r=>r.date>=a&&r.date<=b).reduce((s,r)=>s+(+r.avg_duration||0)*(+r.sessions||0),0),dur=sess>0?durTot/sess:0;
-$('#ga4_kpi').innerHTML=
-reklamTile('Oturum',fmt(sess),'GA4 sessions')+
-reklamTile('Kullanıcı',fmt(users),'toplam (yaklaşık)')+
-reklamTile('Yeni kullanıcı',fmt(nu),'newUsers')+
-reklamTile('Sayfa görüntüleme',fmt(pv),'screenPageViews')+
-reklamTile('Etkileşim oranı','%'+Math.round(engRate*100),'etkileşimli oturum / oturum')+
-reklamTile('Ort. süre',fmtDur(dur),'ortalama oturum süresi')+
-reklamTile('Bounce','%'+Math.round(bounce*100),'1 − etkileşim oranı');
-lineChart('#ga4_ch_sess',seriesRange(DB.ov,r=>+r.sessions),col('--brand-teal'),'Oturum',false,null,prevSeriesRange(DB.ov,r=>+r.sessions));
 var pctF=function(v){return '%'+Math.round(v);};
-var kc=[['users','Kullanıcı',seriesRange(DB.ov,function(r){return +r.users;}),col('--brand-teal'),fmt],['newusers','Yeni kullanıcı',seriesRange(DB.ov,function(r){return +r.new_users;}),col('--brand-teal'),fmt],['pv','Sayfa görüntüleme',seriesRange(DB.ov,function(r){return +r.pageviews;}),col('--brand-teal'),fmt],['engr','Etkileşim oranı',ovDerivedSeries(function(r){return +r.engaged_sessions;},function(r){return +r.sessions;},100),col('--s1'),pctF],['dur','Ort. süre',ovDerivedSeries(function(r){return (+r.avg_duration)*(+r.sessions);},function(r){return +r.sessions;},1),col('--s1'),fmtDur],['bounce','Bounce',ovDerivedSeries(function(r){return (+r.sessions)-(+r.engaged_sessions);},function(r){return +r.sessions;},100),col('--s1'),pctF]];
-$('#ga4_kpicharts').innerHTML=kc.map(function(k){return '<div class="mchart"><div class="mh">'+k[1]+'</div><div id="ga4c_'+k[0]+'"></div></div>';}).join('');
-kc.forEach(function(k){lineChart('#ga4c_'+k[0],k[2],k[3],k[1],false,null,null,k[4]);});
+var cards=[['sess','Oturum',fmt(sess),'GA4 sessions',seriesRange(DB.ov,function(r){return +r.sessions;}),col('--brand-teal'),fmt,prevSeriesRange(DB.ov,function(r){return +r.sessions;}),true],['users','Kullanıcı',fmt(users),'toplam (yaklaşık)',seriesRange(DB.ov,function(r){return +r.users;}),col('--brand-teal'),fmt,null,false],['newusers','Yeni kullanıcı',fmt(nu),'newUsers',seriesRange(DB.ov,function(r){return +r.new_users;}),col('--brand-teal'),fmt,null,false],['pv','Sayfa görüntüleme',fmt(pv),'screenPageViews',seriesRange(DB.ov,function(r){return +r.pageviews;}),col('--brand-teal'),fmt,null,false],['engr','Etkileşim oranı','%'+Math.round(engRate*100),'etkileşimli / oturum',ovDerivedSeries(function(r){return +r.engaged_sessions;},function(r){return +r.sessions;},100),col('--s1'),pctF,null,false],['dur','Ort. süre',fmtDur(dur),'ort. oturum süresi',ovDerivedSeries(function(r){return (+r.avg_duration)*(+r.sessions);},function(r){return +r.sessions;},1),col('--s1'),fmtDur,null,false],['bounce','Bounce','%'+Math.round(bounce*100),'1 − etkileşim',ovDerivedSeries(function(r){return (+r.sessions)-(+r.engaged_sessions);},function(r){return +r.sessions;},100),col('--s1'),pctF,null,false]];
+$('#ga4_kpicharts').innerHTML=cards.map(function(k){return '<div class="mchart'+(k[8]?' hero':'')+'"><div class="mh"><span>'+k[1]+'</span><b>'+k[2]+'</b></div><div class="mx">'+k[3]+'</div><div id="ga4c_'+k[0]+'"></div></div>';}).join('');
+cards.forEach(function(k){lineChart('#ga4c_'+k[0],k[4],k[5],k[1],false,null,k[7],k[6]);});
 shareBars('#ga4_device',brkRows('device',a,b),'--brand-teal');
 shareBars('#ga4_usertype',brkRows('usertype',a,b),'--s1');
 const city=brkRows('city',a,b).slice(0,12);
