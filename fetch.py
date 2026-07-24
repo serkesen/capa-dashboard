@@ -133,6 +133,78 @@ upsert('ga4_events_all_daily', [{'date': d8(r['dimensionValues'][0]['value']),
     'count': int(r['metricValues'][0]['value'])} for r in erows], 'date,event_name')
 print('ga4_events_all_daily', len(erows))
 
+# --- GA4 tab: genis GA4 veri seti (overview + kirilimlar + landing + demografi) ---
+def gi(v):
+    try:
+        return int(float(v))
+    except Exception:
+        return 0
+def gf(v):
+    try:
+        return round(float(v), 4)
+    except Exception:
+        return 0.0
+
+# Overview: gunluk metrikler (oturum/kullanici/engagement/sure/bounce)
+try:
+    orows = ga4({'dateRanges': [{'startDate': start, 'endDate': end}],
+        'dimensions': [{'name': 'date'}],
+        'metrics': [{'name': 'sessions'}, {'name': 'totalUsers'}, {'name': 'newUsers'},
+            {'name': 'screenPageViews'}, {'name': 'engagedSessions'}, {'name': 'engagementRate'},
+            {'name': 'averageSessionDuration'}, {'name': 'bounceRate'}], 'limit': 100000})
+    upsert('ga4_overview_daily', [{'date': d8(r['dimensionValues'][0]['value']),
+        'sessions': gi(r['metricValues'][0]['value']), 'users': gi(r['metricValues'][1]['value']),
+        'new_users': gi(r['metricValues'][2]['value']), 'pageviews': gi(r['metricValues'][3]['value']),
+        'engaged_sessions': gi(r['metricValues'][4]['value']), 'engagement_rate': gf(r['metricValues'][5]['value']),
+        'avg_duration': round(float(r['metricValues'][6]['value']), 1), 'bounce_rate': gf(r['metricValues'][7]['value'])}
+        for r in orows], 'date')
+    print('ga4_overview_daily', len(orows))
+except Exception as e:
+    print('overview skip', repr(e)[:120])
+
+# Kirilimlar: device / city / newVsReturning / browser -> ga4_breakdown_daily
+for kind, dim in [('device', 'deviceCategory'), ('city', 'city'), ('usertype', 'newVsReturning'), ('browser', 'browser')]:
+    try:
+        brows = ga4({'dateRanges': [{'startDate': start, 'endDate': end}],
+            'dimensions': [{'name': 'date'}, {'name': dim}],
+            'metrics': [{'name': 'sessions'}, {'name': 'totalUsers'}], 'limit': 100000})
+        upsert('ga4_breakdown_daily', [{'date': d8(r['dimensionValues'][0]['value']), 'kind': kind,
+            'label': (r['dimensionValues'][1]['value'] or '(yok)'),
+            'sessions': gi(r['metricValues'][0]['value']), 'users': gi(r['metricValues'][1]['value'])}
+            for r in brows], 'date,kind,label')
+        print('ga4_breakdown', kind, len(brows))
+    except Exception as e:
+        print('breakdown skip', kind, repr(e)[:100])
+
+# Landing page (query string strip + gunluk topla)
+try:
+    lrows = ga4({'dateRanges': [{'startDate': start, 'endDate': end}],
+        'dimensions': [{'name': 'date'}, {'name': 'landingPagePlusQueryString'}],
+        'metrics': [{'name': 'sessions'}, {'name': 'engagedSessions'}], 'limit': 100000})
+    lagg = {}
+    for r in lrows:
+        dt2 = d8(r['dimensionValues'][0]['value'])
+        lp = (r['dimensionValues'][1]['value'] or '/').split('?')[0][:200]
+        k = (dt2, lp); a = lagg.get(k, {'s': 0, 'e': 0})
+        a['s'] += gi(r['metricValues'][0]['value']); a['e'] += gi(r['metricValues'][1]['value']); lagg[k] = a
+    upsert('ga4_landing_daily', [{'date': k[0], 'landing': k[1], 'sessions': v['s'], 'engaged_sessions': v['e']}
+        for k, v in lagg.items()], 'date,landing')
+    print('ga4_landing_daily', len(lagg))
+except Exception as e:
+    print('landing skip', repr(e)[:120])
+
+# Demografi (fail-soft; Google Signals kapaliysa/thresholded -> bos)
+try:
+    dmrows = ga4({'dateRanges': [{'startDate': start, 'endDate': end}],
+        'dimensions': [{'name': 'date'}, {'name': 'userGender'}, {'name': 'userAgeBracket'}],
+        'metrics': [{'name': 'totalUsers'}], 'limit': 100000})
+    upsert('ga4_demo_daily', [{'date': d8(r['dimensionValues'][0]['value']),
+        'gender': (r['dimensionValues'][1]['value'] or '(yok)'), 'age': (r['dimensionValues'][2]['value'] or '(yok)'),
+        'users': gi(r['metricValues'][0]['value'])} for r in dmrows], 'date,gender,age')
+    print('ga4_demo_daily', len(dmrows))
+except Exception as e:
+    print('demo skip', repr(e)[:120])
+
 # --- Tek seferlik baseline: eski (donmus) GA4 property 355419399 ---
 # ga4_baseline_daily bostaysa eski property'nin gecmis trafigini bir kez ceker,
 # sonraki calismalarda dolu oldugu icin atlar. Yeni property'nin canli
