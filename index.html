@@ -155,6 +155,7 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <nav id="topnav">
 <a class="tab" data-view="seo" href="#">SEO / Trafik</a>
 <a class="tab" data-view="facebook" href="#/sosyal/facebook">Facebook</a>
+<a class="tab" data-view="instagram" href="#/sosyal/instagram">Instagram</a>
 </nav>
 
 <div class="wrap" id="mainview">
@@ -291,6 +292,21 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 </div>
 </div>
 
+<!-- ===== SOSYAL · INSTAGRAM ===== -->
+<div class="wrap" id="igview" style="display:none">
+<div class="stage"><span class="n">1</span><div><div class="st">Instagram · Kitle & Büyüme</div><div class="sq">@capaortodonti takipçi büyümesi. Dönem kutusuna tıkla — trend o pencereye göre çizilir. Kutudaki büyük sayı anlık takipçi; altındaki değişim seçili dönemdeki net artış.</div></div></div>
+<div class="periods" id="ig_periodrow"></div>
+<div class="note" id="ig_rangenote"></div>
+<div class="kpis3" id="ig_kpi"></div>
+<div class="card">
+<h2>Instagram takipçi <span class="badge" id="ig_b_foll"></span></h2>
+<div class="ch"><b>Ne:</b> hesabın toplam takipçi sayısı (anlık). <b>Oku:</b> yükselen çizgi = büyüyen kitle · <b>soluk kesikli çizgi = önceki eş dönem</b>. <b>Not:</b> takipçi 6 saatte bir ölçülür; ölçüm 24 Tem'de başladı.</div>
+<div id="ig_ch_foll"></div>
+</div>
+<div class="stage"><span class="n">2</span><div><div class="st">Instagram · Etkileşim & Erişim</div><div class="sq">Seçili dönemdeki insight toplamları (günlük değerlerin toplamı). Facebook'ta bu veriler yok; Instagram'da API üzerinden geliyor.</div></div></div>
+<div class="kpis3" id="ig_insights"></div>
+</div>
+
 <div class="tt" id="tt"></div>
 <div id="login"><div class="box">
 <h2>Çapa Dashboard</h2>
@@ -316,7 +332,7 @@ const col=v=>CS.getPropertyValue(v).trim();
 const CUTOVER='2026-07-14';
 const AYK=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
 const COMMERCIAL=/(dis-teli|invisalign|seffaf-plak|bonding|implant|ortodonti|gulus|beyazlat|protez|kanal-ted|pedodont|zirkon|periodont|estetik|dolgu|dis-cek|kaplama|apare|braket)/i;
-let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[],fb:[]};
+let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[],fb:[],ig:[]};
 let GOALS={};
 
 /* dönemler: days = KPI penceresi (gün), chartDays = grafik penceresi, bucket = granülarite */
@@ -349,7 +365,7 @@ return all;
 }
 async function load(){
 try{
-const [site,chan,ev,cl,pages,queries,base,targets,pagecmp,fb]=await Promise.all([
+const [site,chan,ev,cl,pages,queries,base,targets,pagecmp,fb,ig]=await Promise.all([
 q('gsc_site_daily?order=date'),
 q('ga4_channel_daily?order=date'),
 q('ga4_event_daily?order=date'),
@@ -359,9 +375,10 @@ q('gsc_query_daily?order=date'),
 q('ga4_baseline_daily?order=date'),
 q('targets?select=*&order=metric_key'),
 q('ga4_page_compare?select=*&order=page'),
-q('meta_social_daily?platform=eq.facebook&select=date,followers&order=date').catch(()=>[])
+q('meta_social_daily?platform=eq.facebook&select=date,followers&order=date').catch(()=>[]),
+q('meta_social_daily?platform=eq.instagram&select=date,followers,reach,profile_views,views,engaged_accounts,total_interactions,likes,comments,shares,saves&order=date').catch(()=>[])
 ]);
-DB={site,chan,ev,cl,pages,queries,base,pagecmp,fb};
+DB={site,chan,ev,cl,pages,queries,base,pagecmp,fb,ig};
 GOALS={};(targets||[]).forEach(t=>GOALS[t.metric_key]=+t.monthly_target);
 route();
 }catch(e){
@@ -757,14 +774,49 @@ lineChart('#fb_ch_foll',fbSnapSeries(DB.fb,'followers'),col('--s1'),'Takipçi',f
 const bd=$('#fb_b_foll');if(bd){if(s.has){bd.className='badge '+s.cls;bd.textContent=s.txt;}else{bd.className='badge flat';bd.textContent='veri birikiyor';}}
 }
 
+/* ---------- Instagram (Sosyal) ---------- */
+function igLastDate(){let m=null;(DB.ig||[]).forEach(r=>{if(!m||r.date>m)m=r.date;});return m;}
+function igWin(){return curWin(igLastDate()||lastDataDate());}
+function igCurrent(key){const d=igLastDate();if(!d)return null;const r=(DB.ig||[]).find(x=>x.date===d);return r?+r[key]:null;}
+function igSum(key,a,b){return (DB.ig||[]).filter(r=>r.date>=a&&r.date<=b).reduce((s,r)=>s+(+r[key]||0),0);}
+function igPeriodBoxes(){
+const end=igLastDate()||lastDataDate();const cur=igCurrent('followers');
+$('#ig_periodrow').innerHTML=PERIODS.map(p=>{
+const kpiA=shiftDate(end,-(p.days-1)),kpiB=end;const s=fbNetLabel(fbNet(DB.ig,'followers',kpiA,kpiB));
+const on=(PERIOD===p.key)?' on':'';
+return '<button class="pbox'+on+'" data-p="'+p.key+'"><span class="pl">'+p.label+'</span><span class="pv">'+(cur!=null?fmt(cur):'—')+'</span><span class="pd '+s.cls+'">'+s.txt+'</span></button>';
+}).join('');
+}
+function igInsightTiles(){
+const a=W.kpi.a,b=W.kpi.b;
+const items=[['reach','Erişim'],['views','Görüntülenme'],['profile_views','Profil ziyareti'],['engaged_accounts','Etkileşen hesap'],['total_interactions','Toplam etkileşim'],['likes','Beğeni'],['comments','Yorum'],['saves','Kaydetme'],['shares','Paylaşım']];
+$('#ig_insights').innerHTML=items.map(function(it){return '<div class="tile"><div class="l">'+it[1]+'</div><div class="v">'+fmt(igSum(it[0],a,b))+'</div><div class="exp">seçili dönem toplamı</div></div>';}).join('');
+}
+function renderIG(){
+if(!DB.ig){$('#ig_kpi').innerHTML='';$('#ig_periodrow').innerHTML='';return;}
+W=igWin();BK=W.bucket;igPeriodBoxes();
+const fmtD=s=>s.slice(8)+'.'+s.slice(5,7)+'.'+s.slice(0,4);
+$('#ig_rangenote').innerHTML=(PERIOD==='custom'&&CUSTOM)
+?'<b>'+fmtD(W.kpi.a)+' → '+fmtD(W.kpi.b)+'</b> ('+W.days+' gün) · takipçi net + insight toplamı.'
+:'Seçili: <b>'+W.label+'</b> · grafik '+(BK==='day'?'günlük':BK==='week'?'haftalık':'aylık')+' · takipçi anlık (toplanmaz); insight değerleri seçili dönem toplamı.';
+const cur=igCurrent('followers');const nf=fbNet(DB.ig,'followers',W.kpi.a,W.kpi.b);const s=fbNetLabel(nf);
+$('#ig_kpi').innerHTML='<div class="tile"><div class="l">Instagram takipçi</div><div class="v">'+(cur!=null?fmt(cur):'—')+'</div><div class="exp">@capaortodonti · anlık toplam takipçi</div><div class="d '+(s.has?s.cls:'')+'">'+(s.has?s.txt+' (seçili dönem)':s.txt)+'</div></div>';
+lineChart('#ig_ch_foll',fbSnapSeries(DB.ig,'followers'),col('--s3'),'Takipçi',false,null,fbPrevSnap(DB.ig,'followers'));
+const bd=$('#ig_b_foll');if(bd){if(s.has){bd.className='badge '+s.cls;bd.textContent=s.txt;}else{bd.className='badge flat';bd.textContent='veri birikiyor';}}
+igInsightTiles();
+}
+
 /* ---------- drill-down ---------- */
 function route(){
 const h=location.hash;const detail=h.startsWith('#/detay/');const social=h.startsWith('#/sosyal/');
 $('#mainview').style.display=(detail||social)?'none':'';
 $('#detailview').style.display=detail?'':'none';
-$('#sosyalview').style.display=social?'':'none';
-document.querySelectorAll('#topnav .tab').forEach(t=>t.classList.toggle('on',t.dataset.view===(social?'facebook':'seo')));
+const ig=h.startsWith('#/sosyal/instagram');const fbv=social&&!ig;
+$('#sosyalview').style.display=fbv?'':'none';
+$('#igview').style.display=ig?'':'none';
+document.querySelectorAll('#topnav .tab').forEach(t=>t.classList.toggle('on',t.dataset.view===(ig?'instagram':fbv?'facebook':'seo')));
 if(detail){SESS=sessionDaily();W=curWin();BK=W.bucket;renderDetail();}
+else if(ig){renderIG();}
 else if(social){renderFB();}
 else{render();}
 }
@@ -830,6 +882,10 @@ $('#fb_periodrow').addEventListener('click',e=>{
 const b=e.target.closest('.pbox');if(!b)return;
 PERIOD=b.dataset.p;renderFB();
 });
+$('#ig_periodrow').addEventListener('click',e=>{
+const b=e.target.closest('.pbox');if(!b)return;
+PERIOD=b.dataset.p;renderIG();
+});
 function prefillCustom(){
 const end=lastDataDate();$('#c_b').value=end;$('#c_a').value=shiftDate(end,-29);
 }
@@ -837,7 +893,7 @@ function applyCustom(){
 const a=$('#c_a').value,b=$('#c_b').value;if(!a||!b)return;
 CUSTOM={a:a<b?a:b,b:a<b?b:a};PERIOD='custom';render();
 }
-addEventListener('resize',()=>{const h=location.hash;if(h.startsWith('#/detay/'))return;if(h.startsWith('#/sosyal/')){renderFB();return;}if(DB.site.length)render();});
+addEventListener('resize',()=>{const h=location.hash;if(h.startsWith('#/detay/'))return;if(h.startsWith('#/sosyal/instagram')){renderIG();return;}if(h.startsWith('#/sosyal/')){renderFB();return;}if(DB.site.length)render();});
 addEventListener('hashchange',route);
 
 /* ---------- Auth ---------- */
