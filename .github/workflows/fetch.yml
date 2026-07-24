@@ -24,3 +24,9 @@ jobs:
           BACKFILL_DAYS: ${{ inputs.backfill_days || '4' }}
           META_PAGE_TOKEN: ${{ secrets.META_PAGE_TOKEN }}
           META_PAGE_ID: '233229654211'
+      - run: python fetch_ig.py
+        if: always()
+        env:
+          SUPABASE_URL: https://raxdbwdrbygdsgpqlxqc.supabase.co
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          META_IG_TOKEN: ${{ secrets.META_IG_TOKEN }}
