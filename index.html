@@ -327,10 +327,17 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <div class="note" id="reklam_rangenote"></div>
 <div class="kpis3" id="reklam_kpi"></div>
 <div class="note" id="reklam_emptynote">⏳ Reklam henüz başlamadı — harcama/gösterim/tık, Google Ads + Meta Ads hesapları bağlanınca otomatik akacak. Aşağıdaki <b>dönüşüm kaynağı</b> tablosu şimdiden canlı.</div>
+<div class="card">
+<h2>Harcama seyri</h2>
+<div class="ch"><b>Ne:</b> seçili dönemde reklam harcaması (₺), seçilen zaman aralığına göre. Reklam başlayınca dolacak — şimdilik sıfır çizgisi.</div>
+<div id="reklam_ch_spend"></div>
+</div>
 <div class="stage"><span class="n">2</span><div><div class="st">Reklam · Dönüşüm Kaynağı (canlı)</div><div class="sq">Randevu ve telefon dönüşümleri hangi kaynaktan geliyor. Şu an organik trafik; reklam başlayınca <b>cpc</b> kaynakları (google/meta) burada ayrışır — hangi kampanya kaç randevu getirdi görünür.</div></div></div>
 <div class="card">
 <h2>Dönüşüm kaynağı <span class="badge" id="reklam_convtotal"></span></h2>
-<div class="ch"><b>Ne:</b> seçili dönemde randevu/telefon dönüşümlerinin kaynak/mecra dağılımı. <span class="chip b">reklam</span> etiketi = ücretli (cpc) kaynak.</div>
+<div class="ch"><b>Grafik:</b> seçili dönemde randevu/telefon dönüşüm trendi (zaman aralığına göre). <b>Tablo:</b> aynı dönüşümlerin kaynak/mecra dağılımı — <span class="chip b">reklam</span> = ücretli (cpc) kaynak.</div>
+<div class="legend" id="reklam_lg_conv"></div>
+<div id="reklam_ch_conv"></div>
 <div class="tscroll"><table id="reklam_convtable"></table></div>
 </div>
 </div>
@@ -906,6 +913,12 @@ const rows=convBySource(a,b);
 $('#reklam_convtable').innerHTML='<tr><th>Kaynak / Mecra</th><th class="num">Randevu</th><th class="num">Telefon</th></tr>'+
 (rows.length?rows.map(r=>'<tr><td>'+r.src+' / '+r.med+(r.med==='cpc'?' <span class="chip b">reklam</span>':'')+'</td><td class="num">'+fmt(r.rnd)+'</td><td class="num">'+fmt(r.tel)+'</td></tr>').join(''):'<tr><td colspan="3" style="color:var(--muted)">bu dönemde dönüşüm yok</td></tr>');
 const bd=$('#reklam_convtotal');if(bd){bd.className='badge flat';bd.textContent=fmt(rnd)+' randevu · '+fmt(tel)+' telefon';}
+const labels=W.buckets.map(x=>bucketLabel(x,W.bucket));
+const rndS=seriesRange((DB.convsrc||[]).filter(r=>r.event_name==='randevu_tamamlandi'),r=>+r.count).map(pp=>pp.y==null?0:pp.y);
+const telS=seriesRange((DB.convsrc||[]).filter(r=>r.event_name==='telefon_tiklama'),r=>+r.count).map(pp=>pp.y==null?0:pp.y);
+$('#reklam_lg_conv').innerHTML=[['Randevu','--s1'],['Telefon','--s2']].map(x=>'<span><i style="background:'+col(x[1])+'"></i>'+x[0]+'</span>').join('');
+multiLine('#reklam_ch_conv',labels,[{label:'Randevu',color:col('--s1'),data:rndS},{label:'Telefon',color:col('--s2'),data:telS}]);
+lineChart('#reklam_ch_spend',seriesRange(DB.ads||[],r=>+r.spend),col('--brand-orange'),'Harcama (₺)',false);
 }
 
 /* ---------- drill-down ---------- */
