@@ -90,6 +90,24 @@ upsert('ga4_event_daily', [{'date': d8(r['dimensionValues'][0]['value']),
     'count': int(r['metricValues'][0]['value'])} for r in rows],
     'date,event_name,dim1,dim2')
 
+# --- Donusum halkasi (reklam atribusyon): randevu/telefon event'leri kaynak/mecra/kampanya kirilimiyla ---
+# Reklam basladiginda cpc kaynaklarini ayirir; simdi organik baseline'i doldurur. Ayri tablo -> ga4_event_daily totalini bozmaz.
+crows = ga4({'dateRanges': [{'startDate': start, 'endDate': end}],
+    'dimensions': [{'name': 'date'}, {'name': 'eventName'},
+                   {'name': 'sessionSource'}, {'name': 'sessionMedium'},
+                   {'name': 'sessionCampaignName'}],
+    'metrics': [{'name': 'eventCount'}],
+    'dimensionFilter': {'filter': {'fieldName': 'eventName',
+        'inListFilter': {'values': ['randevu_tamamlandi', 'telefon_tiklama']}}},
+    'limit': 100000})
+upsert('ga4_conv_source_daily', [{'date': d8(r['dimensionValues'][0]['value']),
+    'event_name': r['dimensionValues'][1]['value'],
+    'source': r['dimensionValues'][2]['value'] or '',
+    'medium': r['dimensionValues'][3]['value'] or '',
+    'campaign': r['dimensionValues'][4]['value'] or '',
+    'count': int(r['metricValues'][0]['value'])} for r in crows],
+    'date,event_name,source,medium,campaign')
+
 # --- Tek seferlik baseline: eski (donmus) GA4 property 355419399 ---
 # ga4_baseline_daily bostaysa eski property'nin gecmis trafigini bir kez ceker,
 # sonraki calismalarda dolu oldugu icin atlar. Yeni property'nin canli
