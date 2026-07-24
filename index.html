@@ -12,7 +12,7 @@ color-scheme:light;
 --ink-1:#0b0b0b; --ink-2:#52514e; --muted:#898781;
 --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,.10);
 --s1:#2a78d6; --s2:#008300; --s3:#e87ba4; --s4:#eda100; --other:#898781;
---good:#006300; --bad:#d03b3b;
+--good:#006300; --bad:#d03b3b; --google:#d03b3b; --meta:#12356b;
 --brand-grad:linear-gradient(135deg,#1c74d4,#134c8f,#0f3f79);
 --brand-navy:#0f335f; --brand-teal:#0f9b8e; --brand-orange:#d9752b;
 --core:#0f335f; --ctxbg:rgba(137,135,129,.06);
@@ -24,7 +24,7 @@ color-scheme:dark;
 --ink-1:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
 --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,.10);
 --s1:#3987e5; --s2:#008300; --s3:#d55181; --s4:#c98500;
---good:#0ca30c; --core:#8fc0ff; --ctxbg:rgba(137,135,129,.10);
+--good:#0ca30c; --core:#8fc0ff; --ctxbg:rgba(137,135,129,.10); --google:#e2574f; --meta:#5f86c8;
 }
 }
 *{box-sizing:border-box;margin:0}
@@ -908,7 +908,7 @@ const rnd=convSum('randevu_tamamlandi',a,b),tel=convSum('telefon_tiklama',a,b);
 const cmpRow=(pf,label)=>{const sp=adsSumP(pf,'spend',a,b),ck=adsSumP(pf,'clicks',a,b),rd=adConvP(pf,'randevu_tamamlandi',a,b);const cp=rd>0?('₺'+fmt(Math.round(sp/rd))):'—';return '<tr><td>'+label+'</td><td class="num">'+(hasAds?'₺'+fmt(sp):'—')+'</td><td class="num">'+(hasAds?fmt(ck):'—')+'</td><td class="num">'+fmt(rd)+'</td><td class="num">'+cp+'</td></tr>';};
 const totSp=adsSum('spend',a,b),totCk=adsSum('clicks',a,b),totRd=adConvP('google','randevu_tamamlandi',a,b)+adConvP('meta','randevu_tamamlandi',a,b);
 const totCp=totRd>0?('₺'+fmt(Math.round(totSp/totRd))):'—';
-$('#reklam_cmp').innerHTML='<tr><th>Platform</th><th class="num">Harcama</th><th class="num">Tık</th><th class="num">Randevu</th><th class="num">Maliyet/Rnd</th></tr>'+cmpRow('google','🔵 Google')+cmpRow('meta','🟡 Meta')+'<tr style="font-weight:600"><td>Toplam</td><td class="num">'+(hasAds?'₺'+fmt(totSp):'—')+'</td><td class="num">'+(hasAds?fmt(totCk):'—')+'</td><td class="num">'+fmt(totRd)+'</td><td class="num">'+totCp+'</td></tr>';
+$('#reklam_cmp').innerHTML='<tr><th>Platform</th><th class="num">Harcama</th><th class="num">Tık</th><th class="num">Randevu</th><th class="num">Maliyet/Rnd</th></tr>'+cmpRow('google','<span style="color:'+col('--google')+'">●</span> Google')+cmpRow('meta','<span style="color:'+col('--meta')+'">●</span> Meta')+'<tr style="font-weight:600"><td>Toplam</td><td class="num">'+(hasAds?'₺'+fmt(totSp):'—')+'</td><td class="num">'+(hasAds?fmt(totCk):'—')+'</td><td class="num">'+fmt(totRd)+'</td><td class="num">'+totCp+'</td></tr>';
 const en=$('#reklam_emptynote');if(en)en.style.display=hasAds?'none':'';
 const rows=convBySource(a,b);
 $('#reklam_convtable').innerHTML='<tr><th>Kaynak / Mecra</th><th class="num">Randevu</th><th class="num">Telefon</th></tr>'+
@@ -921,8 +921,8 @@ $('#reklam_lg_conv').innerHTML=[['Randevu','--s1'],['Telefon','--s2']].map(x=>'<
 multiLine('#reklam_ch_conv',labels,[{label:'Randevu',color:col('--s1'),data:rndS},{label:'Telefon',color:col('--s2'),data:telS}]);
 const gsp=seriesRange((DB.ads||[]).filter(r=>r.platform==='google'),r=>+r.spend).map(pp=>pp.y==null?0:pp.y);
 const msp=seriesRange((DB.ads||[]).filter(r=>r.platform==='meta'),r=>+r.spend).map(pp=>pp.y==null?0:pp.y);
-$('#reklam_lg_spend').innerHTML=[['Google','--s1'],['Meta','--s4']].map(x=>'<span><i style="background:'+col(x[1])+'"></i>'+x[0]+'</span>').join('');
-multiLine('#reklam_ch_spend',labels,[{label:'Google',color:col('--s1'),data:gsp},{label:'Meta',color:col('--s4'),data:msp}]);
+$('#reklam_lg_spend').innerHTML=[['Google','--google'],['Meta','--meta']].map(x=>'<span><i style="background:'+col(x[1])+'"></i>'+x[0]+'</span>').join('');
+multiLine('#reklam_ch_spend',labels,[{label:'Google',color:col('--google'),data:gsp},{label:'Meta',color:col('--meta'),data:msp}]);
 }
 
 /* ---------- drill-down ---------- */
