@@ -108,6 +108,31 @@ upsert('ga4_conv_source_daily', [{'date': d8(r['dimensionValues'][0]['value']),
     'count': int(r['metricValues'][0]['value'])} for r in crows],
     'date,event_name,source,medium,campaign')
 
+# --- GTM tab: randevu_adim funnel (adim custom dimension, event-scope) ---
+# GTM'in izledigi randevu adimlarini adim kirilimiyla ceker. customEvent:adim yoksa fail-soft atlar (fetcher bozulmaz).
+try:
+    frows = ga4({'dateRanges': [{'startDate': start, 'endDate': end}],
+        'dimensions': [{'name': 'date'}, {'name': 'customEvent:adim'}],
+        'metrics': [{'name': 'eventCount'}],
+        'dimensionFilter': {'filter': {'fieldName': 'eventName',
+            'inListFilter': {'values': ['randevu_adim']}}},
+        'limit': 100000})
+    upsert('ga4_funnel_daily', [{'date': d8(r['dimensionValues'][0]['value']),
+        'adim': (r['dimensionValues'][1]['value'] or '(yok)'),
+        'count': int(r['metricValues'][0]['value'])} for r in frows], 'date,adim')
+    print('ga4_funnel_daily', len(frows))
+except Exception as e:
+    print('funnel skip (customEvent:adim?):', repr(e)[:140])
+
+# --- GTM tab: tum izlenen event'ler (isim x gun) ---
+erows = ga4({'dateRanges': [{'startDate': start, 'endDate': end}],
+    'dimensions': [{'name': 'date'}, {'name': 'eventName'}],
+    'metrics': [{'name': 'eventCount'}], 'limit': 100000})
+upsert('ga4_events_all_daily', [{'date': d8(r['dimensionValues'][0]['value']),
+    'event_name': r['dimensionValues'][1]['value'],
+    'count': int(r['metricValues'][0]['value'])} for r in erows], 'date,event_name')
+print('ga4_events_all_daily', len(erows))
+
 # --- Tek seferlik baseline: eski (donmus) GA4 property 355419399 ---
 # ga4_baseline_daily bostaysa eski property'nin gecmis trafigini bir kez ceker,
 # sonraki calismalarda dolu oldugu icin atlar. Yeni property'nin canli
