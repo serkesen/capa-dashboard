@@ -322,14 +322,15 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 
 <!-- ===== REKLAM ===== -->
 <div class="wrap" id="reklamview" style="display:none">
-<div class="stage"><span class="n">1</span><div><div class="st">Reklam · Harcama & Performans</div><div class="sq">Google & Meta reklam harcaması, gösterimi, tıkı ve randevu başına maliyet. Reklam hesapları bağlanınca otomatik dolacak.</div></div></div>
+<div class="stage"><span class="n">1</span><div><div class="st">Reklam · Google vs Meta</div><div class="sq">Google ve Meta reklamları <b>ayrı ayrı</b>: harcama, tık, atfedilen randevu ve randevu başına maliyet. Reklam hesapları bağlanınca dolar.</div></div></div>
 <div class="periods" id="reklam_periodrow"></div>
 <div class="note" id="reklam_rangenote"></div>
-<div class="kpis3" id="reklam_kpi"></div>
-<div class="note" id="reklam_emptynote">⏳ Reklam henüz başlamadı — harcama/gösterim/tık, Google Ads + Meta Ads hesapları bağlanınca otomatik akacak. Aşağıdaki <b>dönüşüm kaynağı</b> tablosu şimdiden canlı.</div>
+<div class="tscroll"><table id="reklam_cmp"></table></div>
+<div class="note" id="reklam_emptynote">⏳ Reklam henüz başlamadı — yukarıdaki Google/Meta karşılaştırması, hesaplar bağlanınca dolacak. Aşağıdaki <b>dönüşüm kaynağı</b> tablosu (organik dahil) şimdiden canlı.</div>
 <div class="card">
-<h2>Harcama seyri</h2>
-<div class="ch"><b>Ne:</b> seçili dönemde reklam harcaması (₺), seçilen zaman aralığına göre. Reklam başlayınca dolacak — şimdilik sıfır çizgisi.</div>
+<h2>Harcama seyri — Google vs Meta</h2>
+<div class="ch"><b>Ne:</b> seçili dönemde Google ve Meta reklam harcaması (₺), ayrı çizgiler. Reklam başlayınca dolar.</div>
+<div class="legend" id="reklam_lg_spend"></div>
 <div id="reklam_ch_spend"></div>
 </div>
 <div class="stage"><span class="n">2</span><div><div class="st">Reklam · Dönüşüm Kaynağı (canlı)</div><div class="sq">Randevu ve telefon dönüşümleri hangi kaynaktan geliyor. Şu an organik trafik; reklam başlayınca <b>cpc</b> kaynakları (google/meta) burada ayrışır — hangi kampanya kaç randevu getirdi görünür.</div></div></div>
@@ -896,18 +897,18 @@ return '<button class="pbox'+on+'" data-p="'+p.key+'"><span class="pl">'+p.label
 }).join('');
 }
 function reklamTile(l,v,exp){return '<div class="tile"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="exp">'+exp+'</div></div>';}
+function adsSumP(pf,key,a,b){return (DB.ads||[]).filter(r=>r.date>=a&&r.date<=b&&r.platform===pf).reduce((s,r)=>s+(+r[key]||0),0);}
+function adConvP(pf,ev,a,b){return (DB.convsrc||[]).filter(r=>r.date>=a&&r.date<=b&&r.event_name===ev&&r.medium==='cpc'&&r.source===pf).reduce((s,r)=>s+(+r.count||0),0);}
 function renderReklam(){
 W=reklamWin();BK=W.bucket;reklamPeriodBoxes();
 const a=W.kpi.a,b=W.kpi.b;
 $('#reklam_rangenote').innerHTML='Seçili: <b>'+W.label+'</b> · dönüşümler seçili dönem toplamı · dönem kutusundaki sayı = atfedilen randevu.';
 const hasAds=(DB.ads||[]).some(r=>r.date>=a&&r.date<=b);
-const spend=adsSum('spend',a,b),impr=adsSum('impressions',a,b),clk=adsSum('clicks',a,b);
 const rnd=convSum('randevu_tamamlandi',a,b),tel=convSum('telefon_tiklama',a,b);
-const cpr=(hasAds&&rnd>0)?('₺'+fmt(Math.round(spend/rnd))):'—';
-$('#reklam_kpi').innerHTML=
-reklamTile('Harcama',hasAds?('₺'+fmt(spend)):'—','reklam platformu toplam harcama')+
-reklamTile('Gösterim / Tık',hasAds?(fmt(impr)+' / '+fmt(clk)):'—','reklam gösterimi ve tıkı')+
-reklamTile('Maliyet / Randevu',cpr,'harcama ÷ atfedilen randevu');
+const cmpRow=(pf,label)=>{const sp=adsSumP(pf,'spend',a,b),ck=adsSumP(pf,'clicks',a,b),rd=adConvP(pf,'randevu_tamamlandi',a,b);const cp=rd>0?('₺'+fmt(Math.round(sp/rd))):'—';return '<tr><td>'+label+'</td><td class="num">'+(hasAds?'₺'+fmt(sp):'—')+'</td><td class="num">'+(hasAds?fmt(ck):'—')+'</td><td class="num">'+fmt(rd)+'</td><td class="num">'+cp+'</td></tr>';};
+const totSp=adsSum('spend',a,b),totCk=adsSum('clicks',a,b),totRd=adConvP('google','randevu_tamamlandi',a,b)+adConvP('meta','randevu_tamamlandi',a,b);
+const totCp=totRd>0?('₺'+fmt(Math.round(totSp/totRd))):'—';
+$('#reklam_cmp').innerHTML='<tr><th>Platform</th><th class="num">Harcama</th><th class="num">Tık</th><th class="num">Randevu</th><th class="num">Maliyet/Rnd</th></tr>'+cmpRow('google','🔵 Google')+cmpRow('meta','🟡 Meta')+'<tr style="font-weight:600"><td>Toplam</td><td class="num">'+(hasAds?'₺'+fmt(totSp):'—')+'</td><td class="num">'+(hasAds?fmt(totCk):'—')+'</td><td class="num">'+fmt(totRd)+'</td><td class="num">'+totCp+'</td></tr>';
 const en=$('#reklam_emptynote');if(en)en.style.display=hasAds?'none':'';
 const rows=convBySource(a,b);
 $('#reklam_convtable').innerHTML='<tr><th>Kaynak / Mecra</th><th class="num">Randevu</th><th class="num">Telefon</th></tr>'+
@@ -918,7 +919,10 @@ const rndS=seriesRange((DB.convsrc||[]).filter(r=>r.event_name==='randevu_tamaml
 const telS=seriesRange((DB.convsrc||[]).filter(r=>r.event_name==='telefon_tiklama'),r=>+r.count).map(pp=>pp.y==null?0:pp.y);
 $('#reklam_lg_conv').innerHTML=[['Randevu','--s1'],['Telefon','--s2']].map(x=>'<span><i style="background:'+col(x[1])+'"></i>'+x[0]+'</span>').join('');
 multiLine('#reklam_ch_conv',labels,[{label:'Randevu',color:col('--s1'),data:rndS},{label:'Telefon',color:col('--s2'),data:telS}]);
-lineChart('#reklam_ch_spend',seriesRange(DB.ads||[],r=>+r.spend),col('--brand-orange'),'Harcama (₺)',false);
+const gsp=seriesRange((DB.ads||[]).filter(r=>r.platform==='google'),r=>+r.spend).map(pp=>pp.y==null?0:pp.y);
+const msp=seriesRange((DB.ads||[]).filter(r=>r.platform==='meta'),r=>+r.spend).map(pp=>pp.y==null?0:pp.y);
+$('#reklam_lg_spend').innerHTML=[['Google','--s1'],['Meta','--s4']].map(x=>'<span><i style="background:'+col(x[1])+'"></i>'+x[0]+'</span>').join('');
+multiLine('#reklam_ch_spend',labels,[{label:'Google',color:col('--s1'),data:gsp},{label:'Meta',color:col('--s4'),data:msp}]);
 }
 
 /* ---------- drill-down ---------- */
