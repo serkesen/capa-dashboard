@@ -64,6 +64,14 @@ header .hwrap{max-width:1140px;margin:0 auto;padding:0 4px}
 
 .kpis3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:2px 0 6px}
 @media(max-width:520px){.kpis3{grid-template-columns:1fr}}
+.funnel{margin:2px 0}
+.fstep{display:grid;grid-template-columns:78px 1fr 96px;gap:8px;align-items:center;margin-bottom:8px}
+.fstep .fl{font-size:12px;color:var(--ink-2)}
+.fbarwrap{background:var(--grid);border-radius:6px;height:24px;overflow:hidden}
+.fbar{background:var(--brand-teal);height:100%;border-radius:6px;min-width:3px}
+.fmeta{font-size:12px;color:var(--muted);text-align:right;white-space:nowrap}
+.fmeta b{color:var(--ink-1);font-size:13px}
+.fdrop{color:var(--bad)}
 .igcharts{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:2px 0 6px}
 @media(max-width:620px){.igcharts{grid-template-columns:1fr}}
 .mini{background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;padding:10px 12px}
@@ -164,6 +172,7 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <a class="tab" data-view="facebook" href="#/sosyal/facebook">Facebook</a>
 <a class="tab" data-view="instagram" href="#/sosyal/instagram">Instagram</a>
 <a class="tab" data-view="reklam" href="#/reklam">Reklam</a>
+<a class="tab" data-view="gtm" href="#/gtm">GTM</a>
 </nav>
 
 <div class="wrap" id="mainview">
@@ -343,6 +352,27 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 </div>
 </div>
 
+<!-- ===== GTM ===== -->
+<div class="wrap" id="gtmview" style="display:none">
+<div class="stage"><span class="n">1</span><div><div class="st">GTM · Randevu Funnel</div><div class="sq">Google Tag Manager'\''ın izlediği randevu adımları (randevu_adim) — adım adım kaç olay, nerede düşüş var. Son halka = tamamlanan randevu.</div></div></div>
+<div class="periods" id="gtm_periodrow"></div>
+<div class="note" id="gtm_rangenote"></div>
+<div class="card">
+<h2>Randevu funnel</h2>
+<div class="ch"><b>Ne:</b> seçili dönemde funnel adımlarının olay sayısı; sağda ilk adıma göre % ve bir önceki adımdan düşüş. <b>Oku:</b> daralan çubuklar = ilerledikçe kaybedilen kullanıcı.</div>
+<div id="gtm_funnel"></div>
+</div>
+<div class="card">
+<h2>Funnel adımı seyri</h2>
+<div class="ch"><b>Ne:</b> <b>randevu_adim</b> olaylarının seçili zaman aralığına göre trendi.</div>
+<div id="gtm_ch_funnel"></div>
+</div>
+<div class="stage"><span class="n">2</span><div><div class="st">GTM · İzlenen Event'\''ler</div><div class="sq">GTM/GA4'\''te toplanan tüm event'\''ler ve seçili dönemdeki sayıları. <span class="chip b">özel</span> = senin kurduğun dönüşüm/funnel event'\''leri.</div></div></div>
+<div class="card">
+<div class="tscroll"><table id="gtm_events"></table></div>
+</div>
+</div>
+
 <div class="tt" id="tt"></div>
 <div id="login"><div class="box">
 <h2>Çapa Dashboard</h2>
@@ -368,7 +398,7 @@ const col=v=>CS.getPropertyValue(v).trim();
 const CUTOVER='2026-07-14';
 const AYK=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
 const COMMERCIAL=/(dis-teli|invisalign|seffaf-plak|bonding|implant|ortodonti|gulus|beyazlat|protez|kanal-ted|pedodont|zirkon|periodont|estetik|dolgu|dis-cek|kaplama|apare|braket)/i;
-let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[],fb:[],ig:[],ads:[],convsrc:[]};
+let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[],fb:[],ig:[],ads:[],convsrc:[],funnel:[],gaev:[]};
 let GOALS={};
 
 /* dönemler: days = KPI penceresi (gün), chartDays = grafik penceresi, bucket = granülarite */
@@ -401,7 +431,7 @@ return all;
 }
 async function load(){
 try{
-const [site,chan,ev,cl,pages,queries,base,targets,pagecmp,fb,ig,ads,convsrc]=await Promise.all([
+const [site,chan,ev,cl,pages,queries,base,targets,pagecmp,fb,ig,ads,convsrc,funnel,gaev]=await Promise.all([
 q('gsc_site_daily?order=date'),
 q('ga4_channel_daily?order=date'),
 q('ga4_event_daily?order=date'),
@@ -414,9 +444,11 @@ q('ga4_page_compare?select=*&order=page'),
 q('meta_social_daily?platform=eq.facebook&select=date,followers&order=date').catch(()=>[]),
 q('meta_social_daily?platform=eq.instagram&select=date,followers,reach,profile_views,views,engaged_accounts,total_interactions,likes,comments,shares,saves&order=date').catch(()=>[]),
 q('ads_daily?select=date,platform,campaign,spend,impressions,clicks,leads&order=date').catch(()=>[]),
-q('ga4_conv_source_daily?select=date,event_name,source,medium,campaign,count&order=date').catch(()=>[])
+q('ga4_conv_source_daily?select=date,event_name,source,medium,campaign,count&order=date').catch(()=>[]),
+q('ga4_funnel_daily?select=date,adim,count&order=date').catch(()=>[]),
+q('ga4_events_all_daily?select=date,event_name,count&order=date').catch(()=>[])
 ]);
-DB={site,chan,ev,cl,pages,queries,base,pagecmp,fb,ig,ads,convsrc};
+DB={site,chan,ev,cl,pages,queries,base,pagecmp,fb,ig,ads,convsrc,funnel,gaev};
 GOALS={};(targets||[]).forEach(t=>GOALS[t.metric_key]=+t.monthly_target);
 route();
 }catch(e){
@@ -925,17 +957,64 @@ $('#reklam_lg_spend').innerHTML=[['Google','--google'],['Meta','--meta']].map(x=
 multiLine('#reklam_ch_spend',labels,[{label:'Google',color:col('--google'),data:gsp},{label:'Meta',color:col('--meta'),data:msp}]);
 }
 
+/* ---------- GTM (izlenen event + funnel) ---------- */
+function gtmLastDate(){let m=null;[...(DB.funnel||[]),...(DB.gaev||[])].forEach(r=>{if(!m||r.date>m)m=r.date;});return m;}
+function gtmWin(){return curWin(gtmLastDate()||lastDataDate());}
+function gaevSum(ev,a,b){return (DB.gaev||[]).filter(r=>r.date>=a&&r.date<=b&&r.event_name===ev).reduce((s,r)=>s+(+r.count||0),0);}
+function funnelSteps(a,b){
+const by={};(DB.funnel||[]).filter(r=>r.date>=a&&r.date<=b).forEach(r=>{by[r.adim]=(by[r.adim]||0)+(+r.count||0);});
+const keys=Object.keys(by).sort((x,y)=>(parseFloat(x)||0)-(parseFloat(y)||0));
+const steps=keys.map(k=>({label:'Adım '+k,count:by[k]}));
+const done=gaevSum('randevu_tamamlandi',a,b);
+if(steps.length||done>0)steps.push({label:'Randevu \u2713',count:done});
+return steps;
+}
+function funnelRender(sel,steps){
+const el=$(sel);if(!el)return;
+if(!steps.length){el.innerHTML='<div class="ch" style="margin:0">bu dönemde funnel verisi yok</div>';return;}
+const mx=Math.max(1,...steps.map(s=>s.count)),first=steps[0].count;
+el.innerHTML='<div class="funnel">'+steps.map(function(s,i){
+const w=Math.max(3,(s.count/mx)*100),pf=first>0?Math.round(s.count/first*100):0;
+const prev=i>0?steps[i-1].count:null,drop=(prev&&prev>0)?Math.round((s.count-prev)/prev*100):null;
+return '<div class="fstep"><div class="fl">'+s.label+'</div><div class="fbarwrap"><div class="fbar" style="width:'+w.toFixed(1)+'%"></div></div><div class="fmeta"><b>'+fmt(s.count)+'</b> <span class="fpct">%'+pf+'</span>'+(drop!=null?' <span class="fdrop">'+drop+'%</span>':'')+'</div></div>';
+}).join('')+'</div>';
+}
+function gaevRows(a,b){
+const by={};(DB.gaev||[]).filter(r=>r.date>=a&&r.date<=b).forEach(r=>{by[r.event_name]=(by[r.event_name]||0)+(+r.count||0);});
+return Object.entries(by).map(function(e){return {name:e[0],count:e[1]};}).sort((x,y)=>y.count-x.count);
+}
+function gtmPeriodBoxes(){
+const end=gtmLastDate()||lastDataDate();
+$('#gtm_periodrow').innerHTML=PERIODS.map(function(p){
+const a=shiftDate(end,-(p.days-1)),b=end,pa=shiftDate(a,-1),ppa=shiftDate(a,-p.days);
+const cur=gaevSum('randevu_adim',a,b),prev=gaevSum('randevu_adim',ppa,pa);
+const s=deltaFull(cur,prev),on=(PERIOD===p.key)?' on':'';
+return '<button class="pbox'+on+'" data-p="'+p.key+'"><span class="pl">'+p.label+'</span><span class="pv">'+fmt(cur)+'</span><span class="pd '+s.cls+'">'+(s.has?s.txt:'\u2014')+'</span></button>';
+}).join('');
+}
+function renderGTM(){
+W=gtmWin();BK=W.bucket;gtmPeriodBoxes();
+const a=W.kpi.a,b=W.kpi.b;
+$('#gtm_rangenote').innerHTML='Seçili: <b>'+W.label+'</b> · funnel ve tüm eventler seçili dönem toplamı · dönem kutusundaki sayı = funnel adımı (randevu_adim).';
+funnelRender('#gtm_funnel',funnelSteps(a,b));
+lineChart('#gtm_ch_funnel',seriesRange((DB.gaev||[]).filter(r=>r.event_name==='randevu_adim'),r=>+r.count),col('--brand-teal'),'Funnel adımı',false);
+const rows=gaevRows(a,b),key=['randevu_tamamlandi','telefon_tiklama','randevu_adim'];
+$('#gtm_events').innerHTML='<tr><th>Event</th><th class="num">Sayı</th></tr>'+(rows.length?rows.map(function(r){return '<tr><td>'+r.name+(key.includes(r.name)?' <span class="chip b">özel</span>':'')+'</td><td class="num">'+fmt(r.count)+'</td></tr>';}).join(''):'<tr><td colspan="2" style="color:var(--muted)">veri yok</td></tr>');
+}
+
 /* ---------- drill-down ---------- */
 function route(){
-const h=location.hash;const detail=h.startsWith('#/detay/');const social=h.startsWith('#/sosyal/');const reklam=h.startsWith('#/reklam');
-$('#mainview').style.display=(detail||social||reklam)?'none':'';
+const h=location.hash;const detail=h.startsWith('#/detay/');const social=h.startsWith('#/sosyal/');const reklam=h.startsWith('#/reklam');const gtm=h.startsWith('#/gtm');
+$('#mainview').style.display=(detail||social||reklam||gtm)?'none':'';
 $('#detailview').style.display=detail?'':'none';
 const ig=h.startsWith('#/sosyal/instagram');const fbv=social&&!ig;
 $('#sosyalview').style.display=fbv?'':'none';
 $('#igview').style.display=ig?'':'none';
 $('#reklamview').style.display=reklam?'':'none';
-document.querySelectorAll('#topnav .tab').forEach(t=>t.classList.toggle('on',t.dataset.view===(reklam?'reklam':ig?'instagram':fbv?'facebook':'seo')));
+$('#gtmview').style.display=gtm?'':'none';
+document.querySelectorAll('#topnav .tab').forEach(t=>t.classList.toggle('on',t.dataset.view===(gtm?'gtm':reklam?'reklam':ig?'instagram':fbv?'facebook':'seo')));
 if(detail){SESS=sessionDaily();W=curWin();BK=W.bucket;renderDetail();}
+else if(gtm){renderGTM();}
 else if(reklam){renderReklam();}
 else if(ig){renderIG();}
 else if(social){renderFB();}
@@ -1011,6 +1090,10 @@ $('#reklam_periodrow').addEventListener('click',e=>{
 const b=e.target.closest('.pbox');if(!b)return;
 PERIOD=b.dataset.p;renderReklam();
 });
+$('#gtm_periodrow').addEventListener('click',e=>{
+const b=e.target.closest('.pbox');if(!b)return;
+PERIOD=b.dataset.p;renderGTM();
+});
 function prefillCustom(){
 const end=lastDataDate();$('#c_b').value=end;$('#c_a').value=shiftDate(end,-29);
 }
@@ -1018,7 +1101,7 @@ function applyCustom(){
 const a=$('#c_a').value,b=$('#c_b').value;if(!a||!b)return;
 CUSTOM={a:a<b?a:b,b:a<b?b:a};PERIOD='custom';render();
 }
-addEventListener('resize',()=>{const h=location.hash;if(h.startsWith('#/detay/'))return;if(h.startsWith('#/reklam')){renderReklam();return;}if(h.startsWith('#/sosyal/instagram')){renderIG();return;}if(h.startsWith('#/sosyal/')){renderFB();return;}if(DB.site.length)render();});
+addEventListener('resize',()=>{const h=location.hash;if(h.startsWith('#/detay/'))return;if(h.startsWith('#/gtm')){renderGTM();return;}if(h.startsWith('#/reklam')){renderReklam();return;}if(h.startsWith('#/sosyal/instagram')){renderIG();return;}if(h.startsWith('#/sosyal/')){renderFB();return;}if(DB.site.length)render();});
 addEventListener('hashchange',route);
 
 /* ---------- Auth ---------- */
