@@ -80,6 +80,8 @@ header .hwrap{max-width:1140px;margin:0 auto;padding:0 4px}
 .mchart .mh{display:flex;justify-content:flex-start;align-items:baseline;gap:8px;font-size:12px;font-weight:600;color:var(--ink-2)}
 .mchart .mh b{font-size:16px;font-weight:700;letter-spacing:-.01em;color:var(--ink-1);font-variant-numeric:tabular-nums}
 .mchart .mx{font-size:10px;color:var(--muted);margin:1px 0 3px}
+.mchart .mh .d{font-size:11px;font-weight:600;color:var(--muted);font-style:normal;font-variant-numeric:tabular-nums}
+.mchart .mh .d.up{color:var(--good)} .mchart .mh .d.down{color:var(--bad)}
 .mchart.hero{grid-column:1/-1}
 .mini{background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;padding:10px 12px}
 .mini .minihd{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:2px}
@@ -1053,9 +1055,22 @@ const sess=ovSum('sessions',a,b),users=ovSum('users',a,b),nu=ovSum('new_users',a
 const engRate=sess>0?eng/sess:0,bounce=1-engRate;
 const durTot=(DB.ov||[]).filter(r=>r.date>=a&&r.date<=b).reduce((s,r)=>s+(+r.avg_duration||0)*(+r.sessions||0),0),dur=sess>0?durTot/sess:0;
 var pctF=function(v){return '%'+Math.round(v);};
-var cards=[['sess','Oturum',fmt(sess),'GA4 sessions',seriesRange(DB.ov,function(r){return +r.sessions;}),col('--brand-teal'),fmt,prevSeriesRange(DB.ov,function(r){return +r.sessions;}),true],['users','Kullanıcı',fmt(users),'toplam (yaklaşık)',seriesRange(DB.ov,function(r){return +r.users;}),col('--brand-teal'),fmt,null,false],['newusers','Yeni kullanıcı',fmt(nu),'newUsers',seriesRange(DB.ov,function(r){return +r.new_users;}),col('--brand-teal'),fmt,null,false],['pv','Sayfa görüntüleme',fmt(pv),'screenPageViews',seriesRange(DB.ov,function(r){return +r.pageviews;}),col('--brand-teal'),fmt,null,false],['engr','Etkileşim oranı','%'+Math.round(engRate*100),'etkileşimli / oturum',ovDerivedSeries(function(r){return +r.engaged_sessions;},function(r){return +r.sessions;},100),col('--s1'),pctF,null,false],['dur','Ort. süre',fmtDur(dur),'ort. oturum süresi',ovDerivedSeries(function(r){return (+r.avg_duration)*(+r.sessions);},function(r){return +r.sessions;},1),col('--s1'),fmtDur,null,false],['bounce','Bounce','%'+Math.round(bounce*100),'1 − etkileşim',ovDerivedSeries(function(r){return (+r.sessions)-(+r.engaged_sessions);},function(r){return +r.sessions;},100),col('--s1'),pctF,null,false]];
-$('#ga4_kpicharts').innerHTML=cards.map(function(k){return '<div class="mchart'+(k[8]?' hero':'')+'"><div class="mh"><span>'+k[1]+'</span><b>'+k[2]+'</b></div><div class="mx">'+k[3]+'</div><div id="ga4c_'+k[0]+'"></div></div>';}).join('');
-cards.forEach(function(k){lineChart('#ga4c_'+k[0],k[4],k[5],k[1],false,null,k[7],k[6]);});
+var pa=W.prev.a,pb=W.prev.b,hasPrev=(DB.ov||[]).some(function(r){return r.date>=pa&&r.date<=pb;});
+var sessP=ovSum('sessions',pa,pb),usersP=ovSum('users',pa,pb),nuP=ovSum('new_users',pa,pb),pvP=ovSum('pageviews',pa,pb),engP=ovSum('engaged_sessions',pa,pb);
+var engRateP=sessP>0?engP/sessP:0,bounceP=1-engRateP;
+var durTotP=(DB.ov||[]).filter(function(r){return r.date>=pa&&r.date<=pb;}).reduce(function(s2,r){return s2+(+r.avg_duration||0)*(+r.sessions||0);},0),durP=sessP>0?durTotP/sessP:0;
+function kd(cur,prev,invert){var s2=deltaFull(cur,prev);if(!s2.has)return '<em class="d flat">yeni</em>';var pp=pct(cur,prev),cls=s2.cls;if(invert&&cls==='up')cls='down';else if(invert&&cls==='down')cls='up';return '<em class="d '+cls+'">'+s2.arrow+' %'+Math.round(Math.abs(pp))+'</em>';}
+var cards=[
+{id:'sess',name:'Oturum',cur:sess,prev:sessP,f:fmt,ser:seriesRange(DB.ov,function(r){return +r.sessions;}),col:col('--brand-teal'),ov:prevSeriesRange(DB.ov,function(r){return +r.sessions;}),hero:true},
+{id:'users',name:'Kullanıcı',cur:users,prev:usersP,f:fmt,ser:seriesRange(DB.ov,function(r){return +r.users;}),col:col('--brand-teal'),ov:null,hero:false},
+{id:'newusers',name:'Yeni kullanıcı',cur:nu,prev:nuP,f:fmt,ser:seriesRange(DB.ov,function(r){return +r.new_users;}),col:col('--brand-teal'),ov:null,hero:false},
+{id:'pv',name:'Sayfa görüntüleme',cur:pv,prev:pvP,f:fmt,ser:seriesRange(DB.ov,function(r){return +r.pageviews;}),col:col('--brand-teal'),ov:null,hero:false},
+{id:'engr',name:'Etkileşim oranı',cur:engRate*100,prev:engRateP*100,f:pctF,ser:ovDerivedSeries(function(r){return +r.engaged_sessions;},function(r){return +r.sessions;},100),col:col('--s1'),ov:null,hero:false},
+{id:'dur',name:'Ort. süre',cur:dur,prev:durP,f:fmtDur,ser:ovDerivedSeries(function(r){return (+r.avg_duration)*(+r.sessions);},function(r){return +r.sessions;},1),col:col('--s1'),ov:null,hero:false},
+{id:'bounce',name:'Bounce',cur:bounce*100,prev:bounceP*100,f:pctF,ser:ovDerivedSeries(function(r){return (+r.sessions)-(+r.engaged_sessions);},function(r){return +r.sessions;},100),col:col('--s1'),ov:null,hero:false,invert:true}
+];
+$('#ga4_kpicharts').innerHTML=cards.map(function(k){var chip=hasPrev?kd(k.cur,k.prev,k.invert):'<em class="d flat">yeni</em>';var old=hasPrev?('önceki: '+k.f(k.prev)):'önceki dönem: veri yok';return '<div class="mchart'+(k.hero?' hero':'')+'"><div class="mh"><span>'+k.name+'</span><b>'+k.f(k.cur)+'</b>'+chip+'</div><div class="mx">'+old+'</div><div id="ga4c_'+k.id+'"></div></div>';}).join('');
+cards.forEach(function(k){lineChart('#ga4c_'+k.id,k.ser,k.col,k.name,false,null,k.ov,k.f);});
 shareBars('#ga4_device',brkRows('device',a,b),'--brand-teal');
 shareBars('#ga4_usertype',brkRows('usertype',a,b),'--s1');
 const city=brkRows('city',a,b).slice(0,12);
