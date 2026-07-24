@@ -186,15 +186,29 @@ if META_TOKEN:
             print('META fb insights filled:',
                 sorted(k for k in frow if k not in ('date', 'platform', 'followers')))
             srows.append(frow)
+        # IG: META_IG_ID env yoksa sayfaya bagli IG hesabini OTOMATIK bul
+        if not META_IG:
+            try:
+                pg = requests.get(GRAPH + META_PAGE,
+                    params={'fields': 'instagram_business_account', 'access_token': META_TOKEN},
+                    timeout=60).json()
+                iba = pg.get('instagram_business_account') or {}
+                META_IG = str(iba.get('id') or '')
+                print('META ig auto-discover:', META_IG or 'YOK',
+                      (pg.get('error') or {}).get('message', ''))
+            except Exception as e:
+                print('META ig discover err', repr(e))
         if META_IG:
             ig = requests.get(GRAPH + META_IG,
-                params={'fields': 'followers_count', 'access_token': META_TOKEN},
+                params={'fields': 'followers_count,media_count,username', 'access_token': META_TOKEN},
                 timeout=60).json()
             if 'error' in ig:
-                print('META ig error', ig['error'].get('message'))
-            elif 'followers_count' in ig:
-                srows.append({'date': end, 'platform': 'instagram',
-                    'followers': ig['followers_count']})
+                print('META ig error', str(ig['error'].get('message'))[:80])
+            else:
+                print('META ig OK', ig.get('username'), 'followers', ig.get('followers_count'))
+                if ig.get('followers_count') is not None:
+                    srows.append({'date': end, 'platform': 'instagram',
+                        'followers': ig['followers_count']})
         if srows:
             upsert('meta_social_daily', srows, 'date,platform')
         print('META', [s['platform'] + ':' + str(s['followers']) for s in srows])
