@@ -12,7 +12,7 @@ color-scheme:light;
 --ink-1:#0b0b0b; --ink-2:#52514e; --muted:#898781;
 --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,.10);
 --s1:#2a78d6; --s2:#008300; --s3:#e87ba4; --s4:#eda100; --other:#898781;
---good:#006300; --bad:#d03b3b; --google:#d03b3b; --meta:#12356b;
+--good:#006300; --bad:#d03b3b; --google:#d03b3b; --meta:#12356b; --randevu:#0f7a34; --telefon:#d9752b;
 --brand-grad:linear-gradient(135deg,#1c74d4,#134c8f,#0f3f79);
 --brand-navy:#0f335f; --brand-teal:#0f9b8e; --brand-orange:#d9752b;
 --core:#0f335f; --ctxbg:rgba(137,135,129,.06);
@@ -24,7 +24,7 @@ color-scheme:dark;
 --ink-1:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
 --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,.10);
 --s1:#3987e5; --s2:#008300; --s3:#d55181; --s4:#c98500;
---good:#0ca30c; --core:#8fc0ff; --ctxbg:rgba(137,135,129,.10); --google:#e2574f; --meta:#5f86c8;
+--good:#0ca30c; --core:#8fc0ff; --ctxbg:rgba(137,135,129,.10); --google:#e2574f; --meta:#5f86c8; --randevu:#24a552; --telefon:#e8873a;
 }
 }
 *{box-sizing:border-box;margin:0}
@@ -585,7 +585,7 @@ badge('#b_brand',br,brP);
 /* aşama 4 — dönüşüm */
 convChart();
 badge('#b_conv',rnd+tel,rndP+telP);
-$('#lg_conv').innerHTML=[['Randevu','--s1'],['Telefon','--s2']].map(x=>'<span><i style="background:'+col(x[1])+'"></i>'+x[0]+'</span>').join('');
+$('#lg_conv').innerHTML=[['Randevu','--randevu'],['Telefon','--telefon']].map(x=>'<span><i style="background:'+col(x[1])+'"></i>'+x[0]+'</span>').join('');
 
 /* aşama 5 */
 scoreCard();
@@ -709,7 +709,7 @@ function convChart(){
 const labels=W.buckets.map(b=>bucketLabel(b,W.bucket));
 const rndData=seriesRange(DB.ev,r=>r.event_name==='randevu_tamamlandi'?+r.count:0).map(p=>p.y);
 const telData=seriesRange(DB.ev,r=>r.event_name==='telefon_tiklama'?+r.count:0).map(p=>p.y);
-const s=[{label:'Randevu',color:col('--s1'),data:rndData},{label:'Telefon',color:col('--s2'),data:telData}];
+const s=[{label:'Randevu',color:col('--randevu'),data:rndData},{label:'Telefon',color:col('--telefon'),data:telData}];
 const el=$('#ch_conv');if(!el)return;const Wd=el.clientWidth||500,Hh=200;
 const w=Wd-M.l-M.r,h=Hh-M.t-M.b;
 if(!labels.length){el.innerHTML='<div class="ch">veri yok</div>';return;}
@@ -723,7 +723,7 @@ if(GOALS.randevu>0){const per=BK==='day'?GOALS.randevu/30:(BK==='week'?GOALS.ran
 const tt=$('#tt');
 el.innerHTML='<svg viewBox="0 0 '+Wd+' '+Hh+'" height="'+Hh+'">'+gl+'<line x1="'+M.l+'" x2="'+(Wd-M.r)+'" y1="'+(M.t+h)+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'"/>'+bars+gline+xl+'<line class="xh" y1="'+M.t+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'" style="display:none"/></svg>';
 const svg=el.querySelector('svg'),xh=svg.querySelector('.xh');
-svg.addEventListener('mousemove',e=>{const r=svg.getBoundingClientRect();const sx=(e.clientX-r.left)*(svg.viewBox.baseVal.width/r.width);const i=Math.max(0,Math.min(n-1,Math.floor((sx-M.l)/slot)));const x=M.l+slot*i+slot/2;xh.setAttribute('x1',x);xh.setAttribute('x2',x);xh.style.display='block';tt.innerHTML='<b>'+labels[i]+'</b><span style="color:'+col('--s1')+'">●</span> Randevu: '+fmt(s[0].data[i])+'<br><span style="color:'+col('--s2')+'">●</span> Telefon: '+fmt(s[1].data[i]);tt.style.display='block';tt.style.left=Math.min(window.innerWidth-270,e.clientX+14)+'px';tt.style.top=(e.clientY+14)+'px';});
+svg.addEventListener('mousemove',e=>{const r=svg.getBoundingClientRect();const sx=(e.clientX-r.left)*(svg.viewBox.baseVal.width/r.width);const i=Math.max(0,Math.min(n-1,Math.floor((sx-M.l)/slot)));const x=M.l+slot*i+slot/2;xh.setAttribute('x1',x);xh.setAttribute('x2',x);xh.style.display='block';tt.innerHTML='<b>'+labels[i]+'</b><span style="color:'+col('--randevu')+'">●</span> Randevu: '+fmt(s[0].data[i])+'<br><span style="color:'+col('--telefon')+'">●</span> Telefon: '+fmt(s[1].data[i]);tt.style.display='block';tt.style.left=Math.min(window.innerWidth-270,e.clientX+14)+'px';tt.style.top=(e.clientY+14)+'px';});
 svg.addEventListener('mouseleave',()=>{xh.style.display='none';tt.style.display='none';});
 }
 
@@ -917,8 +917,8 @@ const bd=$('#reklam_convtotal');if(bd){bd.className='badge flat';bd.textContent=
 const labels=W.buckets.map(x=>bucketLabel(x,W.bucket));
 const rndS=seriesRange((DB.convsrc||[]).filter(r=>r.event_name==='randevu_tamamlandi'),r=>+r.count).map(pp=>pp.y==null?0:pp.y);
 const telS=seriesRange((DB.convsrc||[]).filter(r=>r.event_name==='telefon_tiklama'),r=>+r.count).map(pp=>pp.y==null?0:pp.y);
-$('#reklam_lg_conv').innerHTML=[['Randevu','--s1'],['Telefon','--s2']].map(x=>'<span><i style="background:'+col(x[1])+'"></i>'+x[0]+'</span>').join('');
-multiLine('#reklam_ch_conv',labels,[{label:'Randevu',color:col('--s1'),data:rndS},{label:'Telefon',color:col('--s2'),data:telS}]);
+$('#reklam_lg_conv').innerHTML=[['Randevu','--randevu'],['Telefon','--telefon']].map(x=>'<span><i style="background:'+col(x[1])+'"></i>'+x[0]+'</span>').join('');
+multiLine('#reklam_ch_conv',labels,[{label:'Randevu',color:col('--randevu'),data:rndS},{label:'Telefon',color:col('--telefon'),data:telS}]);
 const gsp=seriesRange((DB.ads||[]).filter(r=>r.platform==='google'),r=>+r.spend).map(pp=>pp.y==null?0:pp.y);
 const msp=seriesRange((DB.ads||[]).filter(r=>r.platform==='meta'),r=>+r.spend).map(pp=>pp.y==null?0:pp.y);
 $('#reklam_lg_spend').innerHTML=[['Google','--google'],['Meta','--meta']].map(x=>'<span><i style="background:'+col(x[1])+'"></i>'+x[0]+'</span>').join('');
