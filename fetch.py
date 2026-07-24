@@ -62,6 +62,14 @@ upsert('gsc_query_daily', [{'date': r['keys'][0], 'query': r['keys'][1],
     'branded': any(b in r['keys'][1].lower() for b in BRAND)}
     for r in gsc(['date', 'query'])], 'date,query')
 
+upsert('gsc_device_daily', [{'date': r['keys'][0], 'device': r['keys'][1],
+    'clicks': r['clicks'], 'impressions': r['impressions'], 'ctr': round(r['ctr'], 4),
+    'position': round(r['position'], 2)} for r in gsc(['date', 'device'])], 'date,device')
+
+upsert('gsc_country_daily', [{'date': r['keys'][0], 'country': r['keys'][1],
+    'clicks': r['clicks'], 'impressions': r['impressions'], 'ctr': round(r['ctr'], 4),
+    'position': round(r['position'], 2)} for r in gsc(['date', 'country'])], 'date,country')
+
 def ga4(body, prop=PROP):
     r = requests.post(
         'https://analyticsdata.googleapis.com/v1beta/properties/' + prop + ':runReport',

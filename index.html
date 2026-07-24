@@ -186,6 +186,7 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <a class="tab" data-view="reklam" href="#/reklam">Reklam</a>
 <a class="tab" data-view="gtm" href="#/gtm">GTM</a>
 <a class="tab" data-view="ga4" href="#/ga4">GA4</a>
+<a class="tab" data-view="gsc" href="#/gsc">GSC</a>
 </nav>
 
 <div class="wrap" id="mainview">
@@ -407,6 +408,23 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <div class="card"><h2>Demografi</h2><div class="tscroll"><table id="ga4_demo"></table></div></div>
 </div>
 
+<div class="wrap" id="gscview" style="display:none">
+<div class="stage"><span class="n">1</span><div><div class="st">GSC · Genel Bakış</div><div class="sq">Google Search Console: arama tıklaması, gösterim, CTR, ortalama pozisyon. Dönem kutusuna tıkla; her metrik önceki eş dönemle kıyaslı.</div></div></div>
+<div class="periods" id="gsc_periodrow"></div>
+<div class="note" id="gsc_rangenote"></div>
+<div class="card"><h2>KPI'ler &amp; zaman serileri</h2><div class="ch">Her metrik kendi kutusunda: başlıkta güncel değer + dönem % değişim, altında önceki dönem + zaman serisi. <b>Soluk kesikli = önceki eş dönem</b> (tüm grafiklerde). Pozisyonda düşüş İYİ (yeşil).</div><div class="mgrid" id="gsc_kpicharts"></div></div>
+<div class="stage"><span class="n">2</span><div><div class="st">GSC · Cihaz &amp; Ülke</div><div class="sq">Aramanın hangi cihazdan ve ülkeden geldiği — tıklama payı.</div></div></div>
+<div class="grid2">
+<div class="card"><h2>Cihaz</h2><div class="ch">Arama tıklaması — cihaz payı (grafik: ilk 4 + Diğer).</div><div id="gsc_dev_ch"></div><div class="tscroll"><table id="gsc_dev"></table></div></div>
+<div class="card"><h2>Ülke</h2><div class="ch">Arama tıklaması — ülke payı (grafik: ilk 4 + Diğer). Tablo 5 satır, "daha fazla".</div><div id="gsc_ctry_ch"></div><div class="tscroll"><table id="gsc_ctry"></table></div></div>
+</div>
+<div class="stage"><span class="n">3</span><div><div class="st">GSC · Sayfa &amp; Sorgu</div><div class="sq">En çok tıklanan sayfalar ve sorgular — tıklama / gösterim / CTR / ortalama pozisyon.</div></div></div>
+<div class="grid2">
+<div class="card"><h2>Sayfalar</h2><div class="ch">Grafik: tıklamaya göre ilk 4 + Diğer; tablo 5 satır, "daha fazla". Ticari (tedavi) sayfalar işaretli.</div><div id="gsc_page_ch"></div><div class="tscroll"><table id="gsc_page"></table></div></div>
+<div class="card"><h2>Sorgular</h2><div class="ch">Grafik: tıklamaya göre ilk 4 + Diğer; tablo 5 satır, "daha fazla". Markalı sorgular işaretli.</div><div id="gsc_query_ch"></div><div class="tscroll"><table id="gsc_query"></table></div></div>
+</div>
+</div>
+
 <div class="tt" id="tt"></div>
 <div id="login"><div class="box">
 <h2>Çapa Dashboard</h2>
@@ -432,7 +450,7 @@ const col=v=>CS.getPropertyValue(v).trim();
 const CUTOVER='2026-07-14';
 const AYK=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
 const COMMERCIAL=/(dis-teli|invisalign|seffaf-plak|bonding|implant|ortodonti|gulus|beyazlat|protez|kanal-ted|pedodont|zirkon|periodont|estetik|dolgu|dis-cek|kaplama|apare|braket)/i;
-let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[],fb:[],ig:[],ads:[],convsrc:[],funnel:[],gaev:[],ov:[],brk:[],land:[],demo:[]};
+let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[],fb:[],ig:[],ads:[],convsrc:[],funnel:[],gaev:[],ov:[],brk:[],land:[],demo:[],dev:[],ctry:[]};
 let GOALS={};
 
 /* dönemler: days = KPI penceresi (gün), chartDays = grafik penceresi, bucket = granülarite */
@@ -465,7 +483,7 @@ return all;
 }
 async function load(){
 try{
-const [site,chan,ev,cl,pages,queries,base,targets,pagecmp,fb,ig,ads,convsrc,funnel,gaev,ov,brk,land,demo]=await Promise.all([
+const [site,chan,ev,cl,pages,queries,base,targets,pagecmp,fb,ig,ads,convsrc,funnel,gaev,ov,brk,land,demo,dev,ctry]=await Promise.all([
 q('gsc_site_daily?order=date'),
 q('ga4_channel_daily?order=date'),
 q('ga4_event_daily?order=date'),
@@ -484,9 +502,11 @@ q('ga4_events_all_daily?select=date,event_name,count&order=date').catch(()=>[]),
 q('ga4_overview_daily?select=date,sessions,users,new_users,pageviews,engaged_sessions,engagement_rate,avg_duration,bounce_rate&order=date').catch(()=>[]),
 q('ga4_breakdown_daily?select=date,kind,label,sessions,users&order=date').catch(()=>[]),
 q('ga4_landing_daily?select=date,landing,sessions,engaged_sessions&order=date').catch(()=>[]),
-q('ga4_demo_daily?select=date,gender,age,users&order=date').catch(()=>[])
+q('ga4_demo_daily?select=date,gender,age,users&order=date').catch(()=>[]),
+q('gsc_device_daily?select=date,device,clicks,impressions,ctr,position&order=date').catch(()=>[]),
+q('gsc_country_daily?select=date,country,clicks,impressions,ctr,position&order=date').catch(()=>[])
 ]);
-DB={site,chan,ev,cl,pages,queries,base,pagecmp,fb,ig,ads,convsrc,funnel,gaev,ov,brk,land,demo};
+DB={site,chan,ev,cl,pages,queries,base,pagecmp,fb,ig,ads,convsrc,funnel,gaev,ov,brk,land,demo,dev,ctry};
 GOALS={};(targets||[]).forEach(t=>GOALS[t.metric_key]=+t.monthly_target);
 route();
 }catch(e){
@@ -1056,6 +1076,51 @@ function ga4PeriodBoxes(){const end=ga4LastDate()||lastDataDate();$('#ga4_period
 function top5other(rows){if(!rows||rows.length<=4)return rows||[];var head=rows.slice(0,4);var rest=rows.slice(4).reduce(function(s2,r){return s2+(r.value||0);},0);return head.concat([{label:'Diğer',value:rest}]);}
 function toggleMore(el){var t=el.closest('table');if(!t)return;t.classList.toggle('moreopen');el.textContent=t.classList.contains('moreopen')?'daha az \u25b4':el.dataset.more;}
 function renderExpTable(sel,head,cells,cols){var el=$(sel);if(!el)return;el.classList.remove('moreopen');if(!cells.length){el.innerHTML=head+'<tr><td colspan="'+cols+'" style="color:var(--muted)">veri yok</td></tr>';return;}var body=cells.map(function(c,i){return '<tr'+(i>=5?' class="mrow"':'')+'>'+c+'</tr>';}).join('');var more='';if(cells.length>5){var lbl='daha fazla ('+(cells.length-5)+') \u25be';more='<tr class="morerow"><td colspan="'+cols+'"><span class="morelink" data-more="'+lbl+'" onclick="toggleMore(this)">'+lbl+'</span></td></tr>';}el.innerHTML=head+body+more;}
+function derivedSeriesR(rows,numFn,denFn,mul){var bn={},bd={};W.buckets.forEach(function(b){bn[b]=0;bd[b]=0;});var lastD=null;(rows||[]).forEach(function(r){if(r.date>=W.chart.a&&r.date<=W.chart.b){if(lastD==null||r.date>lastD)lastD=r.date;var b=bucketOf(r.date,W.bucket);if(b in bn){bn[b]+=(numFn(r)||0);bd[b]+=(denFn(r)||0);}}});var lastB=lastD?bucketOf(lastD,W.bucket):null;return W.buckets.map(function(b){return {x:b,y:(lastB&&b>lastB)?null:(bd[b]>0?(bn[b]/bd[b])*(mul||1):null),lbl:bucketLabel(b,W.bucket)};});}
+function prevDerivedSeriesR(rows,numFn,denFn,mul){if(!W.chartPrev)return null;var pb=bucketsInRange(W.chartPrev.a,W.chartPrev.b,W.bucket);var bn={},bd={};pb.forEach(function(b){bn[b]=0;bd[b]=0;});(rows||[]).forEach(function(r){if(r.date>=W.chartPrev.a&&r.date<=W.chartPrev.b){var b=bucketOf(r.date,W.bucket);if(b in bn){bn[b]+=(numFn(r)||0);bd[b]+=(denFn(r)||0);}}});var vals=pb.map(function(b){return bd[b]>0?(bn[b]/bd[b])*(mul||1):null;});var N=W.buckets.length;return Array.from({length:N},function(_,i){return i<vals.length?vals[i]:null;});}
+function kdChip(cur,prev,invert){var s2=deltaFull(cur,prev);if(!s2.has)return '<em class="d flat">yeni</em>';var pp=pct(cur,prev),cls=s2.cls;if(invert&&cls==='up')cls='down';else if(invert&&cls==='down')cls='up';return '<em class="d '+cls+'">'+s2.arrow+' %'+Math.round(Math.abs(pp))+'</em>';}
+var GSC_DMAP={MOBILE:'Mobil',DESKTOP:'Masaüstü',TABLET:'Tablet'};
+function gscDevLabel(d){return GSC_DMAP[d]||d||'(yok)';}
+var GSC_CMAP={tur:'Türkiye',usa:'ABD',deu:'Almanya',gbr:'İngiltere',nld:'Hollanda',fra:'Fransa',aze:'Azerbaycan',sau:'S.Arabistan',are:'BAE',rus:'Rusya',bel:'Belçika',aut:'Avusturya',che:'İsviçre',bgr:'Bulgaristan',grc:'Yunanistan',cyp:'Kıbrıs',irn:'İran',irq:'Irak',ukr:'Ukrayna'};
+function gscCtryLabel(c){return GSC_CMAP[(c||'').toLowerCase()]||(c||'').toUpperCase()||'(yok)';}
+function gscLastDate(){var m=null;(DB.site||[]).forEach(function(r){if(!m||r.date>m)m=r.date;});return m;}
+function gscWin(){return curWin(gscLastDate()||lastDataDate());}
+function gscPos(rows,a,b){var n=0,d=0;(rows||[]).forEach(function(r){if(r.date>=a&&r.date<=b){n+=(+r.position||0)*(+r.impressions||0);d+=(+r.impressions||0);}});return d>0?n/d:0;}
+function gscBreakAgg(rows,field,a,b){var by={};(rows||[]).forEach(function(r){if(r.date>=a&&r.date<=b){var k=r[field]||'(yok)';var o=by[k]=by[k]||{c:0,i:0,pw:0};o.c+=+r.clicks||0;o.i+=+r.impressions||0;o.pw+=(+r.position||0)*(+r.impressions||0);}});return Object.keys(by).map(function(k){var o=by[k];return {label:k,clicks:o.c,impr:o.i,ctr:o.i>0?o.c/o.i*100:0,pos:o.i>0?o.pw/o.i:0,value:o.c};}).sort(function(x,y){return y.clicks-x.clicks;});}
+function queryAggGsc(rows,a,b){var by={};(rows||[]).forEach(function(r){if(r.date>=a&&r.date<=b){var o=by[r.query]=by[r.query]||{c:0,i:0,pw:0,b:r.branded};o.c+=+r.clicks||0;o.i+=+r.impressions||0;o.pw+=(+r.position||0)*(+r.impressions||0);}});return Object.keys(by).map(function(k){var o=by[k];return {q:k,c:o.c,i:o.i,ctr:o.i>0?o.c/o.i*100:0,pos:o.i>0?o.pw/o.i:0,b:o.b};}).sort(function(x,y){return y.c-x.c||y.i-x.i;});}
+function gscPeriodBoxes(){var end=gscLastDate()||lastDataDate();$('#gsc_periodrow').innerHTML=PERIODS.map(function(p){var a=shiftDate(end,-(p.days-1)),b=end,pa=shiftDate(a,-1),ppa=shiftDate(a,-p.days);var cur=sumRange(DB.site,'clicks',a,b),prev=sumRange(DB.site,'clicks',ppa,pa);var s=deltaFull(cur,prev),on=(PERIOD===p.key)?' on':'';return '<button class="pbox'+on+'" data-p="'+p.key+'"><span class="pl">'+p.label+'</span><span class="pv">'+fmt(cur)+'</span><span class="pd '+s.cls+'">'+(s.has?s.txt:'\u2014')+'</span></button>';}).join('');}
+function renderGSC(){
+W=gscWin();BK=W.bucket;gscPeriodBoxes();
+var a=W.kpi.a,b=W.kpi.b,pa=W.prev.a,pb=W.prev.b;
+$('#gsc_rangenote').innerHTML='Seçili: <b>'+W.label+'</b> · GSC 2-3 gün gecikmeli · dönem kutusundaki sayı = tıklama · soluk kesikli = önceki eş dönem.';
+var clk=sumRange(DB.site,'clicks',a,b),imp=sumRange(DB.site,'impressions',a,b);
+var ctr=imp>0?clk/imp*100:0,pos=gscPos(DB.site,a,b);
+var clkP=sumRange(DB.site,'clicks',pa,pb),impP=sumRange(DB.site,'impressions',pa,pb);
+var ctrP=impP>0?clkP/impP*100:0,posP=gscPos(DB.site,pa,pb);
+var hasPrev=(DB.site||[]).some(function(r){return r.date>=pa&&r.date<=pb;});
+var posF=function(v){return (Math.round(v*10)/10).toLocaleString('tr-TR',{minimumFractionDigits:1,maximumFractionDigits:1});};
+var ctrF=function(v){return '%'+(Math.round(v*10)/10).toLocaleString('tr-TR',{minimumFractionDigits:1,maximumFractionDigits:1});};
+var cards=[
+{id:'gscc_clk',name:'Tıklama',cur:clk,prev:clkP,f:fmt,ser:seriesRange(DB.site,function(r){return +r.clicks;}),col:col('--s1'),ov:prevSeriesRange(DB.site,function(r){return +r.clicks;}),hero:true},
+{id:'gscc_imp',name:'Gösterim',cur:imp,prev:impP,f:fmt,ser:seriesRange(DB.site,function(r){return +r.impressions;}),col:col('--s1'),ov:prevSeriesRange(DB.site,function(r){return +r.impressions;}),hero:false},
+{id:'gscc_ctr',name:'CTR',cur:ctr,prev:ctrP,f:ctrF,ser:derivedSeriesR(DB.site,function(r){return +r.clicks;},function(r){return +r.impressions;},100),col:col('--brand-teal'),ov:prevDerivedSeriesR(DB.site,function(r){return +r.clicks;},function(r){return +r.impressions;},100),hero:false},
+{id:'gscc_pos',name:'Ort. Pozisyon',cur:pos,prev:posP,f:posF,ser:derivedSeriesR(DB.site,function(r){return (+r.position)*(+r.impressions);},function(r){return +r.impressions;},1),col:col('--s3'),ov:prevDerivedSeriesR(DB.site,function(r){return (+r.position)*(+r.impressions);},function(r){return +r.impressions;},1),hero:false,invert:true}
+];
+$('#gsc_kpicharts').innerHTML=cards.map(function(k){var chip=hasPrev?kdChip(k.cur,k.prev,k.invert):'<em class="d flat">yeni</em>';var old=hasPrev?('önceki: '+k.f(k.prev)):'önceki dönem: veri yok';return '<div class="mchart'+(k.hero?' hero':'')+'"><div class="mh"><span>'+k.name+'</span><b>'+k.f(k.cur)+'</b>'+chip+'</div><div class="mx">'+old+'</div><div id="'+k.id+'"></div></div>';}).join('');
+cards.forEach(function(k){lineChart('#'+k.id,k.ser,k.col,k.name,false,null,k.ov,k.f);});
+var devA=gscBreakAgg(DB.dev,'device',a,b);
+shareBars('#gsc_dev_ch',top5other(devA.map(function(r){return {label:gscDevLabel(r.label),value:r.clicks};})),'--s1');
+renderExpTable('#gsc_dev','<tr><th>Cihaz</th><th class="num">Tık</th><th class="num">Gös.</th><th class="num">CTR</th><th class="num">Poz.</th></tr>',devA.map(function(r){return '<td>'+gscDevLabel(r.label)+'</td><td class="num">'+fmt(r.clicks)+'</td><td class="num">'+fmt(r.impr)+'</td><td class="num">%'+r.ctr.toFixed(1)+'</td><td class="num">'+r.pos.toFixed(1)+'</td>';}),5);
+var ctryA=gscBreakAgg(DB.ctry,'country',a,b);
+shareBars('#gsc_ctry_ch',top5other(ctryA.map(function(r){return {label:gscCtryLabel(r.label),value:r.clicks};})),'--brand-teal');
+renderExpTable('#gsc_ctry','<tr><th>Ülke</th><th class="num">Tık</th><th class="num">Gös.</th><th class="num">CTR</th><th class="num">Poz.</th></tr>',ctryA.map(function(r){return '<td>'+gscCtryLabel(r.label)+'</td><td class="num">'+fmt(r.clicks)+'</td><td class="num">'+fmt(r.impr)+'</td><td class="num">%'+r.ctr.toFixed(1)+'</td><td class="num">'+r.pos.toFixed(1)+'</td>';}),5);
+var pgr=pageAgg(rangeRows(DB.pages),0);
+shareBars('#gsc_page_ch',top5other(pgr.map(function(r){return {label:r.p,value:r.c};})),'--s1');
+renderExpTable('#gsc_page','<tr><th>Sayfa</th><th class="num">Tık</th><th class="num">Gös.</th><th class="num">CTR</th><th class="num">Poz.</th></tr>',pgr.map(function(r){return '<td style="word-break:break-all">'+(r.comm?'<span class="chip b">ticari</span> ':'')+r.p+'</td><td class="num">'+fmt(r.c)+'</td><td class="num">'+fmt(r.i)+'</td><td class="num">%'+(r.i>0?(r.c/r.i*100):0).toFixed(1)+'</td><td class="num">'+r.pos.toFixed(1)+'</td>';}),5);
+var qy=queryAggGsc(DB.queries,a,b);
+shareBars('#gsc_query_ch',top5other(qy.map(function(r){return {label:r.q,value:r.c};})),'--brand-teal');
+renderExpTable('#gsc_query','<tr><th>Sorgu</th><th class="num">Tık</th><th class="num">Gös.</th><th class="num">CTR</th><th class="num">Poz.</th></tr>',qy.map(function(r){return '<td style="word-break:break-all">'+r.q+(r.b?' <span class="chip b">markalı</span>':'')+'</td><td class="num">'+fmt(r.c)+'</td><td class="num">'+fmt(r.i)+'</td><td class="num">%'+(r.i>0?(r.c/r.i*100):0).toFixed(1)+'</td><td class="num">'+r.pos.toFixed(1)+'</td>';}),5);
+}
 function renderGA4(){
 W=ga4Win();BK=W.bucket;ga4PeriodBoxes();
 const a=W.kpi.a,b=W.kpi.b;
@@ -1098,8 +1163,8 @@ else{$('#ga4_demo').innerHTML='<tr><td style="color:var(--muted)">Demografi veri
 
 /* ---------- drill-down ---------- */
 function route(){
-const h=location.hash;const detail=h.startsWith('#/detay/');const social=h.startsWith('#/sosyal/');const reklam=h.startsWith('#/reklam');const gtm=h.startsWith('#/gtm');const ga4=h.startsWith('#/ga4');
-$('#mainview').style.display=(detail||social||reklam||gtm||ga4)?'none':'';
+const h=location.hash;const detail=h.startsWith('#/detay/');const social=h.startsWith('#/sosyal/');const reklam=h.startsWith('#/reklam');const gtm=h.startsWith('#/gtm');const ga4=h.startsWith('#/ga4');const gsc=h.startsWith('#/gsc');
+$('#mainview').style.display=(detail||social||reklam||gtm||ga4||gsc)?'none':'';
 $('#detailview').style.display=detail?'':'none';
 const ig=h.startsWith('#/sosyal/instagram');const fbv=social&&!ig;
 $('#sosyalview').style.display=fbv?'':'none';
@@ -1107,9 +1172,11 @@ $('#igview').style.display=ig?'':'none';
 $('#reklamview').style.display=reklam?'':'none';
 $('#gtmview').style.display=gtm?'':'none';
 $('#ga4view').style.display=ga4?'':'none';
-document.querySelectorAll('#topnav .tab').forEach(t=>t.classList.toggle('on',t.dataset.view===(ga4?'ga4':gtm?'gtm':reklam?'reklam':ig?'instagram':fbv?'facebook':'seo')));
+$('#gscview').style.display=gsc?'':'none';
+document.querySelectorAll('#topnav .tab').forEach(t=>t.classList.toggle('on',t.dataset.view===(gsc?'gsc':ga4?'ga4':gtm?'gtm':reklam?'reklam':ig?'instagram':fbv?'facebook':'seo')));
 if(detail){SESS=sessionDaily();W=curWin();BK=W.bucket;renderDetail();}
 else if(ga4){renderGA4();}
+else if(gsc){renderGSC();}
 else if(gtm){renderGTM();}
 else if(reklam){renderReklam();}
 else if(ig){renderIG();}
@@ -1194,6 +1261,10 @@ $('#ga4_periodrow').addEventListener('click',e=>{
 const b=e.target.closest('.pbox');if(!b)return;
 PERIOD=b.dataset.p;renderGA4();
 });
+$('#gsc_periodrow').addEventListener('click',e=>{
+const b=e.target.closest('.pbox');if(!b)return;
+PERIOD=b.dataset.p;renderGSC();
+});
 function prefillCustom(){
 const end=lastDataDate();$('#c_b').value=end;$('#c_a').value=shiftDate(end,-29);
 }
@@ -1201,7 +1272,7 @@ function applyCustom(){
 const a=$('#c_a').value,b=$('#c_b').value;if(!a||!b)return;
 CUSTOM={a:a<b?a:b,b:a<b?b:a};PERIOD='custom';render();
 }
-addEventListener('resize',()=>{const h=location.hash;if(h.startsWith('#/detay/'))return;if(h.startsWith('#/ga4')){renderGA4();return;}if(h.startsWith('#/gtm')){renderGTM();return;}if(h.startsWith('#/reklam')){renderReklam();return;}if(h.startsWith('#/sosyal/instagram')){renderIG();return;}if(h.startsWith('#/sosyal/')){renderFB();return;}if(DB.site.length)render();});
+addEventListener('resize',()=>{const h=location.hash;if(h.startsWith('#/detay/'))return;if(h.startsWith('#/ga4')){renderGA4();return;}if(h.startsWith('#/gsc')){renderGSC();return;}if(h.startsWith('#/gtm')){renderGTM();return;}if(h.startsWith('#/reklam')){renderReklam();return;}if(h.startsWith('#/sosyal/instagram')){renderIG();return;}if(h.startsWith('#/sosyal/')){renderFB();return;}if(DB.site.length)render();});
 addEventListener('hashchange',route);
 
 /* ---------- Auth ---------- */
