@@ -163,6 +163,7 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <a class="tab" data-view="seo" href="#">SEO / Trafik</a>
 <a class="tab" data-view="facebook" href="#/sosyal/facebook">Facebook</a>
 <a class="tab" data-view="instagram" href="#/sosyal/instagram">Instagram</a>
+<a class="tab" data-view="reklam" href="#/reklam">Reklam</a>
 </nav>
 
 <div class="wrap" id="mainview">
@@ -319,6 +320,21 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <div class="igcharts" id="ig_insights"></div>
 </div>
 
+<!-- ===== REKLAM ===== -->
+<div class="wrap" id="reklamview" style="display:none">
+<div class="stage"><span class="n">1</span><div><div class="st">Reklam · Harcama & Performans</div><div class="sq">Google & Meta reklam harcaması, gösterimi, tıkı ve randevu başına maliyet. Reklam hesapları bağlanınca otomatik dolacak.</div></div></div>
+<div class="periods" id="reklam_periodrow"></div>
+<div class="note" id="reklam_rangenote"></div>
+<div class="kpis3" id="reklam_kpi"></div>
+<div class="note" id="reklam_emptynote">⏳ Reklam henüz başlamadı — harcama/gösterim/tık, Google Ads + Meta Ads hesapları bağlanınca otomatik akacak. Aşağıdaki <b>dönüşüm kaynağı</b> tablosu şimdiden canlı.</div>
+<div class="stage"><span class="n">2</span><div><div class="st">Reklam · Dönüşüm Kaynağı (canlı)</div><div class="sq">Randevu ve telefon dönüşümleri hangi kaynaktan geliyor. Şu an organik trafik; reklam başlayınca <b>cpc</b> kaynakları (google/meta) burada ayrışır — hangi kampanya kaç randevu getirdi görünür.</div></div></div>
+<div class="card">
+<h2>Dönüşüm kaynağı <span class="badge" id="reklam_convtotal"></span></h2>
+<div class="ch"><b>Ne:</b> seçili dönemde randevu/telefon dönüşümlerinin kaynak/mecra dağılımı. <span class="chip b">reklam</span> etiketi = ücretli (cpc) kaynak.</div>
+<div class="tscroll"><table id="reklam_convtable"></table></div>
+</div>
+</div>
+
 <div class="tt" id="tt"></div>
 <div id="login"><div class="box">
 <h2>Çapa Dashboard</h2>
@@ -344,7 +360,7 @@ const col=v=>CS.getPropertyValue(v).trim();
 const CUTOVER='2026-07-14';
 const AYK=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
 const COMMERCIAL=/(dis-teli|invisalign|seffaf-plak|bonding|implant|ortodonti|gulus|beyazlat|protez|kanal-ted|pedodont|zirkon|periodont|estetik|dolgu|dis-cek|kaplama|apare|braket)/i;
-let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[],fb:[],ig:[]};
+let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[],fb:[],ig:[],ads:[],convsrc:[]};
 let GOALS={};
 
 /* dönemler: days = KPI penceresi (gün), chartDays = grafik penceresi, bucket = granülarite */
@@ -377,7 +393,7 @@ return all;
 }
 async function load(){
 try{
-const [site,chan,ev,cl,pages,queries,base,targets,pagecmp,fb,ig]=await Promise.all([
+const [site,chan,ev,cl,pages,queries,base,targets,pagecmp,fb,ig,ads,convsrc]=await Promise.all([
 q('gsc_site_daily?order=date'),
 q('ga4_channel_daily?order=date'),
 q('ga4_event_daily?order=date'),
@@ -388,9 +404,11 @@ q('ga4_baseline_daily?order=date'),
 q('targets?select=*&order=metric_key'),
 q('ga4_page_compare?select=*&order=page'),
 q('meta_social_daily?platform=eq.facebook&select=date,followers&order=date').catch(()=>[]),
-q('meta_social_daily?platform=eq.instagram&select=date,followers,reach,profile_views,views,engaged_accounts,total_interactions,likes,comments,shares,saves&order=date').catch(()=>[])
+q('meta_social_daily?platform=eq.instagram&select=date,followers,reach,profile_views,views,engaged_accounts,total_interactions,likes,comments,shares,saves&order=date').catch(()=>[]),
+q('ads_daily?select=date,platform,campaign,spend,impressions,clicks,leads&order=date').catch(()=>[]),
+q('ga4_conv_source_daily?select=date,event_name,source,medium,campaign,count&order=date').catch(()=>[])
 ]);
-DB={site,chan,ev,cl,pages,queries,base,pagecmp,fb,ig};
+DB={site,chan,ev,cl,pages,queries,base,pagecmp,fb,ig,ads,convsrc};
 GOALS={};(targets||[]).forEach(t=>GOALS[t.metric_key]=+t.monthly_target);
 route();
 }catch(e){
@@ -847,16 +865,61 @@ const bd=$('#ig_b_foll');if(bd){if(s.has){bd.className='badge '+s.cls;bd.textCon
 igInsightCharts();
 }
 
+/* ---------- Reklam (Ads + dönüşüm atribüsyon) ---------- */
+function reklamLastDate(){let m=null;[...(DB.ads||[]),...(DB.convsrc||[])].forEach(r=>{if(!m||r.date>m)m=r.date;});return m;}
+function reklamWin(){return curWin(reklamLastDate()||lastDataDate());}
+function adsSum(key,a,b){return (DB.ads||[]).filter(r=>r.date>=a&&r.date<=b).reduce((s,r)=>s+(+r[key]||0),0);}
+function convSum(ev,a,b){return (DB.convsrc||[]).filter(r=>r.date>=a&&r.date<=b&&r.event_name===ev).reduce((s,r)=>s+(+r.count||0),0);}
+function convBySource(a,b){
+const agg={};
+(DB.convsrc||[]).filter(r=>r.date>=a&&r.date<=b).forEach(r=>{
+const src=r.source||'(direct)',med=r.medium||'(none)',k=src+' / '+med;
+const o=agg[k]=agg[k]||{src,med,rnd:0,tel:0};
+if(r.event_name==='randevu_tamamlandi')o.rnd+=(+r.count||0);else if(r.event_name==='telefon_tiklama')o.tel+=(+r.count||0);
+});
+return Object.values(agg).sort((x,y)=>(y.rnd-x.rnd)||(y.tel-x.tel));
+}
+function reklamPeriodBoxes(){
+const end=reklamLastDate()||lastDataDate();
+$('#reklam_periodrow').innerHTML=PERIODS.map(p=>{
+const a=shiftDate(end,-(p.days-1)),b=end,pa=shiftDate(a,-1),ppa=shiftDate(a,-p.days);
+const cur=convSum('randevu_tamamlandi',a,b),prev=convSum('randevu_tamamlandi',ppa,pa);
+const s=deltaFull(cur,prev),on=(PERIOD===p.key)?' on':'';
+return '<button class="pbox'+on+'" data-p="'+p.key+'"><span class="pl">'+p.label+'</span><span class="pv">'+fmt(cur)+'</span><span class="pd '+s.cls+'">'+(s.has?s.txt:'—')+'</span></button>';
+}).join('');
+}
+function reklamTile(l,v,exp){return '<div class="tile"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="exp">'+exp+'</div></div>';}
+function renderReklam(){
+W=reklamWin();BK=W.bucket;reklamPeriodBoxes();
+const a=W.kpi.a,b=W.kpi.b;
+$('#reklam_rangenote').innerHTML='Seçili: <b>'+W.label+'</b> · dönüşümler seçili dönem toplamı · dönem kutusundaki sayı = atfedilen randevu.';
+const hasAds=(DB.ads||[]).some(r=>r.date>=a&&r.date<=b);
+const spend=adsSum('spend',a,b),impr=adsSum('impressions',a,b),clk=adsSum('clicks',a,b);
+const rnd=convSum('randevu_tamamlandi',a,b),tel=convSum('telefon_tiklama',a,b);
+const cpr=(hasAds&&rnd>0)?('₺'+fmt(Math.round(spend/rnd))):'—';
+$('#reklam_kpi').innerHTML=
+reklamTile('Harcama',hasAds?('₺'+fmt(spend)):'—','reklam platformu toplam harcama')+
+reklamTile('Gösterim / Tık',hasAds?(fmt(impr)+' / '+fmt(clk)):'—','reklam gösterimi ve tıkı')+
+reklamTile('Maliyet / Randevu',cpr,'harcama ÷ atfedilen randevu');
+const en=$('#reklam_emptynote');if(en)en.style.display=hasAds?'none':'';
+const rows=convBySource(a,b);
+$('#reklam_convtable').innerHTML='<tr><th>Kaynak / Mecra</th><th class="num">Randevu</th><th class="num">Telefon</th></tr>'+
+(rows.length?rows.map(r=>'<tr><td>'+r.src+' / '+r.med+(r.med==='cpc'?' <span class="chip b">reklam</span>':'')+'</td><td class="num">'+fmt(r.rnd)+'</td><td class="num">'+fmt(r.tel)+'</td></tr>').join(''):'<tr><td colspan="3" style="color:var(--muted)">bu dönemde dönüşüm yok</td></tr>');
+const bd=$('#reklam_convtotal');if(bd){bd.className='badge flat';bd.textContent=fmt(rnd)+' randevu · '+fmt(tel)+' telefon';}
+}
+
 /* ---------- drill-down ---------- */
 function route(){
-const h=location.hash;const detail=h.startsWith('#/detay/');const social=h.startsWith('#/sosyal/');
-$('#mainview').style.display=(detail||social)?'none':'';
+const h=location.hash;const detail=h.startsWith('#/detay/');const social=h.startsWith('#/sosyal/');const reklam=h.startsWith('#/reklam');
+$('#mainview').style.display=(detail||social||reklam)?'none':'';
 $('#detailview').style.display=detail?'':'none';
 const ig=h.startsWith('#/sosyal/instagram');const fbv=social&&!ig;
 $('#sosyalview').style.display=fbv?'':'none';
 $('#igview').style.display=ig?'':'none';
-document.querySelectorAll('#topnav .tab').forEach(t=>t.classList.toggle('on',t.dataset.view===(ig?'instagram':fbv?'facebook':'seo')));
+$('#reklamview').style.display=reklam?'':'none';
+document.querySelectorAll('#topnav .tab').forEach(t=>t.classList.toggle('on',t.dataset.view===(reklam?'reklam':ig?'instagram':fbv?'facebook':'seo')));
 if(detail){SESS=sessionDaily();W=curWin();BK=W.bucket;renderDetail();}
+else if(reklam){renderReklam();}
 else if(ig){renderIG();}
 else if(social){renderFB();}
 else{render();}
@@ -927,6 +990,10 @@ $('#ig_periodrow').addEventListener('click',e=>{
 const b=e.target.closest('.pbox');if(!b)return;
 PERIOD=b.dataset.p;renderIG();
 });
+$('#reklam_periodrow').addEventListener('click',e=>{
+const b=e.target.closest('.pbox');if(!b)return;
+PERIOD=b.dataset.p;renderReklam();
+});
 function prefillCustom(){
 const end=lastDataDate();$('#c_b').value=end;$('#c_a').value=shiftDate(end,-29);
 }
@@ -934,7 +1001,7 @@ function applyCustom(){
 const a=$('#c_a').value,b=$('#c_b').value;if(!a||!b)return;
 CUSTOM={a:a<b?a:b,b:a<b?b:a};PERIOD='custom';render();
 }
-addEventListener('resize',()=>{const h=location.hash;if(h.startsWith('#/detay/'))return;if(h.startsWith('#/sosyal/instagram')){renderIG();return;}if(h.startsWith('#/sosyal/')){renderFB();return;}if(DB.site.length)render();});
+addEventListener('resize',()=>{const h=location.hash;if(h.startsWith('#/detay/'))return;if(h.startsWith('#/reklam')){renderReklam();return;}if(h.startsWith('#/sosyal/instagram')){renderIG();return;}if(h.startsWith('#/sosyal/')){renderFB();return;}if(DB.site.length)render();});
 addEventListener('hashchange',route);
 
 /* ---------- Auth ---------- */
