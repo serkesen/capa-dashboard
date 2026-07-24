@@ -64,6 +64,13 @@ header .hwrap{max-width:1140px;margin:0 auto;padding:0 4px}
 
 .kpis3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:2px 0 6px}
 @media(max-width:520px){.kpis3{grid-template-columns:1fr}}
+.igcharts{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:2px 0 6px}
+@media(max-width:620px){.igcharts{grid-template-columns:1fr}}
+.mini{background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;padding:10px 12px}
+.mini .minihd{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:2px}
+.mini .ml{font-size:12px;color:var(--ink-2)}
+.mini .mv{font-size:18px;font-weight:700;color:var(--ink-1)}
+.mini .minich{margin-top:2px}
 .tile{background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;padding:12px 14px;position:relative}
 .tile.star{border-color:var(--brand-orange)}
 .tile .l{font-size:12px;color:var(--ink-2);display:flex;align-items:center;gap:4px}
@@ -287,7 +294,7 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <div class="kpis3" id="fb_kpi"></div>
 <div class="card">
 <h2>Facebook takipçi <span class="badge" id="fb_b_foll"></span></h2>
-<div class="ch"><b>Ne:</b> sayfanın toplam takipçi sayısı (anlık). <b>Oku:</b> yükselen çizgi = büyüyen kitle · <b>soluk kesikli çizgi = önceki eş dönem</b>. <b>Not:</b> takipçi 6 saatte bir ölçülür; ölçüm 23 Tem'de başladı — trend günden güne birikiyor, başta tek nokta görünmesi normaldir.</div>
+<div class="ch"><b>Ne:</b> seçili dönemde <b>net takipçi değişimi</b> (kazanılan − kaybedilen). <b>Oku:</b> yeşil çubuk = net artış · kırmızı çubuk = net azalış. Anlık toplam takipçi yukarıdaki büyük sayıdadır. <b>Not:</b> çubuklar 6 saatte bir ölçümden türetilir; en az 2 ölçüm gerekir, başta boş görünmesi normaldir.</div>
 <div id="fb_ch_foll"></div>
 </div>
 </div>
@@ -300,11 +307,11 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <div class="kpis3" id="ig_kpi"></div>
 <div class="card">
 <h2>Instagram takipçi <span class="badge" id="ig_b_foll"></span></h2>
-<div class="ch"><b>Ne:</b> hesabın toplam takipçi sayısı (anlık). <b>Oku:</b> yükselen çizgi = büyüyen kitle · <b>soluk kesikli çizgi = önceki eş dönem</b>. <b>Not:</b> takipçi 6 saatte bir ölçülür; ölçüm 24 Tem'de başladı.</div>
+<div class="ch"><b>Ne:</b> seçili dönemde <b>net takipçi değişimi</b> (kazanılan − kaybedilen). <b>Oku:</b> yeşil çubuk = net artış · kırmızı çubuk = net azalış. Anlık toplam takipçi yukarıdaki büyük sayıdadır. <b>Not:</b> çubuklar 6 saatte bir ölçümden türetilir; en az 2 ölçüm gerekir.</div>
 <div id="ig_ch_foll"></div>
 </div>
-<div class="stage"><span class="n">2</span><div><div class="st">Instagram · Etkileşim & Erişim</div><div class="sq">Seçili dönemdeki insight toplamları (günlük değerlerin toplamı). Facebook'ta bu veriler yok; Instagram'da API üzerinden geliyor.</div></div></div>
-<div class="kpis3" id="ig_insights"></div>
+<div class="stage"><span class="n">2</span><div><div class="st">Instagram · Etkileşim & Erişim</div><div class="sq">Her insight metriği seçili dönemde <b>günlük grafik</b> olarak; kartın sağ üstündeki sayı dönem toplamıdır. Facebook'ta bu veriler yok; Instagram'da API üzerinden geliyor.</div></div></div>
+<div class="igcharts" id="ig_insights"></div>
 </div>
 
 <div class="tt" id="tt"></div>
@@ -689,6 +696,33 @@ svg.addEventListener('mousemove',e=>{const r=svg.getBoundingClientRect();const s
 svg.addEventListener('mouseleave',()=>{xh.style.display='none';tt.style.display='none';});
 }
 
+/* ---------- net-degisim bar chart (stok metrik + flow insight) ---------- */
+function fbNetSeries(rows,key){
+const snap=fbSnapSeries(rows,key);
+const by={};(rows||[]).forEach(r=>{by[r.date]=+r[key];});
+const dates=Object.keys(by).sort();
+let prevStock=null;
+if(snap.length){const start=snap[0].x;for(const d of dates){if(d<start)prevStock=by[d];else break;}}
+return snap.map((s,i)=>{let y=null;if(s.y!=null){const base=(i===0)?prevStock:snap[i-1].y;if(base!=null)y=s.y-base;}return{x:s.x,y,lbl:s.lbl};});
+}
+function netBarChart(sel,data,name,posColor,height){
+const el=$(sel);if(!el)return;const Wd=el.clientWidth||600,Hh=height||200;
+const w=Wd-M.l-M.r,h=Hh-M.t-M.b;const signed=!posColor;
+const vals=data.map(d=>d.y).filter(v=>v!=null);
+if(!vals.length){el.innerHTML='<div class="ch" style="margin:0">veri birikiyor — en az 2 ölçüm gerekiyor</div>';return;}
+let mn=Math.min(0,...vals),mx=Math.max(0,...vals);if(mn===mx)mx=mn+1;
+const pad=(mx-mn)*0.12||1,lo=mn<0?mn-pad:mn,hi=mx>0?mx+pad:mx;
+const y=v=>M.t+h-((v-lo)/(hi-lo))*h,zeroY=y(0);
+const n=data.length,slot=w/n,bw=Math.max(3,Math.min(24,slot-6));
+const bars=data.map((d,i)=>{if(d.y==null)return'';const cx=M.l+slot*i+slot/2,bx=cx-bw/2,yTop=d.y>=0?y(d.y):zeroY,hh=Math.max(1.5,Math.abs(y(d.y)-zeroY)),c=d.y>0?(posColor||col('--good')):(d.y<0?col('--bad'):col('--muted'));return '<rect x="'+bx.toFixed(1)+'" y="'+yTop.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+hh.toFixed(1)+'" rx="2" fill="'+c+'"/>';}).join('');
+const gl=[hi,0,lo].map(t=>{const yy=y(t),strong=(t===0);return '<line x1="'+M.l+'" x2="'+(Wd-M.r)+'" y1="'+yy+'" y2="'+yy+'" stroke="'+col(strong?'--axis':'--grid')+'"'+(strong?' stroke-width="1.2"':'')+'/><text x="'+(M.l-6)+'" y="'+(yy+4)+'" text-anchor="end" font-size="10" fill="'+col('--muted')+'">'+(signed&&t>0?'+':'')+fmt(Math.round(t))+'</text>';}).join('');
+const xl=axisLabelsArr(data.map(d=>d.lbl)).map(o=>'<text x="'+(M.l+slot*o.i+slot/2)+'" y="'+(Hh-8)+'" text-anchor="middle" font-size="10" fill="'+col('--muted')+'">'+o.t+'</text>').join('');
+el.innerHTML='<svg viewBox="0 0 '+Wd+' '+Hh+'" height="'+Hh+'">'+gl+bars+xl+'<line class="xh" y1="'+M.t+'" y2="'+(M.t+h)+'" stroke="'+col('--axis')+'" style="display:none"/></svg>';
+const svg=el.querySelector('svg'),xh=svg.querySelector('.xh'),tt=$('#tt');
+svg.addEventListener('mousemove',e=>{const r=svg.getBoundingClientRect(),sx=(e.clientX-r.left)*(svg.viewBox.baseVal.width/r.width),i=Math.max(0,Math.min(n-1,Math.floor((sx-M.l)/slot))),d=data[i],x=M.l+slot*i+slot/2;xh.setAttribute('x1',x);xh.setAttribute('x2',x);xh.style.display='block';tt.innerHTML='<b>'+d.lbl+'</b>'+name+': '+(d.y==null?'veri yok':((signed&&d.y>0?'+':'')+fmt(d.y)));tt.style.display='block';tt.style.left=Math.min(window.innerWidth-270,e.clientX+14)+'px';tt.style.top=(e.clientY+14)+'px';});
+svg.addEventListener('mouseleave',()=>{xh.style.display='none';tt.style.display='none';});
+}
+
 /* ---------- tablolar ---------- */
 function pageAgg(rows,n){
 const agg={};rows.forEach(r=>{const p=r.page.replace('https://capaortodonti.com','')||'/';const a=agg[p]=agg[p]||{c:0,i:0,pos:0,n:0};a.c+=+r.clicks;a.i+=+r.impressions;a.pos+=+r.position;a.n++;});
@@ -770,7 +804,7 @@ $('#fb_rangenote').innerHTML=(PERIOD==='custom'&&CUSTOM)
 :'Seçili: <b>'+W.label+'</b> · grafik '+(BK==='day'?'günlük':BK==='week'?'haftalık':'aylık')+' · takipçi anlık değerdir (toplanmaz).';
 const cur=fbCurrent('followers');const nf=fbNet(DB.fb,'followers',W.kpi.a,W.kpi.b);const s=fbNetLabel(nf);
 $('#fb_kpi').innerHTML='<div class="tile"><div class="l">Facebook takipçi</div><div class="v">'+(cur!=null?fmt(cur):'—')+'</div><div class="exp">Özel Çapa sayfası · anlık toplam takipçi</div><div class="d '+(s.has?s.cls:'')+'">'+(s.has?s.txt+' (seçili dönem)':s.txt)+'</div></div>';
-lineChart('#fb_ch_foll',fbSnapSeries(DB.fb,'followers'),col('--s1'),'Takipçi',false,null,fbPrevSnap(DB.fb,'followers'));
+netBarChart('#fb_ch_foll',fbNetSeries(DB.fb,'followers'),'Net takipçi');
 const bd=$('#fb_b_foll');if(bd){if(s.has){bd.className='badge '+s.cls;bd.textContent=s.txt;}else{bd.className='badge flat';bd.textContent='veri birikiyor';}}
 }
 
@@ -787,10 +821,11 @@ const on=(PERIOD===p.key)?' on':'';
 return '<button class="pbox'+on+'" data-p="'+p.key+'"><span class="pl">'+p.label+'</span><span class="pv">'+(cur!=null?fmt(cur):'—')+'</span><span class="pd '+s.cls+'">'+s.txt+'</span></button>';
 }).join('');
 }
-function igInsightTiles(){
+function igInsightCharts(){
 const a=W.kpi.a,b=W.kpi.b;
 const items=[['reach','Erişim'],['views','Görüntülenme'],['profile_views','Profil ziyareti'],['engaged_accounts','Etkileşen hesap'],['total_interactions','Toplam etkileşim'],['likes','Beğeni'],['comments','Yorum'],['saves','Kaydetme'],['shares','Paylaşım']];
-$('#ig_insights').innerHTML=items.map(function(it){return '<div class="tile"><div class="l">'+it[1]+'</div><div class="v">'+fmt(igSum(it[0],a,b))+'</div><div class="exp">seçili dönem toplamı</div></div>';}).join('');
+$('#ig_insights').innerHTML=items.map(function(it){return '<div class="mini"><div class="minihd"><span class="ml">'+it[1]+'</span><span class="mv">'+fmt(igSum(it[0],a,b))+'</span></div><div class="minich" id="ig_ins_'+it[0]+'"></div></div>';}).join('');
+items.forEach(function(it){netBarChart('#ig_ins_'+it[0],seriesRange(DB.ig,function(r){return +r[it[0]];}),it[1],col('--s3'),132);});
 }
 function renderIG(){
 if(!DB.ig){$('#ig_kpi').innerHTML='';$('#ig_periodrow').innerHTML='';return;}
@@ -801,9 +836,9 @@ $('#ig_rangenote').innerHTML=(PERIOD==='custom'&&CUSTOM)
 :'Seçili: <b>'+W.label+'</b> · grafik '+(BK==='day'?'günlük':BK==='week'?'haftalık':'aylık')+' · takipçi anlık (toplanmaz); insight değerleri seçili dönem toplamı.';
 const cur=igCurrent('followers');const nf=fbNet(DB.ig,'followers',W.kpi.a,W.kpi.b);const s=fbNetLabel(nf);
 $('#ig_kpi').innerHTML='<div class="tile"><div class="l">Instagram takipçi</div><div class="v">'+(cur!=null?fmt(cur):'—')+'</div><div class="exp">@capaortodonti · anlık toplam takipçi</div><div class="d '+(s.has?s.cls:'')+'">'+(s.has?s.txt+' (seçili dönem)':s.txt)+'</div></div>';
-lineChart('#ig_ch_foll',fbSnapSeries(DB.ig,'followers'),col('--s3'),'Takipçi',false,null,fbPrevSnap(DB.ig,'followers'));
+netBarChart('#ig_ch_foll',fbNetSeries(DB.ig,'followers'),'Net takipçi');
 const bd=$('#ig_b_foll');if(bd){if(s.has){bd.className='badge '+s.cls;bd.textContent=s.txt;}else{bd.className='badge flat';bd.textContent='veri birikiyor';}}
-igInsightTiles();
+igInsightCharts();
 }
 
 /* ---------- drill-down ---------- */
