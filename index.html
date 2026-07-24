@@ -388,7 +388,7 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <div class="stage"><span class="n">1</span><div><div class="st">GA4 · Genel Bakış</div><div class="sq">Google Analytics 4 veri seti: oturum, kullanıcı, etkileşim, süre, bounce + cihaz/coğrafya/sayfa/kullanıcı kırılımları. Dönem kutusuna tıkla.</div></div></div>
 <div class="periods" id="ga4_periodrow"></div>
 <div class="note" id="ga4_rangenote"></div>
-<div class="card"><h2>KPI'ler &amp; zaman serileri</h2><div class="ch">Her KPI kendi kutusunda (başlıkta güncel değer) + seçili dönemdeki seyri. Oturum grafiğinde <b>soluk kesikli = önceki eş dönem</b>. Oran ve süre gerçek değer, toplama değil.</div><div class="mgrid" id="ga4_kpicharts"></div></div>
+<div class="card"><h2>KPI'ler &amp; zaman serileri</h2><div class="ch">Her KPI kendi kutusunda (başlıkta güncel değer + dönem % değişim) + seçili dönemdeki seyri. <b>Soluk kesikli çizgi = önceki eş dönem</b> (tüm grafiklerde). Oran ve süre gerçek değer, toplama değil.</div><div class="mgrid" id="ga4_kpicharts"></div></div>
 <div class="stage"><span class="n">2</span><div><div class="st">GA4 · Cihaz & Kullanıcı</div><div class="sq">Ziyaretçiler hangi cihazdan geliyor ve yeni mi dönen mi. Mobile-first için cihaz kırılımı kritik.</div></div></div>
 <div class="grid2">
 <div class="card"><h2>Cihaz</h2><div class="ch">mobil / masaüstü / tablet — oturum payı.</div><div id="ga4_device"></div></div>
@@ -558,6 +558,7 @@ for(const r of rows){if(r.date>=W.chartPrev.a&&r.date<=W.chartPrev.b){const b=bu
 const vals=pb.map(b=>by[b]);const N=W.buckets.length;
 return Array.from({length:N},(_,i)=>i<vals.length?vals[i]:null);
 }
+function prevDerivedSeries(numFn,denFn,mul){if(!W.chartPrev)return null;var pb=bucketsInRange(W.chartPrev.a,W.chartPrev.b,W.bucket);var bn={},bd={};pb.forEach(function(b){bn[b]=0;bd[b]=0;});(DB.ov||[]).forEach(function(r){if(r.date>=W.chartPrev.a&&r.date<=W.chartPrev.b){var b=bucketOf(r.date,W.bucket);if(b in bn){bn[b]+=(numFn(r)||0);bd[b]+=(denFn(r)||0);}}});var vals=pb.map(function(b){return bd[b]>0?(bn[b]/bd[b])*(mul||1):null;});var N=W.buckets.length;return Array.from({length:N},function(_,i){return i<vals.length?vals[i]:null;});}
 const hasPrevData=()=>{const e=earliestDate();return e!=null&&e<=W.prev.b;};
 function earliestDate(){
 let m=null;const scan=rows=>rows.forEach(r=>{if(m==null||r.date<m)m=r.date;});
@@ -1062,12 +1063,12 @@ var durTotP=(DB.ov||[]).filter(function(r){return r.date>=pa&&r.date<=pb;}).redu
 function kd(cur,prev,invert){var s2=deltaFull(cur,prev);if(!s2.has)return '<em class="d flat">yeni</em>';var pp=pct(cur,prev),cls=s2.cls;if(invert&&cls==='up')cls='down';else if(invert&&cls==='down')cls='up';return '<em class="d '+cls+'">'+s2.arrow+' %'+Math.round(Math.abs(pp))+'</em>';}
 var cards=[
 {id:'sess',name:'Oturum',cur:sess,prev:sessP,f:fmt,ser:seriesRange(DB.ov,function(r){return +r.sessions;}),col:col('--brand-teal'),ov:prevSeriesRange(DB.ov,function(r){return +r.sessions;}),hero:true},
-{id:'users',name:'Kullanıcı',cur:users,prev:usersP,f:fmt,ser:seriesRange(DB.ov,function(r){return +r.users;}),col:col('--brand-teal'),ov:null,hero:false},
-{id:'newusers',name:'Yeni kullanıcı',cur:nu,prev:nuP,f:fmt,ser:seriesRange(DB.ov,function(r){return +r.new_users;}),col:col('--brand-teal'),ov:null,hero:false},
-{id:'pv',name:'Sayfa görüntüleme',cur:pv,prev:pvP,f:fmt,ser:seriesRange(DB.ov,function(r){return +r.pageviews;}),col:col('--brand-teal'),ov:null,hero:false},
-{id:'engr',name:'Etkileşim oranı',cur:engRate*100,prev:engRateP*100,f:pctF,ser:ovDerivedSeries(function(r){return +r.engaged_sessions;},function(r){return +r.sessions;},100),col:col('--s1'),ov:null,hero:false},
-{id:'dur',name:'Ort. süre',cur:dur,prev:durP,f:fmtDur,ser:ovDerivedSeries(function(r){return (+r.avg_duration)*(+r.sessions);},function(r){return +r.sessions;},1),col:col('--s1'),ov:null,hero:false},
-{id:'bounce',name:'Bounce',cur:bounce*100,prev:bounceP*100,f:pctF,ser:ovDerivedSeries(function(r){return (+r.sessions)-(+r.engaged_sessions);},function(r){return +r.sessions;},100),col:col('--s1'),ov:null,hero:false,invert:true}
+{id:'users',name:'Kullanıcı',cur:users,prev:usersP,f:fmt,ser:seriesRange(DB.ov,function(r){return +r.users;}),col:col('--brand-teal'),ov:prevSeriesRange(DB.ov,function(r){return +r.users;}),hero:false},
+{id:'newusers',name:'Yeni kullanıcı',cur:nu,prev:nuP,f:fmt,ser:seriesRange(DB.ov,function(r){return +r.new_users;}),col:col('--brand-teal'),ov:prevSeriesRange(DB.ov,function(r){return +r.new_users;}),hero:false},
+{id:'pv',name:'Sayfa görüntüleme',cur:pv,prev:pvP,f:fmt,ser:seriesRange(DB.ov,function(r){return +r.pageviews;}),col:col('--brand-teal'),ov:prevSeriesRange(DB.ov,function(r){return +r.pageviews;}),hero:false},
+{id:'engr',name:'Etkileşim oranı',cur:engRate*100,prev:engRateP*100,f:pctF,ser:ovDerivedSeries(function(r){return +r.engaged_sessions;},function(r){return +r.sessions;},100),col:col('--s1'),ov:prevDerivedSeries(function(r){return +r.engaged_sessions;},function(r){return +r.sessions;},100),hero:false},
+{id:'dur',name:'Ort. süre',cur:dur,prev:durP,f:fmtDur,ser:ovDerivedSeries(function(r){return (+r.avg_duration)*(+r.sessions);},function(r){return +r.sessions;},1),col:col('--s1'),ov:prevDerivedSeries(function(r){return (+r.avg_duration)*(+r.sessions);},function(r){return +r.sessions;},1),hero:false},
+{id:'bounce',name:'Bounce',cur:bounce*100,prev:bounceP*100,f:pctF,ser:ovDerivedSeries(function(r){return (+r.sessions)-(+r.engaged_sessions);},function(r){return +r.sessions;},100),col:col('--s1'),ov:prevDerivedSeries(function(r){return (+r.sessions)-(+r.engaged_sessions);},function(r){return +r.sessions;},100),hero:false,invert:true}
 ];
 $('#ga4_kpicharts').innerHTML=cards.map(function(k){var chip=hasPrev?kd(k.cur,k.prev,k.invert):'<em class="d flat">yeni</em>';var old=hasPrev?('önceki: '+k.f(k.prev)):'önceki dönem: veri yok';return '<div class="mchart'+(k.hero?' hero':'')+'"><div class="mh"><span>'+k.name+'</span><b>'+k.f(k.cur)+'</b>'+chip+'</div><div class="mx">'+old+'</div><div id="ga4c_'+k.id+'"></div></div>';}).join('');
 cards.forEach(function(k){lineChart('#ga4c_'+k.id,k.ser,k.col,k.name,false,null,k.ov,k.f);});
