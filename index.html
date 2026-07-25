@@ -187,6 +187,7 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <a class="tab" data-view="gtm" href="#/gtm">GTM</a>
 <a class="tab" data-view="ga4" href="#/ga4">GA4</a>
 <a class="tab" data-view="gsc" href="#/gsc">GSC</a>
+<a class="tab" data-view="clarity" href="#/clarity">Clarity</a>
 </nav>
 
 <div class="wrap" id="mainview">
@@ -425,6 +426,20 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 </div>
 </div>
 
+<div class="wrap" id="clarityview" style="display:none">
+<div class="stage"><span class="n">1</span><div><div class="st">Clarity · Genel Bakış</div><div class="sq">Microsoft Clarity davranış verisi: oturum, tekil kullanıcı, sayfa/oturum, scroll derinliği, etkileşim süresi. Veri günlük snapshot — geçmiş backfill YOK, bugünden birikir.</div></div></div>
+<div class="periods" id="clr_periodrow"></div>
+<div class="note" id="clr_rangenote"></div>
+<div class="card"><h2>KPI'ler &amp; zaman serileri</h2><div class="ch">Her metrik kendi kutusunda: başlıkta güncel değer + dönem % değişim, altında önceki dönem + zaman serisi. <b>Soluk kesikli = önceki eş dönem</b>.</div><div class="mgrid" id="clr_kpicharts"></div></div>
+<div class="stage"><span class="n">2</span><div><div class="st">Clarity · Frustrasyon &amp; Teknik</div><div class="sq">Kullanıcının takıldığı/sinirlendiği + teknik hata sinyalleri. Bunlarda ARTIŞ kötüdür → çip kırmızı, düşüş yeşil.</div></div></div>
+<div class="card"><h2>Frustrasyon sinyalleri</h2><div class="ch">Rage click (öfke), dead click (boşa), quick-back (hızlı dönüş), aşırı kaydırma, script hatası, error click. GA4/GSC'de olmayan; randevu/tedavi sayfalarında takılma göstergesi. Artış=kötü (renk ters).</div><div class="mgrid" id="clr_frust"></div></div>
+<div class="stage"><span class="n">3</span><div><div class="st">Clarity · Cihaz &amp; Ülke</div><div class="sq">Oturumların cihaz ve ülke dağılımı.</div></div></div>
+<div class="grid2">
+<div class="card"><h2>Cihaz</h2><div class="ch">Oturum payı (ilk 4 + Diğer).</div><div id="clr_dev_ch"></div><div class="tscroll"><table id="clr_dev"></table></div></div>
+<div class="card"><h2>Ülke</h2><div class="ch">Oturum payı (ilk 4 + Diğer). Tablo 5 satır, "daha fazla".</div><div id="clr_ctry_ch"></div><div class="tscroll"><table id="clr_ctry"></table></div></div>
+</div>
+</div>
+
 <div class="tt" id="tt"></div>
 <div id="login"><div class="box">
 <h2>Çapa Dashboard</h2>
@@ -450,7 +465,7 @@ const col=v=>CS.getPropertyValue(v).trim();
 const CUTOVER='2026-07-14';
 const AYK=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
 const COMMERCIAL=/(dis-teli|invisalign|seffaf-plak|bonding|implant|ortodonti|gulus|beyazlat|protez|kanal-ted|pedodont|zirkon|periodont|estetik|dolgu|dis-cek|kaplama|apare|braket)/i;
-let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[],fb:[],ig:[],ads:[],convsrc:[],funnel:[],gaev:[],ov:[],brk:[],land:[],demo:[],dev:[],ctry:[]};
+let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[],fb:[],ig:[],ads:[],convsrc:[],funnel:[],gaev:[],ov:[],brk:[],land:[],demo:[],dev:[],ctry:[],clar:[],clarb:[]};
 let GOALS={};
 
 /* dönemler: days = KPI penceresi (gün), chartDays = grafik penceresi, bucket = granülarite */
@@ -483,7 +498,7 @@ return all;
 }
 async function load(){
 try{
-const [site,chan,ev,cl,pages,queries,base,targets,pagecmp,fb,ig,ads,convsrc,funnel,gaev,ov,brk,land,demo,dev,ctry]=await Promise.all([
+const [site,chan,ev,cl,pages,queries,base,targets,pagecmp,fb,ig,ads,convsrc,funnel,gaev,ov,brk,land,demo,dev,ctry,clar,clarb]=await Promise.all([
 q('gsc_site_daily?order=date'),
 q('ga4_channel_daily?order=date'),
 q('ga4_event_daily?order=date'),
@@ -504,9 +519,11 @@ q('ga4_breakdown_daily?select=date,kind,label,sessions,users&order=date').catch(
 q('ga4_landing_daily?select=date,landing,sessions,engaged_sessions&order=date').catch(()=>[]),
 q('ga4_demo_daily?select=date,gender,age,users&order=date').catch(()=>[]),
 q('gsc_device_daily?select=date,device,clicks,impressions,ctr,position&order=date').catch(()=>[]),
-q('gsc_country_daily?select=date,country,clicks,impressions,ctr,position&order=date').catch(()=>[])
+q('gsc_country_daily?select=date,country,clicks,impressions,ctr,position&order=date').catch(()=>[]),
+q('clarity_daily?select=date,sessions,bot_sessions,distinct_users,pages_per_session,scroll_depth,engage_active,engage_total,dead_clicks,rage_clicks,quickbacks,excessive_scroll,script_errors,error_clicks&order=date').catch(()=>[]),
+q('clarity_breakdown_daily?select=date,kind,label,sessions&order=date').catch(()=>[])
 ]);
-DB={site,chan,ev,cl,pages,queries,base,pagecmp,fb,ig,ads,convsrc,funnel,gaev,ov,brk,land,demo,dev,ctry};
+DB={site,chan,ev,cl,pages,queries,base,pagecmp,fb,ig,ads,convsrc,funnel,gaev,ov,brk,land,demo,dev,ctry,clar,clarb};
 GOALS={};(targets||[]).forEach(t=>GOALS[t.metric_key]=+t.monthly_target);
 route();
 }catch(e){
@@ -1121,6 +1138,47 @@ var qy=queryAggGsc(DB.queries,a,b);
 shareBars('#gsc_query_ch',top5other(qy.map(function(r){return {label:r.q,value:r.c};})),'--brand-teal');
 renderExpTable('#gsc_query','<tr><th>Sorgu</th><th class="num">Tık</th><th class="num">Gös.</th><th class="num">CTR</th><th class="num">Poz.</th></tr>',qy.map(function(r){return '<td style="word-break:break-all">'+r.q+(r.b?' <span class="chip b">markalı</span>':'')+'</td><td class="num">'+fmt(r.c)+'</td><td class="num">'+fmt(r.i)+'</td><td class="num">%'+(r.i>0?(r.c/r.i*100):0).toFixed(1)+'</td><td class="num">'+r.pos.toFixed(1)+'</td>';}),5);
 }
+function renderKcards(sel,cards,hasPrev){$(sel).innerHTML=cards.map(function(k){var chip=hasPrev?kdChip(k.cur,k.prev,k.invert):'<em class="d flat">yeni</em>';var old=hasPrev?('önceki: '+k.f(k.prev)):'önceki dönem: veri yok';return '<div class="mchart'+(k.hero?' hero':'')+'"><div class="mh"><span>'+k.name+'</span><b>'+k.f(k.cur)+'</b>'+chip+'</div><div class="mx">'+old+'</div><div id="'+k.id+'"></div></div>';}).join('');cards.forEach(function(k){lineChart('#'+k.id,k.ser,k.col,k.name,false,null,k.ov,k.f);});}
+function clrLastDate(){var m=null;(DB.clar||[]).forEach(function(r){if(!m||r.date>m)m=r.date;});return m;}
+function clrWin(){return curWin(clrLastDate()||lastDataDate());}
+function clrWavg(key,a,b){var n=0,d=0;(DB.clar||[]).forEach(function(r){if(r.date>=a&&r.date<=b){var sc=+r.sessions||0,v=r[key];if(v!=null&&sc>0){n+=(+v)*sc;d+=sc;}}});return d>0?n/d:0;}
+function clrBreakAgg(kind,a,b){var by={};(DB.clarb||[]).forEach(function(r){if(r.kind===kind&&r.date>=a&&r.date<=b){by[r.label]=(by[r.label]||0)+(+r.sessions||0);}});return Object.keys(by).map(function(k){return {label:k,value:by[k]};}).sort(function(x,y){return y.value-x.value;});}
+function clrPeriodBoxes(){var end=clrLastDate()||lastDataDate();$('#clr_periodrow').innerHTML=PERIODS.map(function(p){var a=shiftDate(end,-(p.days-1)),b=end,pa=shiftDate(a,-1),ppa=shiftDate(a,-p.days);var cur=sumRange(DB.clar,'sessions',a,b),prev=sumRange(DB.clar,'sessions',ppa,pa);var s=deltaFull(cur,prev),on=(PERIOD===p.key)?' on':'';return '<button class="pbox'+on+'" data-p="'+p.key+'"><span class="pl">'+p.label+'</span><span class="pv">'+fmt(cur)+'</span><span class="pd '+s.cls+'">'+(s.has?s.txt:'\u2014')+'</span></button>';}).join('');}
+function renderClarity(){
+W=clrWin();BK=W.bucket;clrPeriodBoxes();
+var a=W.kpi.a,b=W.kpi.b,pa=W.prev.a,pb=W.prev.b;
+var hasPrev=(DB.clar||[]).some(function(r){return r.date>=pa&&r.date<=pb;});
+$('#clr_rangenote').innerHTML='Seçili: <b>'+W.label+'</b> · Clarity son 24s anlık, günlük snapshot (geçmiş backfill yok) · soluk kesikli = önceki eş dönem.';
+var dec1=function(v){return (Math.round(v*10)/10).toLocaleString('tr-TR',{minimumFractionDigits:1,maximumFractionDigits:1});};
+var pctF=function(v){return '%'+Math.round(v);};
+var flow=function(key){return seriesRange(DB.clar,function(r){return +r[key];});};
+var flowP=function(key){return prevSeriesRange(DB.clar,function(r){return +r[key];});};
+var avg=function(key){return derivedSeriesR(DB.clar,function(r){return (+r[key])*(+r.sessions);},function(r){return +r.sessions;},1);};
+var avgP=function(key){return prevDerivedSeriesR(DB.clar,function(r){return (+r[key])*(+r.sessions);},function(r){return +r.sessions;},1);};
+var g1=[
+{id:'clrc_sess',name:'Oturum',cur:sumRange(DB.clar,'sessions',a,b),prev:sumRange(DB.clar,'sessions',pa,pb),f:fmt,ser:flow('sessions'),ov:flowP('sessions'),col:col('--s1'),hero:true},
+{id:'clrc_users',name:'Tekil kullanıcı',cur:sumRange(DB.clar,'distinct_users',a,b),prev:sumRange(DB.clar,'distinct_users',pa,pb),f:fmt,ser:flow('distinct_users'),ov:flowP('distinct_users'),col:col('--s1')},
+{id:'clrc_pps',name:'Sayfa/Oturum',cur:clrWavg('pages_per_session',a,b),prev:clrWavg('pages_per_session',pa,pb),f:dec1,ser:avg('pages_per_session'),ov:avgP('pages_per_session'),col:col('--brand-teal')},
+{id:'clrc_scroll',name:'Scroll derinliği',cur:clrWavg('scroll_depth',a,b),prev:clrWavg('scroll_depth',pa,pb),f:pctF,ser:avg('scroll_depth'),ov:avgP('scroll_depth'),col:col('--brand-teal')},
+{id:'clrc_eng',name:'Etkileşim süresi',cur:clrWavg('engage_active',a,b),prev:clrWavg('engage_active',pa,pb),f:fmtDur,ser:avg('engage_active'),ov:avgP('engage_active'),col:col('--brand-teal')}
+];
+renderKcards('#clr_kpicharts',g1,hasPrev);
+var g2=[
+{id:'clrf_rage',name:'Rage click (öfke)',cur:sumRange(DB.clar,'rage_clicks',a,b),prev:sumRange(DB.clar,'rage_clicks',pa,pb),f:fmt,ser:flow('rage_clicks'),ov:flowP('rage_clicks'),col:col('--s3'),invert:true,hero:true},
+{id:'clrf_dead',name:'Dead click (boşa)',cur:sumRange(DB.clar,'dead_clicks',a,b),prev:sumRange(DB.clar,'dead_clicks',pa,pb),f:fmt,ser:flow('dead_clicks'),ov:flowP('dead_clicks'),col:col('--s3'),invert:true},
+{id:'clrf_qb',name:'Quick-back (hızlı dönüş)',cur:sumRange(DB.clar,'quickbacks',a,b),prev:sumRange(DB.clar,'quickbacks',pa,pb),f:fmt,ser:flow('quickbacks'),ov:flowP('quickbacks'),col:col('--s3'),invert:true},
+{id:'clrf_es',name:'Aşırı kaydırma',cur:sumRange(DB.clar,'excessive_scroll',a,b),prev:sumRange(DB.clar,'excessive_scroll',pa,pb),f:fmt,ser:flow('excessive_scroll'),ov:flowP('excessive_scroll'),col:col('--s3'),invert:true},
+{id:'clrf_se',name:'Script hatası',cur:sumRange(DB.clar,'script_errors',a,b),prev:sumRange(DB.clar,'script_errors',pa,pb),f:fmt,ser:flow('script_errors'),ov:flowP('script_errors'),col:col('--s3'),invert:true},
+{id:'clrf_ec',name:'Error click',cur:sumRange(DB.clar,'error_clicks',a,b),prev:sumRange(DB.clar,'error_clicks',pa,pb),f:fmt,ser:flow('error_clicks'),ov:flowP('error_clicks'),col:col('--s3'),invert:true}
+];
+renderKcards('#clr_frust',g2,hasPrev);
+var devA=clrBreakAgg('device',a,b);
+shareBars('#clr_dev_ch',top5other(devA),'--s1');
+renderExpTable('#clr_dev','<tr><th>Cihaz</th><th class="num">Oturum</th></tr>',devA.map(function(r){return '<td>'+r.label+'</td><td class="num">'+fmt(r.value)+'</td>';}),2);
+var ctryA=clrBreakAgg('country',a,b);
+shareBars('#clr_ctry_ch',top5other(ctryA),'--brand-teal');
+renderExpTable('#clr_ctry','<tr><th>Ülke</th><th class="num">Oturum</th></tr>',ctryA.map(function(r){return '<td>'+r.label+'</td><td class="num">'+fmt(r.value)+'</td>';}),2);
+}
 function renderGA4(){
 W=ga4Win();BK=W.bucket;ga4PeriodBoxes();
 const a=W.kpi.a,b=W.kpi.b;
@@ -1163,8 +1221,8 @@ else{$('#ga4_demo').innerHTML='<tr><td style="color:var(--muted)">Demografi veri
 
 /* ---------- drill-down ---------- */
 function route(){
-const h=location.hash;const detail=h.startsWith('#/detay/');const social=h.startsWith('#/sosyal/');const reklam=h.startsWith('#/reklam');const gtm=h.startsWith('#/gtm');const ga4=h.startsWith('#/ga4');const gsc=h.startsWith('#/gsc');
-$('#mainview').style.display=(detail||social||reklam||gtm||ga4||gsc)?'none':'';
+const h=location.hash;const detail=h.startsWith('#/detay/');const social=h.startsWith('#/sosyal/');const reklam=h.startsWith('#/reklam');const gtm=h.startsWith('#/gtm');const ga4=h.startsWith('#/ga4');const gsc=h.startsWith('#/gsc');const clr=h.startsWith('#/clarity');
+$('#mainview').style.display=(detail||social||reklam||gtm||ga4||gsc||clr)?'none':'';
 $('#detailview').style.display=detail?'':'none';
 const ig=h.startsWith('#/sosyal/instagram');const fbv=social&&!ig;
 $('#sosyalview').style.display=fbv?'':'none';
@@ -1173,10 +1231,12 @@ $('#reklamview').style.display=reklam?'':'none';
 $('#gtmview').style.display=gtm?'':'none';
 $('#ga4view').style.display=ga4?'':'none';
 $('#gscview').style.display=gsc?'':'none';
-document.querySelectorAll('#topnav .tab').forEach(t=>t.classList.toggle('on',t.dataset.view===(gsc?'gsc':ga4?'ga4':gtm?'gtm':reklam?'reklam':ig?'instagram':fbv?'facebook':'seo')));
+$('#clarityview').style.display=clr?'':'none';
+document.querySelectorAll('#topnav .tab').forEach(t=>t.classList.toggle('on',t.dataset.view===(clr?'clarity':gsc?'gsc':ga4?'ga4':gtm?'gtm':reklam?'reklam':ig?'instagram':fbv?'facebook':'seo')));
 if(detail){SESS=sessionDaily();W=curWin();BK=W.bucket;renderDetail();}
 else if(ga4){renderGA4();}
 else if(gsc){renderGSC();}
+else if(clr){renderClarity();}
 else if(gtm){renderGTM();}
 else if(reklam){renderReklam();}
 else if(ig){renderIG();}
@@ -1265,6 +1325,10 @@ $('#gsc_periodrow').addEventListener('click',e=>{
 const b=e.target.closest('.pbox');if(!b)return;
 PERIOD=b.dataset.p;renderGSC();
 });
+$('#clr_periodrow').addEventListener('click',e=>{
+const b=e.target.closest('.pbox');if(!b)return;
+PERIOD=b.dataset.p;renderClarity();
+});
 function prefillCustom(){
 const end=lastDataDate();$('#c_b').value=end;$('#c_a').value=shiftDate(end,-29);
 }
@@ -1272,7 +1336,7 @@ function applyCustom(){
 const a=$('#c_a').value,b=$('#c_b').value;if(!a||!b)return;
 CUSTOM={a:a<b?a:b,b:a<b?b:a};PERIOD='custom';render();
 }
-addEventListener('resize',()=>{const h=location.hash;if(h.startsWith('#/detay/'))return;if(h.startsWith('#/ga4')){renderGA4();return;}if(h.startsWith('#/gsc')){renderGSC();return;}if(h.startsWith('#/gtm')){renderGTM();return;}if(h.startsWith('#/reklam')){renderReklam();return;}if(h.startsWith('#/sosyal/instagram')){renderIG();return;}if(h.startsWith('#/sosyal/')){renderFB();return;}if(DB.site.length)render();});
+addEventListener('resize',()=>{const h=location.hash;if(h.startsWith('#/detay/'))return;if(h.startsWith('#/ga4')){renderGA4();return;}if(h.startsWith('#/gsc')){renderGSC();return;}if(h.startsWith('#/clarity')){renderClarity();return;}if(h.startsWith('#/gtm')){renderGTM();return;}if(h.startsWith('#/reklam')){renderReklam();return;}if(h.startsWith('#/sosyal/instagram')){renderIG();return;}if(h.startsWith('#/sosyal/')){renderFB();return;}if(DB.site.length)render();});
 addEventListener('hashchange',route);
 
 /* ---------- Auth ---------- */

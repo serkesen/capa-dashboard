@@ -340,4 +340,91 @@ if META_TOKEN:
 else:
     print('META skip (token yok)')
 
+# --- MS Clarity (Data Export API) — token varsa, gunde ~1 kez (rate-limit 10/gun) ---
+CLARITY_TOKEN = os.environ.get('CLARITY_TOKEN', '')
+_run_clarity = bool(CLARITY_TOKEN) and (os.environ.get('CLARITY_RUN') == '1' or dt.datetime.utcnow().hour < 6)
+if _run_clarity:
+    try:
+        def clarity(dims=None):
+            params = {'numOfDays': 1}
+            if dims:
+                for _i, _d in enumerate(dims, 1):
+                    params['dimension' + str(_i)] = _d
+            _r = requests.get('https://www.clarity.ms/export-data/api/v1/project-live-insights',
+                headers={'Authorization': 'Bearer ' + CLARITY_TOKEN}, params=params, timeout=120)
+            _r.raise_for_status()
+            return _r.json()
+
+        def _cnum(v):
+            try:
+                return float(v)
+            except (TypeError, ValueError):
+                return None
+
+        def _norm(s):
+            return ''.join(ch for ch in str(s).lower() if ch.isalnum())
+
+        cday = today.isoformat()
+        agg = clarity()
+        by = {}
+        for m in (agg or []):
+            info = m.get('information') or []
+            by[_norm(m.get('metricName'))] = info[0] if info else {}
+        for _a, _b in [('excessivescrolling', 'excessivescroll'), ('quickback', 'quickbackclick'),
+                       ('deadclick', 'deadclickcount'), ('rageclick', 'rageclickcount'),
+                       ('scripterror', 'scripterrorcount'), ('errorclick', 'errorclickcount'),
+                       ('engagement', 'engagementtime')]:
+            if _a in by and _b not in by:
+                by[_b] = by[_a]
+
+        def pk(name, *keys):
+            row = by.get(name, {})
+            for k in keys:
+                if k in row and _cnum(row[k]) is not None:
+                    return _cnum(row[k])
+            for k, v in row.items():
+                n = _cnum(v)
+                if n is not None:
+                    return n
+            return None
+
+        tr = by.get('traffic', {})
+        crow = {'date': cday,
+                'sessions': _cnum(tr.get('totalSessionCount')),
+                'bot_sessions': _cnum(tr.get('totalBotSessionCount')),
+                'distinct_users': _cnum(tr.get('distinctUserCount') or tr.get('distantUserCount')),
+                'pages_per_session': _cnum(tr.get('PagesPerSessionPercentage') or tr.get('pagesPerSessionPercentage')),
+                'scroll_depth': pk('scrolldepth', 'averageScrollDepth', 'AverageScrollDepth'),
+                'engage_active': pk('engagementtime', 'activeTime', 'totalActiveTime'),
+                'engage_total': pk('engagementtime', 'totalTime', 'totalSessionTime'),
+                'dead_clicks': pk('deadclickcount', 'subTotal', 'totalCount'),
+                'rage_clicks': pk('rageclickcount', 'subTotal', 'totalCount'),
+                'quickbacks': pk('quickbackclick', 'subTotal', 'totalCount'),
+                'excessive_scroll': pk('excessivescroll', 'subTotal', 'totalCount'),
+                'script_errors': pk('scripterrorcount', 'subTotal', 'totalCount'),
+                'error_clicks': pk('errorclickcount', 'subTotal', 'totalCount'),
+                'raw': agg}
+        upsert('clarity_daily', [crow], 'date')
+
+        brk = []
+        for kind, dim in [('device', 'Device'), ('country', 'Country')]:
+            try:
+                data = clarity([dim])
+                for m in (data or []):
+                    if _norm(m.get('metricName')) == 'traffic':
+                        for info in (m.get('information') or []):
+                            lbl = info.get(dim) or info.get('Country/Region') or info.get('Country') or info.get('Device') or '(yok)'
+                            sc = _cnum(info.get('totalSessionCount'))
+                            if sc is not None:
+                                brk.append({'date': cday, 'kind': kind, 'label': str(lbl)[:80], 'sessions': sc})
+            except Exception as _e:
+                print('clarity brk', kind, 'ERR', repr(_e))
+        if brk:
+            upsert('clarity_breakdown_daily', brk, 'date,kind,label')
+        print('clarity OK metrics:', list(by.keys()))
+    except Exception as e:
+        print('clarity ERR', repr(e))
+else:
+    print('clarity skip (token yok / gun-ici)')
+
 print('OK')
