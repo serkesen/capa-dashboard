@@ -419,6 +419,43 @@ if _run_clarity:
                                 brk.append({'date': cday, 'kind': kind, 'label': str(lbl)[:80], 'sessions': sc})
             except Exception as _e:
                 print('clarity brk', kind, 'ERR', repr(_e))
+        def _blist(mname, labelkeys, valkeys):
+            out = []
+            for m in (agg or []):
+                if _norm(m.get('metricName')) != mname:
+                    continue
+                for info in (m.get('information') or []):
+                    lbl = None
+                    for _k in labelkeys:
+                        if info.get(_k):
+                            lbl = info.get(_k)
+                            break
+                    val = None
+                    for _k in valkeys:
+                        if _cnum(info.get(_k)) is not None:
+                            val = _cnum(info.get(_k))
+                            break
+                    if val is not None:
+                        out.append((str(lbl or '(dogrudan)')[:300], val))
+            return out
+
+        for kind, mname, _lk, _vk in [
+                ('page', 'popularpages', ['url', 'Url', 'name'], ['visitsCount', 'sessionsCount']),
+                ('referrer', 'referrerurl', ['name', 'url'], ['sessionsCount', 'visitsCount']),
+                ('browser', 'browser', ['name'], ['sessionsCount']),
+                ('os', 'os', ['name'], ['sessionsCount'])]:
+            for _lbl, _val in _blist(mname, _lk, _vk):
+                brk.append({'date': cday, 'kind': kind, 'label': _lbl, 'sessions': _val})
+
+        _uniq = {}
+        for _r in brk:
+            _k2 = (_r['date'], _r['kind'], _r['label'])
+            if _k2 in _uniq:
+                _uniq[_k2]['sessions'] = (_uniq[_k2]['sessions'] or 0) + (_r['sessions'] or 0)
+            else:
+                _uniq[_k2] = _r
+        brk = list(_uniq.values())
+
         if brk:
             upsert('clarity_breakdown_daily', brk, 'date,kind,label')
         print('clarity OK metrics:', list(by.keys()))

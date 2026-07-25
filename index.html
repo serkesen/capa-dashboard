@@ -129,6 +129,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .tscroll{overflow-x:auto}
 table .mrow{display:none} table.moreopen .mrow{display:table-row}
 .morelink{color:var(--s1);cursor:pointer;font-size:12px;font-weight:600;display:inline-block;padding:3px 0}
+.hml{text-decoration:none;font-size:13px;opacity:.85} .hml:hover{opacity:1}
 .morerow td{padding-top:8px}
 details.ctx{margin-top:6px;border:1px dashed var(--grid);border-radius:12px;background:var(--ctxbg);padding:0 12px}
 details.ctx>summary{cursor:pointer;padding:12px 2px;font-size:12px;font-weight:700;color:var(--ink-2);list-style:none}
@@ -437,6 +438,11 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <div class="grid2">
 <div class="card"><h2>Cihaz</h2><div class="ch">Oturum payı (ilk 4 + Diğer).</div><div id="clr_dev_ch"></div><div class="tscroll"><table id="clr_dev"></table></div></div>
 <div class="card"><h2>Ülke</h2><div class="ch">Oturum payı (ilk 4 + Diğer). Tablo 5 satır, "daha fazla".</div><div id="clr_ctry_ch"></div><div class="tscroll"><table id="clr_ctry"></table></div></div>
+</div>
+<div class="stage"><span class="n">4</span><div><div class="st">Clarity · Popüler sayfalar &amp; Trafik kaynağı</div><div class="sq">Hangi sayfa geziliyor, ziyaretçi nereden geliyor. Sayfa satırındaki 🔥 o sayfanın <b>Clarity ısı haritasını</b> açar — ısı haritası API'den veri olarak GELMEZ, Clarity arayüzünde çizilir.</div></div></div>
+<div class="grid2">
+<div class="card"><h2>Popüler sayfalar</h2><div class="ch">Sayfa ziyareti (ilk 4 + Diğer). Tablo 5 satır, "daha fazla". 🔥 = Clarity ısı haritası (tıklama/scroll, son 3 gün).</div><div id="clr_page_ch"></div><div class="tscroll"><table id="clr_page"></table></div></div>
+<div class="card"><h2>Trafik kaynağı</h2><div class="ch">Oturumu getiren adres (ilk 4 + Diğer). capaortodonti.com ile başlayanlar = site içi geçiş.</div><div id="clr_ref_ch"></div><div class="tscroll"><table id="clr_ref"></table></div></div>
 </div>
 </div>
 
@@ -1143,6 +1149,10 @@ function clrLastDate(){var m=null;(DB.clar||[]).forEach(function(r){if(!m||r.dat
 function clrWin(){return curWin(clrLastDate()||lastDataDate());}
 function clrWavg(key,a,b){var n=0,d=0;(DB.clar||[]).forEach(function(r){if(r.date>=a&&r.date<=b){var sc=+r.sessions||0,v=r[key];if(v!=null&&sc>0){n+=(+v)*sc;d+=sc;}}});return d>0?n/d:0;}
 function clrBreakAgg(kind,a,b){var by={};(DB.clarb||[]).forEach(function(r){if(r.kind===kind&&r.date>=a&&r.date<=b){by[r.label]=(by[r.label]||0)+(+r.sessions||0);}});return Object.keys(by).map(function(k){return {label:k,value:by[k]};}).sort(function(x,y){return y.value-x.value;});}
+var CLARITY_PID='xlyo07l9il';
+function esc(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function shortUrl(u){var t=String(u||'');if(t==='(dogrudan)'||t==='(yok)')return '(doğrudan giriş)';t=t.replace(/^https?:\/\/(www\.)?/,'').replace(/^capaortodonti\.com/,'');if(!t)t='/';return t.length>56?t.slice(0,54)+'…':t;}
+function clrHeatUrl(u){var b='https://clarity.microsoft.com/projects/view/'+CLARITY_PID+'/heatmaps?date=Last%203%20days';var t=String(u||'').split('#')[0].split('?')[0];if(!/^https?:\/\//.test(t))return b;var rx='^'+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(\\?.*)?$';return b+'&heatmapDeviceType=0&heatmapType=0&URL='+encodeURIComponent('2;6;'+rx);}
 function clrPeriodBoxes(){var end=clrLastDate()||lastDataDate();$('#clr_periodrow').innerHTML=PERIODS.map(function(p){var a=shiftDate(end,-(p.days-1)),b=end,pa=shiftDate(a,-1),ppa=shiftDate(a,-p.days);var cur=sumRange(DB.clar,'sessions',a,b),prev=sumRange(DB.clar,'sessions',ppa,pa);var s=deltaFull(cur,prev),on=(PERIOD===p.key)?' on':'';return '<button class="pbox'+on+'" data-p="'+p.key+'"><span class="pl">'+p.label+'</span><span class="pv">'+fmt(cur)+'</span><span class="pd '+s.cls+'">'+(s.has?s.txt:'\u2014')+'</span></button>';}).join('');}
 function renderClarity(){
 W=clrWin();BK=W.bucket;clrPeriodBoxes();
@@ -1177,7 +1187,13 @@ shareBars('#clr_dev_ch',top5other(devA),'--s1');
 renderExpTable('#clr_dev','<tr><th>Cihaz</th><th class="num">Oturum</th></tr>',devA.map(function(r){return '<td>'+r.label+'</td><td class="num">'+fmt(r.value)+'</td>';}),2);
 var ctryA=clrBreakAgg('country',a,b);
 shareBars('#clr_ctry_ch',top5other(ctryA),'--brand-teal');
-renderExpTable('#clr_ctry','<tr><th>Ülke</th><th class="num">Oturum</th></tr>',ctryA.map(function(r){return '<td>'+r.label+'</td><td class="num">'+fmt(r.value)+'</td>';}),2);
+renderExpTable('#clr_ctry','<tr><th>Ülke</th><th class="num">Oturum</th></tr>',ctryA.map(function(r){return '<td>'+esc(r.label)+'</td><td class="num">'+fmt(r.value)+'</td>';}),2);
+var pageA=clrBreakAgg('page',a,b);
+shareBars('#clr_page_ch',top5other(pageA.map(function(r){return {label:shortUrl(r.label),value:r.value};})),'--s2');
+renderExpTable('#clr_page','<tr><th>Sayfa</th><th class="num">Ziyaret</th><th class="num">Isı</th></tr>',pageA.map(function(r){return '<td style="word-break:break-all">'+esc(shortUrl(r.label))+'</td><td class="num">'+fmt(r.value)+'</td><td class="num"><a class="hml" href="'+esc(clrHeatUrl(r.label))+'" target="_blank" rel="noopener" title="Clarity ısı haritası">🔥</a></td>';}),3);
+var refA=clrBreakAgg('referrer',a,b);
+shareBars('#clr_ref_ch',top5other(refA.map(function(r){return {label:shortUrl(r.label),value:r.value};})),'--brand-orange');
+renderExpTable('#clr_ref','<tr><th>Kaynak</th><th class="num">Oturum</th></tr>',refA.map(function(r){return '<td style="word-break:break-all">'+esc(shortUrl(r.label))+'</td><td class="num">'+fmt(r.value)+'</td>';}),2);
 }
 function renderGA4(){
 W=ga4Win();BK=W.bucket;ga4PeriodBoxes();
