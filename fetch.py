@@ -506,10 +506,15 @@ elif _run_psi:
             def _a(key):
                 return _num((au.get(key) or {}).get('numericValue'))
 
-            # alan (CrUX) verisi: sayfa bazinda yoksa origin'e dus
+            # Alan (CrUX) verisi. ⚠ 26 Tem canli dogrulama: loadingExperience
+            # DOLU olsa bile Google sayfa bazinda yeterli trafik yoksa site
+            # geneli (origin) degerini doner ve bunu 'origin_fallback': true
+            # ile isaretler. Bu bayrak okunmazsa site geneli veri sayfa verisi
+            # sanilir. Kaynak MUTLAKA bu bayraktan belirlenir.
             le = j.get('loadingExperience') or {}
-            src = 'page'
-            if not (le.get('metrics') or {}):
+            if (le.get('metrics') or {}):
+                src = 'origin' if le.get('origin_fallback') else 'page'
+            else:
                 le = j.get('originLoadingExperience') or {}
                 src = 'origin' if (le.get('metrics') or {}) else None
             fm = le.get('metrics') or {}
