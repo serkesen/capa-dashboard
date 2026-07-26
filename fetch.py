@@ -560,8 +560,15 @@ if not DENTSOFT_KEY:
 else:
     try:
         _df = (today - dt.timedelta(days=DENTSOFT_DAYS)).isoformat()
+        # ⚠ 26 Tem: sunucu onundeki openresty katmani ciplak istegi HTTP 415 ile
+        # reddetti (istek PHP'ye hic ulasmadi). Normal tarayici basliklari sart.
+        _h = {
+            'X-Capa-Key': DENTSOFT_KEY,
+            'Accept': 'application/json',
+            'User-Agent': 'CapaDashboardFetcher/1.0 (+https://capaortodonti.com)',
+        }
         r = requests.get(DENTSOFT_URL, params={'from': _df, 'to': end},
-                         headers={'X-Capa-Key': DENTSOFT_KEY}, timeout=60)
+                         headers=_h, timeout=60)
         if r.status_code != 200:
             print('dentsoft HTTP', r.status_code, r.text[:200])
         else:
