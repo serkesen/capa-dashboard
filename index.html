@@ -169,6 +169,32 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 #goalpanel .gsave{margin-top:12px;background:var(--brand-navy);color:#fff;border:0;border-radius:8px;padding:8px 16px;font-weight:700;font-size:13px;cursor:pointer}
 #goalpanel .gsave:disabled{opacity:.6}
 #goalpanel .gstatus{font-size:12px;color:var(--muted);margin-left:10px}
+
+/* ---- Özet: uyarı / tempo / tazelik ---- */
+.alerts{display:grid;gap:8px}
+.alert{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--ring);border-left-width:4px;border-radius:10px;padding:10px 12px;background:var(--plane);font-size:13px}
+.alert .ai{font-size:15px;line-height:1.25;flex:0 0 auto}
+.alert .at{color:var(--ink-1);font-weight:600;line-height:1.4}
+.alert .ad{color:var(--muted);font-size:12px;margin-top:2px;line-height:1.45}
+.alert.sev-hi{border-left-color:var(--bad)}
+.alert.sev-md{border-left-color:var(--brand-orange)}
+.alert.sev-lo{border-left-color:var(--s1)}
+.alert.sev-ok{border-left-color:var(--good)}
+.alert a{color:var(--s1);text-decoration:none}
+.alert a:hover{text-decoration:underline}
+.pacewrap{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:640px){.pacewrap{grid-template-columns:1fr 1fr}}
+.pace{border:1px solid var(--ring);border-radius:10px;padding:10px 12px;background:var(--plane)}
+.pace .ph{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px;color:var(--ink-2);font-weight:600}
+.pace .ph b{font-size:16px;color:var(--ink-1);font-variant-numeric:tabular-nums}
+.pace .pbar{background:var(--grid);border-radius:6px;height:9px;overflow:hidden;margin-top:7px}
+.pace .pfill{height:100%;border-radius:6px;min-width:2px}
+.pace .pn{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4}
+.freshrow{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 10px}
+.fresh{font-size:11px;border:1px solid var(--ring);border-radius:99px;padding:3px 10px;color:var(--ink-2);background:var(--surface-1);white-space:nowrap}
+.fresh b{color:var(--ink-1)}
+.fresh.stale{border-color:var(--brand-orange);color:var(--brand-orange)}
+.oppgain{color:var(--good);font-weight:700}
 </style>
 </head>
 <body class="locked">
@@ -181,7 +207,8 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 </div></header>
 
 <nav id="topnav">
-<a class="tab" data-view="seo" href="#">SEO / Trafik</a>
+<a class="tab" data-view="ozet" href="#">Özet</a>
+<a class="tab" data-view="seo" href="#/seo">SEO Analiz</a>
 <a class="tab" data-view="facebook" href="#/sosyal/facebook">Facebook</a>
 <a class="tab" data-view="instagram" href="#/sosyal/instagram">Instagram</a>
 <a class="tab" data-view="reklam" href="#/reklam">Reklam</a>
@@ -191,7 +218,43 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <a class="tab" data-view="clarity" href="#/clarity">Clarity</a>
 </nav>
 
-<div class="wrap" id="mainview">
+<!-- ===== ÖZET · karar katmanı (kök) ===== -->
+<div class="wrap" id="ozetview">
+<div class="stage"><span class="n">1</span><div><div class="st">Çekirdek — sürekli izlenen 6 metrik</div><div class="sq">Bu sekmeye yalnızca <b>değiştiğinde aksiyon alınacak</b> metrikler girer. Detay ve kırılım için üstteki kaynak sekmeleri (GA4 · GSC · Clarity) var. Dönem kutusuna tıkla; her değer önceki eş döneme kıyaslı.</div></div></div>
+<div class="periods" id="oz_periodrow"></div>
+<div class="note" id="oz_rangenote"></div>
+<div class="freshrow" id="oz_fresh"></div>
+<div class="card">
+<h2>Çekirdek KPI'ler</h2>
+<div class="ch"><b>Ne:</b> hasta kazanımına en yakın 4 ölçü (Randevu ⭐, Telefon, Tedavi sayfası tıkı, Organik oturum) + görünürlük (Ort. pozisyon) + deneyim (Frustrasyon oranı). <b>Oku:</b> koyu çizgi = bu dönem, <b>soluk kesikli = önceki eş dönem</b>. Pozisyon ve frustrasyonda <b>düşüş iyidir</b> → renk ters çevrildi.</div>
+<div class="mgrid" id="oz_kpicharts"></div>
+</div>
+
+<div class="stage"><span class="n">2</span><div><div class="st">Dikkat gerektirenler</div><div class="sq">Kural tabanlı kontroller — tahmin değil, eşik. Bir şey yoksa "belirgin sapma yok" yazar; o zaman bu sekmede işin bitmiştir.</div></div></div>
+<div class="card">
+<h2>Uyarılar</h2>
+<div class="ch"><b>Ne:</b> dönüşüm düşüşü, pozisyon kaybı, frustrasyon eşiği, hedef temposu ve veri akışı kontrolü. <b>Not:</b> eşikler veri biriktikçe kalibre edilecek; kırmızı bir uyarı tek başına kanıt değil, bakılacak yeri gösterir.</div>
+<div class="alerts" id="oz_alerts"></div>
+</div>
+
+<div class="stage"><span class="n">3</span><div><div class="st">Hedef temposu</div><div class="sq">Aylık hedefe göre nerede olmalıydık, neredeyiz. Hedefleri SEO Analiz sekmesindeki 🎯 Hedefler panelinden girersin.</div></div></div>
+<div class="card">
+<h2>Ay sonu projeksiyonu</h2>
+<div class="ch"><b>Ne:</b> içinde bulunulan ayın gerçekleşeni + bugüne kadarki hıza göre ay sonu tahmini. <b>Oku:</b> çubuk = ay hedefinin yüzde kaçı tamamlandı; altındaki satır bugün itibarıyla olması gereken tempoyu söyler.</div>
+<div class="pacewrap" id="oz_pace"></div>
+</div>
+
+<div class="stage"><span class="n">4</span><div><div class="st">Sıradaki iş</div><div class="sq">Fırsat skoruna göre en yüksek kazanç potansiyeli olan 3 sayfa. Tam liste SEO Analiz sekmesinde.</div></div></div>
+<div class="card">
+<h2>En hızlı kazanç — ilk 3 sayfa</h2>
+<div class="ch"><b>Ne:</b> aramada çok görünen ama hak ettiği tıkı alamayan sayfalar. <b>Potansiyel</b> = mevcut pozisyonun tipik CTR'ına ulaşılsa kazanılacak ek aylık tık. <b>Oku:</b> üstteki satır bu haftanın işidir. 🔥 = o sayfanın Clarity ısı haritası.</div>
+<div class="tscroll"><table id="oz_next"></table></div>
+<a class="det" href="#/detay/firsat">Tüm fırsat tablosu →</a>
+</div>
+<footer>Çapa Ortodonti · Özet · kaynak: GSC + GA4 + Clarity → Supabase · özel/giriş korumalı</footer>
+</div>
+
+<div class="wrap" id="mainview" style="display:none">
 <div id="gbtnrow"><button class="gbtn" onclick="toggleGoals()">🎯 Hedefler</button></div>
 <div id="goalpanel">
 <h3>🎯 Aylık hedefler</h3>
@@ -224,18 +287,7 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <div class="ch"><b>Ne:</b> siteye gelen toplam ziyaret. <b>Oku:</b> koyu çizgi = bu dönem · <b>soluk kesikli çizgi = önceki eş dönem</b> (aynı gün sayısı, hizalı) · turuncu çizgi = 14 Tem ölçüm devri.</div>
 <div id="ch_sess"></div>
 </div>
-<div class="grid2">
-<div class="card">
-<h2>Arama tıkları (GSC) <span class="badge" id="b_clicks"></span></h2>
-<div class="ch"><b>Ne:</b> Google aramadan gelen tık. <b>Oku:</b> SEO'nun getirdiği trafik · dikey çizgiler = yaptığımız işler. <b>Not:</b> GSC verisi ~2-3 gün gecikmeli — son günler grafikte henüz boş olabilir.</div>
-<div id="ch_clicks"></div>
-</div>
-<div class="card">
-<h2>Arama gösterimleri (GSC) <span class="badge" id="b_impr"></span></h2>
-<div class="ch"><b>Ne:</b> aramada kaç kez göründük (tıklamasa da). <b>Oku:</b> görünürlük — tık gelmese de yükselmesi iyi işaret.</div>
-<div id="ch_impr"></div>
-</div>
-</div>
+<div class="note">Arama tıkı / gösterim / CTR / pozisyon zaman serileri <b>GSC sekmesine</b> taşındı (orada cihaz ve ülke kırılımıyla birlikte duruyor). Burada tekrarlanmıyor.</div>
 
 <!-- ===== AŞAMA 3 · TRAFİK NEREDEN ===== -->
 <div class="stage"><span class="n">3</span><div><div class="st">Trafik nereden geliyor?</div><div class="sq">Aynı trafiğin kaynağı: hangi kanaldan, ne tür aramadan. Hasta-niyetli kaynak mı yoksa rastgele mi?</div></div></div>
@@ -279,19 +331,29 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <div class="card"><h2>Değişiklik günlüğü</h2><div class="ch">Yapılan işlerin kronolojik listesi.</div>
 <div id="changelog"></div></div>
 
+<!-- ===== AŞAMA 6 · SAYFA FIRSAT TABLOSU ===== -->
+<div class="stage"><span class="n">6</span><div><div class="st">Hangi sayfayı düzeltmeliyim?</div><div class="sq">GSC (gösterim/tık/CTR/pozisyon) + GA4 (oturum/etkileşim) verisi sayfa bazında tek satırda birleşiyor, fırsat skoruna göre sıralanıyor. Haftalık iş kuyruğu bu tablodan çıkar.</div></div></div>
+<div class="card">
+<h2>Sayfa sağlık &amp; fırsat tablosu <span class="badge flat" id="b_opp"></span></h2>
+<div class="ch"><b>Fırsat skoru:</b> sayfanın mevcut pozisyonunda tipik olarak beklenen CTR'a ulaşılsa kazanılacak <b>ek tık</b> (gösterim × [beklenen CTR − gerçek CTR]). Yüksek gösterim + düşük CTR + 4-20 arası pozisyon = en hızlı kazanç. <b>Oku:</b> Potansiyel sütunu büyük olan satır önce ele alınır; oturum/etkileşim sütunu sayfanın gelen trafiği tutup tutmadığını söyler. 🔥 = Clarity ısı haritası. <b>Not:</b> pozisyonu ilk 3'te olan sayfalarda kazanım payı küçüktür, skor doğal olarak düşer.</div>
+<div id="seo_opp_ch"></div>
+<div class="tscroll"><table id="seo_opp"></table></div>
+<a class="det" href="#/detay/firsat">Tüm sayfalar — fırsat tablosu →</a>
+</div>
+
+<!-- ===== AŞAMA 7 · SAYFA HIZI ===== -->
+<div class="stage"><span class="n">7</span><div><div class="st">Sayfa hızı — Core Web Vitals</div><div class="sq">Google'ın sıralama sinyali olarak kullandığı hız ölçüleri. Mobil ölçüm, günde bir kez, 5 kilit sayfa. Yavaş sayfa hem sıralamayı hem dönüşümü düşürür.</div></div></div>
+<div class="card">
+<h2>PageSpeed (mobil) <span class="badge flat" id="b_psi"></span></h2>
+<div class="ch"><b>Ne:</b> <b>Skor</b> 0-100 (90+ iyi · 50-89 orta · &lt;50 kötü) · <b>LCP</b> = ana içeriğin görünme süresi (iyi ≤2,5 sn) · <b>CLS</b> = yüklenirken kayma (iyi ≤0,1) · <b>TBT</b> = tarayıcının kilitlendiği süre. <b>Oku:</b> bu laboratuvar ölçümüdür; gerçek kullanıcı (alan) verisi ancak yeterli trafikte gelir — geldiğinde <b>Alan LCP</b> sütunu dolar. Kırmızı satır varsa Özet sekmesinde uyarı olarak da çıkar.</div>
+<div class="tscroll"><table id="seo_psi"></table></div>
+</div>
+
 <!-- ===== DETAY TABLOLAR ===== -->
 <details class="ctx" id="ctxbox">
-<summary>Detay tablolar — sayfalar, sorgular, düşüş teşhisi
-<span class="q">Seçili döneme ait sıralı listeler + uzun vadeli trafik düşüşü teşhisi. İncelemek istersen aç.</span>
+<summary>Trafik düşüşü teşhisi
+<span class="q">Uzun vadeli landing-page düşüşü. Sayfa ve sorgu listeleri GSC sekmesine taşındı. İncelemek istersen aç.</span>
 </summary>
-<div class="grid2">
-<div class="card"><h2>En çok gösterim alan sayfalar</h2><div class="ch">Seçili dönem toplamı (ilk 8).</div>
-<div class="tscroll"><table id="tb_pages"></table></div>
-<a class="det" href="#/detay/sayfalar">Tüm sayfalar →</a></div>
-<div class="card"><h2>En çok tıklanan sorgular</h2><div class="ch">Seçili dönem · <span class="chip b">markalı</span> = çapa/capa içeren (ilk 8).</div>
-<div class="tscroll"><table id="tb_queries"></table></div>
-<a class="det" href="#/detay/sorgular">Tüm sorgular →</a></div>
-</div>
 <div class="card">
 <h2>Trafik düşüşü teşhisi — en çok düşen sayfalar <span class="badge flat" id="b_decline"></span></h2>
 <div class="ch">Zirve (Şub–Nis 2025) → Son (Nis–Haz 2026) landing-page oturum farkı. Düşüşün çoğu alakasız genel-sağlık içeriğinde. <b>Dönem filtresinden bağımsız.</b></div>
@@ -305,7 +367,7 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 
 <!-- ===== DETAY (drill-down) ===== -->
 <div class="wrap" id="detailview" style="display:none">
-<a class="backlink" href="#" onclick="location.hash='';return false">← panele dön</a>
+<a class="backlink" href="#/seo" onclick="location.hash='#/seo';return false">← SEO Analiz'e dön</a>
 <div class="dhead" id="d_head"></div>
 <div class="dsub" id="d_sub"></div>
 <input class="searchbox" id="d_search" placeholder="Filtrele…" oninput="renderDetail()">
@@ -471,7 +533,7 @@ const col=v=>CS.getPropertyValue(v).trim();
 const CUTOVER='2026-07-14';
 const AYK=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
 const COMMERCIAL=/(dis-teli|invisalign|seffaf-plak|bonding|implant|ortodonti|gulus|beyazlat|protez|kanal-ted|pedodont|zirkon|periodont|estetik|dolgu|dis-cek|kaplama|apare|braket)/i;
-let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[],fb:[],ig:[],ads:[],convsrc:[],funnel:[],gaev:[],ov:[],brk:[],land:[],demo:[],dev:[],ctry:[],clar:[],clarb:[]};
+let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[],fb:[],ig:[],ads:[],convsrc:[],funnel:[],gaev:[],ov:[],brk:[],land:[],demo:[],dev:[],ctry:[],clar:[],clarb:[],psi:[]};
 let GOALS={};
 
 /* dönemler: days = KPI penceresi (gün), chartDays = grafik penceresi, bucket = granülarite */
@@ -504,7 +566,7 @@ return all;
 }
 async function load(){
 try{
-const [site,chan,ev,cl,pages,queries,base,targets,pagecmp,fb,ig,ads,convsrc,funnel,gaev,ov,brk,land,demo,dev,ctry,clar,clarb]=await Promise.all([
+const [site,chan,ev,cl,pages,queries,base,targets,pagecmp,fb,ig,ads,convsrc,funnel,gaev,ov,brk,land,demo,dev,ctry,clar,clarb,psi]=await Promise.all([
 q('gsc_site_daily?order=date'),
 q('ga4_channel_daily?order=date'),
 q('ga4_event_daily?order=date'),
@@ -527,9 +589,10 @@ q('ga4_demo_daily?select=date,gender,age,users&order=date').catch(()=>[]),
 q('gsc_device_daily?select=date,device,clicks,impressions,ctr,position&order=date').catch(()=>[]),
 q('gsc_country_daily?select=date,country,clicks,impressions,ctr,position&order=date').catch(()=>[]),
 q('clarity_daily?select=date,sessions,bot_sessions,distinct_users,pages_per_session,scroll_depth,engage_active,engage_total,dead_clicks,rage_clicks,quickbacks,excessive_scroll,script_errors,error_clicks&order=date').catch(()=>[]),
-q('clarity_breakdown_daily?select=date,kind,label,sessions&order=date').catch(()=>[])
+q('clarity_breakdown_daily?select=date,kind,label,sessions&order=date').catch(()=>[]),
+q('psi_daily?select=date,url,strategy,perf_score,lcp_ms,cls,tbt_ms,fcp_ms,si_ms,field_lcp_ms,field_inp_ms,field_cls,field_source&order=date').catch(()=>[])
 ]);
-DB={site,chan,ev,cl,pages,queries,base,pagecmp,fb,ig,ads,convsrc,funnel,gaev,ov,brk,land,demo,dev,ctry,clar,clarb};
+DB={site,chan,ev,cl,pages,queries,base,pagecmp,fb,ig,ads,convsrc,funnel,gaev,ov,brk,land,demo,dev,ctry,clar,clarb,psi};
 GOALS={};(targets||[]).forEach(t=>GOALS[t.metric_key]=+t.monthly_target);
 route();
 }catch(e){
@@ -681,12 +744,6 @@ tile('Tedavi sayfası tıkı',comm,fmt,{prev:commP,goalKey:'ticari_tik',exp:'Ted
 const sc=sumRange(SESS,'sessions',W.kpi.a,W.kpi.b),sp=sumRange(SESS,'sessions',W.prev.a,W.prev.b);
 lineChart('#ch_sess',seriesRange(SESS,r=>+r.sessions),col('--brand-teal'),'Ziyaret',false,CUTOVER,prevSeriesRange(SESS,r=>+r.sessions));
 badge('#b_sess',sc,sp);
-const cl=sumRange(DB.site,'clicks',W.kpi.a,W.kpi.b),clP=sumRange(DB.site,'clicks',W.prev.a,W.prev.b);
-lineChart('#ch_clicks',seriesRange(DB.site,r=>+r.clicks),col('--s1'),'Tık',true);
-badge('#b_clicks',cl,clP);
-const im=sumRange(DB.site,'impressions',W.kpi.a,W.kpi.b),imP=sumRange(DB.site,'impressions',W.prev.a,W.prev.b);
-lineChart('#ch_impr',seriesRange(DB.site,r=>+r.impressions),col('--s1'),'Gösterim',false);
-badge('#b_impr',im,imP);
 
 /* aşama 3 — kaynak */
 channelsChart();
@@ -705,9 +762,13 @@ $('#lg_conv').innerHTML=[['Randevu','--randevu'],['Telefon','--telefon']].map(x=
 scoreCard();
 changelogList();
 
+/* aşama 6 — sayfa sağlık & fırsat tablosu */
+renderOpp();
+
+/* aşama 7 — sayfa hızı (Core Web Vitals) */
+renderPsi();
+
 /* detay tablolar */
-pagesTable(pageAgg(rangeRows(DB.pages),8));
-queriesTable(queryAgg(rangeRows(DB.queries),8));
 declineTable(declineData(10));
 const pt=(DB.pagecmp||[]).filter(r=>r.period==='peak').reduce((t,r)=>t+ +r.sessions,0);
 const rt=(DB.pagecmp||[]).filter(r=>r.period==='recent').reduce((t,r)=>t+ +r.sessions,0);
@@ -900,7 +961,7 @@ const arr=[...pgs].map(p=>({p,peak:pk[p]||0,recent:rc[p]||0,delta:(rc[p]||0)-(pk
 return n?arr.slice(0,n):arr;
 }
 function declineRow(r){
-return '<tr><td style="word-break:break-all">'+(isComm(r.p)?'<span class="chip b">ticari</span> ':'')+r.p+'</td><td class="num">'+fmt(r.peak)+'</td><td class="num">'+fmt(r.recent)+'</td><td class="num" style="color:'+(r.delta<0?col('--bad'):col('--good'))+'">'+(r.delta>0?'+':'')+fmt(r.delta)+'</td></tr>';
+return '<tr><td style="word-break:break-all">'+(isComm(r.p)?'<span class="chip b">ticari</span> ':'')+esc(r.p)+'</td><td class="num">'+fmt(r.peak)+'</td><td class="num">'+fmt(r.recent)+'</td><td class="num" style="color:'+(r.delta<0?col('--bad'):col('--good'))+'">'+(r.delta>0?'+':'')+fmt(r.delta)+'</td></tr>';
 }
 function declineTable(rows){
 const el=$('#tb_decline');if(!el)return;
@@ -1094,7 +1155,7 @@ function ovDerivedSeries(numFn,denFn,mul){var bn={},bd={};W.buckets.forEach(func
 function fmtDur(s){s=Math.round(s);const m=Math.floor(s/60),ss=s%60;return m+':'+(ss<10?'0':'')+ss;}
 function brkRows(kind,a,b){const by={};(DB.brk||[]).filter(r=>r.kind===kind&&r.date>=a&&r.date<=b).forEach(r=>{by[r.label]=(by[r.label]||0)+(+r.sessions||0);});return Object.entries(by).map(function(e){return {label:e[0],value:e[1]};}).sort((x,y)=>y.value-x.value);}
 function landRows(a,b){const by={};(DB.land||[]).filter(r=>r.date>=a&&r.date<=b).forEach(r=>{const o=by[r.landing]=by[r.landing]||{s:0,e:0};o.s+=+r.sessions||0;o.e+=+r.engaged_sessions||0;});return Object.entries(by).map(function(e){return {landing:e[0],sessions:e[1].s,engaged:e[1].e};}).sort((x,y)=>y.sessions-x.sessions);}
-function shareBars(sel,rows,colorVar){const el=$(sel);if(!el)return;if(!rows.length){el.innerHTML='<div class="ch" style="margin:0">veri yok</div>';return;}const tot=rows.reduce((s,r)=>s+r.value,0)||1,mx=Math.max(1,...rows.map(r=>r.value));el.innerHTML='<div class="funnel">'+rows.map(function(r){const w=Math.max(3,(r.value/mx)*100),pct=Math.round(r.value/tot*100);return '<div class="fstep"><div class="fl">'+r.label+'</div><div class="fbarwrap"><div class="fbar" style="width:'+w.toFixed(1)+'%;background:'+col(colorVar)+'"></div></div><div class="fmeta"><b>'+fmt(r.value)+'</b> <span class="fpct">%'+pct+'</span></div></div>';}).join('')+'</div>';}
+function shareBars(sel,rows,colorVar){const el=$(sel);if(!el)return;if(!rows.length){el.innerHTML='<div class="ch" style="margin:0">veri yok</div>';return;}const tot=rows.reduce((s,r)=>s+r.value,0)||1,mx=Math.max(1,...rows.map(r=>r.value));el.innerHTML='<div class="funnel">'+rows.map(function(r){const w=Math.max(3,(r.value/mx)*100),pct=Math.round(r.value/tot*100);return '<div class="fstep"><div class="fl">'+esc(r.label)+'</div><div class="fbarwrap"><div class="fbar" style="width:'+w.toFixed(1)+'%;background:'+col(colorVar)+'"></div></div><div class="fmeta"><b>'+fmt(r.value)+'</b> <span class="fpct">%'+pct+'</span></div></div>';}).join('')+'</div>';}
 function ga4PeriodBoxes(){const end=ga4LastDate()||lastDataDate();$('#ga4_periodrow').innerHTML=PERIODS.map(function(p){const a=shiftDate(end,-(p.days-1)),b=end,pa=shiftDate(a,-1),ppa=shiftDate(a,-p.days);const cur=ovSum('sessions',a,b),prev=ovSum('sessions',ppa,pa);const s=deltaFull(cur,prev),on=(PERIOD===p.key)?' on':'';return '<button class="pbox'+on+'" data-p="'+p.key+'"><span class="pl">'+p.label+'</span><span class="pv">'+fmt(cur)+'</span><span class="pd '+s.cls+'">'+(s.has?s.txt:'\u2014')+'</span></button>';}).join('');}
 function top5other(rows){if(!rows||rows.length<=4)return rows||[];var head=rows.slice(0,4);var rest=rows.slice(4).reduce(function(s2,r){return s2+(r.value||0);},0);return head.concat([{label:'Diğer',value:rest}]);}
 function toggleMore(el){var t=el.closest('table');if(!t)return;t.classList.toggle('moreopen');el.textContent=t.classList.contains('moreopen')?'daha az \u25b4':el.dataset.more;}
@@ -1139,10 +1200,10 @@ shareBars('#gsc_ctry_ch',top5other(ctryA.map(function(r){return {label:gscCtryLa
 renderExpTable('#gsc_ctry','<tr><th>Ülke</th><th class="num">Tık</th><th class="num">Gös.</th><th class="num">CTR</th><th class="num">Poz.</th></tr>',ctryA.map(function(r){return '<td>'+gscCtryLabel(r.label)+'</td><td class="num">'+fmt(r.clicks)+'</td><td class="num">'+fmt(r.impr)+'</td><td class="num">%'+r.ctr.toFixed(1)+'</td><td class="num">'+r.pos.toFixed(1)+'</td>';}),5);
 var pgr=pageAgg(rangeRows(DB.pages),0);
 shareBars('#gsc_page_ch',top5other(pgr.map(function(r){return {label:r.p,value:r.c};})),'--s1');
-renderExpTable('#gsc_page','<tr><th>Sayfa</th><th class="num">Tık</th><th class="num">Gös.</th><th class="num">CTR</th><th class="num">Poz.</th></tr>',pgr.map(function(r){return '<td style="word-break:break-all">'+(r.comm?'<span class="chip b">ticari</span> ':'')+r.p+'</td><td class="num">'+fmt(r.c)+'</td><td class="num">'+fmt(r.i)+'</td><td class="num">%'+(r.i>0?(r.c/r.i*100):0).toFixed(1)+'</td><td class="num">'+r.pos.toFixed(1)+'</td>';}),5);
+renderExpTable('#gsc_page','<tr><th>Sayfa</th><th class="num">Tık</th><th class="num">Gös.</th><th class="num">CTR</th><th class="num">Poz.</th></tr>',pgr.map(function(r){return '<td style="word-break:break-all">'+(r.comm?'<span class="chip b">ticari</span> ':'')+esc(r.p)+'</td><td class="num">'+fmt(r.c)+'</td><td class="num">'+fmt(r.i)+'</td><td class="num">%'+(r.i>0?(r.c/r.i*100):0).toFixed(1)+'</td><td class="num">'+r.pos.toFixed(1)+'</td>';}),5);
 var qy=queryAggGsc(DB.queries,a,b);
 shareBars('#gsc_query_ch',top5other(qy.map(function(r){return {label:r.q,value:r.c};})),'--brand-teal');
-renderExpTable('#gsc_query','<tr><th>Sorgu</th><th class="num">Tık</th><th class="num">Gös.</th><th class="num">CTR</th><th class="num">Poz.</th></tr>',qy.map(function(r){return '<td style="word-break:break-all">'+r.q+(r.b?' <span class="chip b">markalı</span>':'')+'</td><td class="num">'+fmt(r.c)+'</td><td class="num">'+fmt(r.i)+'</td><td class="num">%'+(r.i>0?(r.c/r.i*100):0).toFixed(1)+'</td><td class="num">'+r.pos.toFixed(1)+'</td>';}),5);
+renderExpTable('#gsc_query','<tr><th>Sorgu</th><th class="num">Tık</th><th class="num">Gös.</th><th class="num">CTR</th><th class="num">Poz.</th></tr>',qy.map(function(r){return '<td style="word-break:break-all">'+esc(r.q)+(r.b?' <span class="chip b">markalı</span>':'')+'</td><td class="num">'+fmt(r.c)+'</td><td class="num">'+fmt(r.i)+'</td><td class="num">%'+(r.i>0?(r.c/r.i*100):0).toFixed(1)+'</td><td class="num">'+r.pos.toFixed(1)+'</td>';}),5);
 }
 function renderKcards(sel,cards,hasPrev){$(sel).innerHTML=cards.map(function(k){var chip=hasPrev?kdChip(k.cur,k.prev,k.invert):'<em class="d flat">yeni</em>';var old=hasPrev?('önceki: '+k.f(k.prev)):'önceki dönem: veri yok';return '<div class="mchart'+(k.hero?' hero':'')+'"><div class="mh"><span>'+k.name+'</span><b>'+k.f(k.cur)+'</b>'+chip+'</div><div class="mx">'+old+'</div><div id="'+k.id+'"></div></div>';}).join('');cards.forEach(function(k){lineChart('#'+k.id,k.ser,k.col,k.name,false,null,k.ov,k.f);});}
 function clrLastDate(){var m=null;(DB.clar||[]).forEach(function(r){if(!m||r.date>m)m=r.date;});return m;}
@@ -1223,22 +1284,243 @@ shareBars('#ga4_device',brkRows('device',a,b),'--brand-teal');
 shareBars('#ga4_usertype',brkRows('usertype',a,b),'--s1');
 const city=brkRows('city',a,b);
 shareBars('#ga4_city_ch',top5other(city),'--s1');
-renderExpTable('#ga4_city','<tr><th>Şehir</th><th class="num">Oturum</th></tr>',city.map(function(r){return '<td>'+r.label+'</td><td class="num">'+fmt(r.value)+'</td>';}),2);
+renderExpTable('#ga4_city','<tr><th>Şehir</th><th class="num">Oturum</th></tr>',city.map(function(r){return '<td>'+esc(r.label)+'</td><td class="num">'+fmt(r.value)+'</td>';}),2);
 const brw=brkRows('browser',a,b).slice(0,10);
 shareBars('#ga4_brw_ch',brw.slice(0,8),'--s3');
-$('#ga4_browser').innerHTML='<tr><th>Tarayıcı</th><th class="num">Oturum</th></tr>'+(brw.length?brw.map(function(r){return '<tr><td>'+r.label+'</td><td class="num">'+fmt(r.value)+'</td></tr>';}).join(''):'<tr><td colspan="2" style="color:var(--muted)">veri yok</td></tr>');
+$('#ga4_browser').innerHTML='<tr><th>Tarayıcı</th><th class="num">Oturum</th></tr>'+(brw.length?brw.map(function(r){return '<tr><td>'+esc(r.label)+'</td><td class="num">'+fmt(r.value)+'</td></tr>';}).join(''):'<tr><td colspan="2" style="color:var(--muted)">veri yok</td></tr>');
 const land=landRows(a,b);
 shareBars('#ga4_land_ch',top5other(land.map(function(r){return {label:r.landing,value:r.sessions};})),'--brand-teal');
-renderExpTable('#ga4_landing','<tr><th>Landing sayfa</th><th class="num">Oturum</th><th class="num">Etkileşim</th></tr>',land.map(function(r){return '<td style="word-break:break-all">'+r.landing+'</td><td class="num">'+fmt(r.sessions)+'</td><td class="num">%'+(r.sessions>0?Math.round(r.engaged/r.sessions*100):0)+'</td>';}),3);
+renderExpTable('#ga4_landing','<tr><th>Landing sayfa</th><th class="num">Oturum</th><th class="num">Etkileşim</th></tr>',land.map(function(r){return '<td style="word-break:break-all">'+esc(r.landing)+'</td><td class="num">'+fmt(r.sessions)+'</td><td class="num">%'+(r.sessions>0?Math.round(r.engaged/r.sessions*100):0)+'</td>';}),3);
 const demo=(DB.demo||[]).filter(r=>r.date>=a&&r.date<=b);
 if(demo.length){const by={};demo.forEach(r=>{const k=r.gender+' · '+r.age;by[k]=(by[k]||0)+(+r.users||0);});const drows=Object.entries(by).map(function(e){return {k:e[0],v:e[1]};}).sort((x,y)=>y.v-x.v);$('#ga4_demo').innerHTML='<tr><th>Cinsiyet · Yaş</th><th class="num">Kullanıcı</th></tr>'+drows.map(function(r){return '<tr><td>'+r.k+'</td><td class="num">'+fmt(r.v)+'</td></tr>';}).join('');}
 else{$('#ga4_demo').innerHTML='<tr><td style="color:var(--muted)">Demografi verisi yok — GA4 tarafında Google Signals kapalı olabilir (yaş/cinsiyet için açılması gerekir).</td></tr>';}
 }
 
+/* ================= ÖZET · karar katmanı ================= */
+function pathOf(u){var t=String(u==null?'':u);t=t.replace(/^https?:\/\/[^/]*/,'');t=t.split('#')[0].split('?')[0];if(!t||t.charAt(0)!=='/')t='/'+(t||'');if(t.length>1&&t.charAt(t.length-1)!=='/')t+='/';return t;}
+function fullUrl(p){return 'https://capaortodonti.com'+p;}
+function maxDate(rows){var m=null;(rows||[]).forEach(function(r){if(!m||r.date>m)m=r.date;});return m;}
+function daysBetween(a,b){return Math.round((new Date(b+'T00:00:00Z')-new Date(a+'T00:00:00Z'))/864e5);}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+/* pozisyona göre tipik CTR — fırsat skorunun referans eğrisi (sektör ortalaması, kesin değer değil) */
+function expCtr(p){if(!(p>0))return 0;if(p<=1.5)return .28;if(p<=2.5)return .16;if(p<=3.5)return .11;if(p<=5)return .075;if(p<=7)return .045;if(p<=10)return .025;if(p<=15)return .013;if(p<=20)return .008;return 0;}
+
+/* GSC sayfa + GA4 landing + Clarity sayfa → tek satır, fırsat skoruna göre sıralı */
+function oppRows(a,b){
+var by={};
+(DB.pages||[]).forEach(function(r){
+if(r.date<a||r.date>b)return;
+var k=pathOf(r.page);var o=by[k]=by[k]||{p:k,c:0,i:0,pw:0,s:0,e:0,cl:0};
+o.c+=+r.clicks||0;o.i+=+r.impressions||0;o.pw+=(+r.position||0)*(+r.impressions||0);
+});
+(DB.land||[]).forEach(function(r){
+if(r.date<a||r.date>b)return;var k=pathOf(r.landing);if(!by[k])return;
+by[k].s+=+r.sessions||0;by[k].e+=+r.engaged_sessions||0;
+});
+(DB.clarb||[]).forEach(function(r){
+if(r.kind!=='page'||r.date<a||r.date>b)return;var k=pathOf(r.label);if(!by[k])return;
+by[k].cl+=+r.sessions||0;
+});
+return Object.keys(by).map(function(k){
+var o=by[k];
+o.pos=o.i>0?o.pw/o.i:0;
+o.ctr=o.i>0?o.c/o.i:0;
+o.gain=(o.i>=30)?Math.max(0,Math.round(o.i*(expCtr(o.pos)-o.ctr))):0;
+return o;
+}).sort(function(x,y){return y.gain-x.gain||y.i-x.i;});
+}
+function oppCell(r){
+return '<td style="word-break:break-all">'+(isComm(r.p)?'<span class="chip b">ticari</span> ':'')+esc(shortUrl(r.p))+'</td>'+
+'<td class="num">'+fmt(r.i)+'</td><td class="num">'+fmt(r.c)+'</td>'+
+'<td class="num">%'+(r.ctr*100).toFixed(1)+'</td>'+
+'<td class="num">'+(r.pos?r.pos.toFixed(1):'—')+'</td>'+
+'<td class="num">'+(r.s?fmt(r.s):'—')+'</td>'+
+'<td class="num'+(r.gain>0?' oppgain':'')+'">'+(r.gain>0?'+'+fmt(r.gain):'—')+'</td>'+
+'<td class="num"><a class="hml" href="'+esc(clrHeatUrl(fullUrl(r.p)))+'" target="_blank" rel="noopener" title="Clarity ısı haritası">🔥</a></td>';
+}
+var OPP_HEAD='<tr><th>Sayfa</th><th class="num">Gös.</th><th class="num">Tık</th><th class="num">CTR</th><th class="num">Poz.</th><th class="num">Oturum</th><th class="num">Potansiyel</th><th class="num">Isı</th></tr>';
+function renderOpp(){
+var rows=oppRows(W.kpi.a,W.kpi.b);
+var gainRows=rows.filter(function(r){return r.gain>0;});
+var bd=$('#b_opp');
+if(bd){
+if(!gainRows.length){bd.className='badge flat';bd.textContent='fırsat yok';}
+else{var tot=gainRows.reduce(function(s,r){return s+r.gain;},0);bd.className='badge up';bd.textContent='+'+fmt(tot)+' tık potansiyeli · '+gainRows.length+' sayfa';}
+}
+shareBars('#seo_opp_ch',top5other(gainRows.slice(0,12).map(function(r){return {label:shortUrl(r.p),value:r.gain};})),'--brand-orange');
+renderExpTable('#seo_opp',OPP_HEAD,(gainRows.length?gainRows:rows).map(oppCell),8);
+}
+
+/* --- PageSpeed / Core Web Vitals --- */
+function psiLatest(){
+var by={};
+(DB.psi||[]).forEach(function(r){var k=r.url+'|'+(r.strategy||'mobile');if(!by[k]||r.date>by[k].date)by[k]=r;});
+return Object.keys(by).map(function(k){return by[k];}).sort(function(x,y){return (x.perf_score==null?999:+x.perf_score)-(y.perf_score==null?999:+y.perf_score);});
+}
+function psiCv(v,good,mid){return v<=good?'--good':(v<=mid?'--brand-orange':'--bad');}
+function renderPsi(){
+var el=$('#seo_psi');if(!el)return;
+var rows=psiLatest(),bd=$('#b_psi');
+if(!rows.length){
+if(bd){bd.className='badge flat';bd.textContent='veri yok';}
+el.innerHTML='<tr><td style="color:var(--muted)">Henüz ölçüm yok — fetcher gece koşusunda (ya da Actions → fetch → Run workflow) PageSpeed verisini çeker.</td></tr>';
+return;
+}
+var w=rows[0];
+if(bd){var sc0=w.perf_score==null?null:+w.perf_score;bd.className='badge '+(sc0==null?'flat':(sc0>=90?'up':(sc0>=50?'flat':'down')));bd.textContent=(sc0==null?'skor yok':'en düşük skor '+Math.round(sc0))+' · '+rows.length+' sayfa · '+w.date;}
+var sec=function(ms){return ms==null?'—':(ms/1000).toLocaleString('tr-TR',{minimumFractionDigits:1,maximumFractionDigits:1})+' sn';};
+var origin=false;
+el.innerHTML='<tr><th>Sayfa</th><th class="num">Skor</th><th class="num">LCP</th><th class="num">CLS</th><th class="num">TBT</th><th class="num">Alan LCP</th></tr>'+
+rows.map(function(r){
+var sc=r.perf_score==null?null:+r.perf_score;
+var scv=sc==null?'--muted':(sc>=90?'--good':(sc>=50?'--brand-orange':'--bad'));
+var lcv=r.lcp_ms==null?'--muted':psiCv(+r.lcp_ms,2500,4000);
+var clv=r.cls==null?'--muted':psiCv(+r.cls,0.1,0.25);
+if(r.field_lcp_ms!=null&&r.field_source==='origin')origin=true;
+return '<tr><td style="word-break:break-all">'+esc(shortUrl(r.url))+'</td>'+
+'<td class="num" style="color:'+col(scv)+';font-weight:700">'+(sc==null?'—':Math.round(sc))+'</td>'+
+'<td class="num" style="color:'+col(lcv)+'">'+sec(r.lcp_ms)+'</td>'+
+'<td class="num" style="color:'+col(clv)+'">'+(r.cls==null?'—':(+r.cls).toLocaleString('tr-TR',{maximumFractionDigits:3}))+'</td>'+
+'<td class="num">'+(r.tbt_ms==null?'—':fmt(r.tbt_ms)+' ms')+'</td>'+
+'<td class="num">'+(r.field_lcp_ms==null?'—':sec(r.field_lcp_ms)+(r.field_source==='origin'?' *':''))+'</td></tr>';
+}).join('')+(origin?'<tr><td colspan="6" style="color:var(--muted);font-size:11px">* sayfa bazında gerçek kullanıcı verisi yok — site geneli (origin) değeri gösteriliyor.</td></tr>':'');
+}
+
+function ozWin(){return curWin(lastDataDate());}
+function ozPeriodBoxes(){
+var end=lastDataDate();
+$('#oz_periodrow').innerHTML=PERIODS.map(function(p){
+var a=shiftDate(end,-(p.days-1)),b=end,pa=shiftDate(a,-1),ppa=shiftDate(a,-p.days);
+var cur=evCountRange('randevu_tamamlandi',a,b),prev=evCountRange('randevu_tamamlandi',ppa,pa);
+var s=deltaFull(cur,prev),on=(PERIOD===p.key)?' on':'';
+return '<button class="pbox'+on+'" data-p="'+p.key+'"><span class="pl">'+p.label+'</span><span class="pv">'+fmt(cur)+'</span><span class="pd '+s.cls+'">'+(s.has?s.txt:'—')+'</span></button>';
+}).join('');
+}
+function ozFresh(){
+var t=todayStr();
+var src=[
+{n:'GA4',d:maxDate(DB.ov)||maxDate(DB.chan),lim:3},
+{n:'GSC',d:maxDate(DB.site),lim:6},
+{n:'Clarity',d:maxDate(DB.clar),lim:3},
+{n:'Meta',d:maxDate(DB.fb),lim:3}
+];
+$('#oz_fresh').innerHTML=src.map(function(s){
+if(!s.d)return '<span class="fresh stale">'+s.n+': <b>veri yok</b></span>';
+var g=daysBetween(s.d,t);
+return '<span class="fresh'+(g>s.lim?' stale':'')+'">'+s.n+': <b>'+s.d.slice(8)+'.'+s.d.slice(5,7)+'</b> · '+(g<=0?'bugün':g+' gün önce')+'</span>';
+}).join('')+'<span class="fresh">son gün her zaman KISMİ</span>';
+return src;
+}
+function monthWindow(end){
+var mk=end.slice(0,7),dim=new Date(Date.UTC(+mk.slice(0,4),+mk.slice(5,7),0)).getUTCDate();
+return {a:mk+'-01',b:end,dim:dim,dayN:+end.slice(8,10),mk:mk};
+}
+function ozPace(){
+var end=lastDataDate(),mw=monthWindow(end);
+var defs=[
+{k:'randevu',n:'Randevu ⭐',val:function(a,b){return evCountRange('randevu_tamamlandi',a,b);}},
+{k:'telefon',n:'Telefon tıklama',val:function(a,b){return evCountRange('telefon_tiklama',a,b);}},
+{k:'ticari_tik',n:'Tedavi sayfası tıkı',val:function(a,b){return commClicksRange(a,b);}},
+{k:'markali_tik',n:'Markalı arama tıkı',val:function(a,b){return brandClicksRange(a,b);}}
+].filter(function(d){return GOALS[d.k]>0;});
+if(!defs.length){$('#oz_pace').innerHTML='<div class="ch" style="margin:0">Henüz aylık hedef girilmemiş — <b>SEO Analiz</b> sekmesindeki 🎯 Hedefler panelinden gir, tempo burada belirir.</div>';return [];}
+var out=[];
+$('#oz_pace').innerHTML=defs.map(function(d){
+var target=GOALS[d.k],act=d.val(mw.a,mw.b);
+var expected=target*mw.dayN/mw.dim,proj=mw.dayN>0?act/mw.dayN*mw.dim:0;
+var donePct=target>0?Math.round(act/target*100):0;
+var pacePct=expected>0?Math.round(act/expected*100):0;
+var cv=pacePct>=100?'--good':(pacePct>=70?'--brand-orange':'--bad');
+out.push({k:d.k,n:d.n,pacePct:pacePct,act:act,target:target,proj:Math.round(proj)});
+return '<div class="pace"><div class="ph"><span>'+d.n+'</span><b>'+fmt(act)+' / '+fmt(target)+'</b></div>'+
+'<div class="pbar"><div class="pfill" style="width:'+Math.min(100,Math.max(1,donePct))+'%;background:'+col(cv)+'"></div></div>'+
+'<div class="pn">Bugün olması gereken <b>'+fmt(Math.round(expected))+'</b> · tempo <b style="color:'+col(cv)+'">%'+pacePct+'</b> · bu hızla ay sonu ≈ <b>'+fmt(Math.round(proj))+'</b> ('+mw.dayN+'/'+mw.dim+' gün)</div></div>';
+}).join('');
+return out;
+}
+function ozAlerts(fresh,pace,opp){
+var A=[],t=todayStr(),end=lastDataDate();
+(fresh||[]).forEach(function(s){
+if(!s.d){A.push({sev:1,i:'🛑',t:s.n+' verisi hiç gelmemiş',d:'Tabloda kayıt yok — GitHub Actions → fetch log\'una bak.'});return;}
+var g=daysBetween(s.d,t);
+if(g>s.lim)A.push({sev:1,i:'🛑',t:s.n+' verisi '+g+' gündür güncellenmiyor',d:'Son kayıt <b>'+s.d+'</b>. Bu kaynak için beklenen gecikme en fazla '+s.lim+' gün → fetcher veya token sorunu olabilir.'});
+});
+function drop(name,label,sev){
+var c=evCountRange(name,shiftDate(end,-6),end),p=evCountRange(name,shiftDate(end,-13),shiftDate(end,-7));
+if(p>=3&&c<p){var dp=Math.round((p-c)/p*100);
+if(dp>=30)A.push({sev:sev,i:'⚠️',t:label+' son 7 günde %'+dp+' düştü',d:'Bu hafta <b>'+fmt(c)+'</b>, önceki hafta <b>'+fmt(p)+'</b>. Önce GSC pozisyon, sonra Clarity frustrasyon sinyallerine bak.'});}
+}
+drop('randevu_tamamlandi','Randevu',1);
+drop('telefon_tiklama','Telefon tıklama',2);
+var gd=maxDate(DB.site);
+if(gd){
+var pc=gscPos(DB.site,shiftDate(gd,-13),gd),pp=gscPos(DB.site,shiftDate(gd,-27),shiftDate(gd,-14));
+var ic=sumRange(DB.site,'impressions',shiftDate(gd,-13),gd);
+if(pp>0&&pc>0&&ic>=200&&(pc-pp)>=0.7)A.push({sev:2,i:'📉',t:'Ortalama pozisyon '+(pc-pp).toFixed(1)+' sıra geriledi',d:'Son 14 gün <b>'+pc.toFixed(1)+'</b>, önceki 14 gün <b>'+pp.toFixed(1)+'</b>. Hangi sayfa/sorgu kaybetti → GSC sekmesi.'});
+}
+var cd=maxDate(DB.clar);
+if(cd){
+var ca=shiftDate(cd,-6),s7=sumRange(DB.clar,'sessions',ca,cd);
+if(s7>=20){
+var fr=(sumRange(DB.clar,'dead_clicks',ca,cd)+sumRange(DB.clar,'rage_clicks',ca,cd))/s7*100;
+if(fr>=25)A.push({sev:2,i:'😤',t:'Frustrasyon yüksek: 100 oturumda '+Math.round(fr)+' boşa/öfke tıklaması',d:'Son 7 gün. Hangi sayfada olduğunu görmek için <b>Clarity</b> sekmesindeki 🔥 ısı haritasını aç.'});
+}
+}
+(pace||[]).forEach(function(p){
+if(p.pacePct<70)A.push({sev:2,i:'🎯',t:p.n+' hedef temposu %'+p.pacePct,d:'Ay içinde <b>'+fmt(p.act)+'/'+fmt(p.target)+'</b>. Bu hızla ay sonu ≈ <b>'+fmt(p.proj)+'</b>.'});
+});
+var ps=psiLatest();
+if(ps.length){
+var bad=ps.filter(function(r){return r.perf_score!=null&&+r.perf_score<50;});
+var slow=ps.filter(function(r){return r.lcp_ms!=null&&+r.lcp_ms>4000;});
+if(bad.length)A.push({sev:2,i:'🐢',t:bad.length+' sayfanın hız skoru 50 altında',d:'En düşük <b>'+esc(shortUrl(bad[0].url))+'</b> (skor '+Math.round(bad[0].perf_score)+'). Detay → <b>SEO Analiz</b> sekmesi, Aşama 7.'});
+else if(slow.length)A.push({sev:2,i:'🐢',t:slow.length+' sayfada LCP 4 saniyenin üzerinde',d:'En yavaş <b>'+esc(shortUrl(slow[0].url))+'</b> ('+(slow[0].lcp_ms/1000).toFixed(1)+' sn). Detay → <b>SEO Analiz</b> sekmesi, Aşama 7.'});
+}
+if(opp&&opp.length&&opp[0].gain>0)A.push({sev:3,i:'💡',t:'En hızlı kazanç: '+shortUrl(opp[0].p),d:'Pozisyon <b>'+opp[0].pos.toFixed(1)+'</b>, CTR <b>%'+(opp[0].ctr*100).toFixed(1)+'</b> → başlık/meta iyileştirmesiyle bu dönem ~<b>'+fmt(opp[0].gain)+'</b> ek tık potansiyeli.'});
+A.sort(function(x,y){return x.sev-y.sev;});
+var sc=['','sev-hi','sev-md','sev-lo'];
+if(!A.length){$('#oz_alerts').innerHTML='<div class="alert sev-ok"><div class="ai">✅</div><div><div class="at">Belirgin bir sapma yok</div><div class="ad">Dönüşüm, pozisyon, frustrasyon ve veri akışı eşiklerin içinde.</div></div></div>';return;}
+$('#oz_alerts').innerHTML=A.slice(0,5).map(function(x){
+return '<div class="alert '+sc[x.sev]+'"><div class="ai">'+x.i+'</div><div><div class="at">'+esc(x.t)+'</div><div class="ad">'+x.d+'</div></div></div>';
+}).join('')+(A.length>5?'<div class="ch" style="margin:8px 0 0">+'+(A.length-5)+' uyarı daha (ilk 5 gösteriliyor).</div>':'');
+}
+function renderOzet(){
+SESS=sessionDaily();W=ozWin();BK=W.bucket;ozPeriodBoxes();
+var a=W.kpi.a,b=W.kpi.b,pa=W.prev.a,pb=W.prev.b;
+$('#oz_rangenote').innerHTML='Seçili: <b>'+W.label+'</b> · dönem kutusundaki sayı = <b>randevu</b> · tüm kartlar önceki eş döneme kıyaslı.';
+var fresh=ozFresh(),hasPrev=hasPrevData();
+var posF=function(v){return (Math.round(v*10)/10).toLocaleString('tr-TR',{minimumFractionDigits:1,maximumFractionDigits:1});};
+var dec1=function(v){return (Math.round(v*10)/10).toLocaleString('tr-TR',{maximumFractionDigits:1});};
+var evR=function(n){return (DB.ev||[]).filter(function(r){return r.event_name===n;});};
+var rndR=evR('randevu_tamamlandi'),telR=evR('telefon_tiklama');
+var orgRows=(DB.chan||[]).filter(function(r){return r.channel==='Organic Search';});
+var commV=function(r){return isComm(r.page)?+r.clicks:0;};
+var frN=function(r){return (+r.dead_clicks||0)+(+r.rage_clicks||0);},frD=function(r){return +r.sessions;};
+var cs=sumRange(DB.clar,'sessions',a,b),csP=sumRange(DB.clar,'sessions',pa,pb);
+var frCur=cs>0?(sumRange(DB.clar,'dead_clicks',a,b)+sumRange(DB.clar,'rage_clicks',a,b))/cs*100:0;
+var frPrev=csP>0?(sumRange(DB.clar,'dead_clicks',pa,pb)+sumRange(DB.clar,'rage_clicks',pa,pb))/csP*100:0;
+var cards=[
+{id:'ozc_rnd',name:'Randevu ⭐',cur:evCountRange('randevu_tamamlandi',a,b),prev:evCountRange('randevu_tamamlandi',pa,pb),f:fmt,ser:seriesRange(rndR,function(r){return +r.count;}),ov:prevSeriesRange(rndR,function(r){return +r.count;}),col:col('--randevu'),hero:true},
+{id:'ozc_tel',name:'Telefon tıklama',cur:evCountRange('telefon_tiklama',a,b),prev:evCountRange('telefon_tiklama',pa,pb),f:fmt,ser:seriesRange(telR,function(r){return +r.count;}),ov:prevSeriesRange(telR,function(r){return +r.count;}),col:col('--telefon')},
+{id:'ozc_comm',name:'Tedavi sayfası tıkı',cur:commClicksRange(a,b),prev:commClicksRange(pa,pb),f:fmt,ser:seriesRange(DB.pages,commV),ov:prevSeriesRange(DB.pages,commV),col:col('--brand-teal')},
+{id:'ozc_org',name:'Organik oturum',cur:sumRange(orgRows,'sessions',a,b),prev:sumRange(orgRows,'sessions',pa,pb),f:fmt,ser:seriesRange(orgRows,function(r){return +r.sessions;}),ov:prevSeriesRange(orgRows,function(r){return +r.sessions;}),col:col('--s1')},
+{id:'ozc_pos',name:'Ort. pozisyon',cur:gscPos(DB.site,a,b),prev:gscPos(DB.site,pa,pb),f:posF,ser:derivedSeriesR(DB.site,function(r){return (+r.position)*(+r.impressions);},function(r){return +r.impressions;},1),ov:prevDerivedSeriesR(DB.site,function(r){return (+r.position)*(+r.impressions);},function(r){return +r.impressions;},1),col:col('--s3'),invert:true},
+{id:'ozc_fr',name:'Frustrasyon / 100 oturum',cur:frCur,prev:frPrev,f:dec1,ser:derivedSeriesR(DB.clar,frN,frD,100),ov:prevDerivedSeriesR(DB.clar,frN,frD,100),col:col('--s3'),invert:true}
+];
+renderKcards('#oz_kpicharts',cards,hasPrev);
+var pace=ozPace();
+var opp=oppRows(a,b),top=opp.filter(function(r){return r.gain>0;}).slice(0,3);
+renderExpTable('#oz_next','<tr><th>Sayfa</th><th class="num">Gös.</th><th class="num">CTR</th><th class="num">Poz.</th><th class="num">Potansiyel</th><th class="num">Isı</th></tr>',
+top.map(function(r){return '<td style="word-break:break-all">'+(isComm(r.p)?'<span class="chip b">ticari</span> ':'')+esc(shortUrl(r.p))+'</td><td class="num">'+fmt(r.i)+'</td><td class="num">%'+(r.ctr*100).toFixed(1)+'</td><td class="num">'+r.pos.toFixed(1)+'</td><td class="num oppgain">+'+fmt(r.gain)+'</td><td class="num"><a class="hml" href="'+esc(clrHeatUrl(fullUrl(r.p)))+'" target="_blank" rel="noopener" title="Clarity ısı haritası">🔥</a></td>';}),6);
+ozAlerts(fresh,pace,opp);
+}
+
 /* ---------- drill-down ---------- */
 function route(){
-const h=location.hash;const detail=h.startsWith('#/detay/');const social=h.startsWith('#/sosyal/');const reklam=h.startsWith('#/reklam');const gtm=h.startsWith('#/gtm');const ga4=h.startsWith('#/ga4');const gsc=h.startsWith('#/gsc');const clr=h.startsWith('#/clarity');
-$('#mainview').style.display=(detail||social||reklam||gtm||ga4||gsc||clr)?'none':'';
+const h=location.hash;const detail=h.startsWith('#/detay/');const social=h.startsWith('#/sosyal/');const reklam=h.startsWith('#/reklam');const gtm=h.startsWith('#/gtm');const ga4=h.startsWith('#/ga4');const gsc=h.startsWith('#/gsc');const clr=h.startsWith('#/clarity');const seo=h.startsWith('#/seo');
+const ozet=!(detail||social||reklam||gtm||ga4||gsc||clr||seo);
+$('#ozetview').style.display=ozet?'':'none';
+$('#mainview').style.display=seo?'':'none';
 $('#detailview').style.display=detail?'':'none';
 const ig=h.startsWith('#/sosyal/instagram');const fbv=social&&!ig;
 $('#sosyalview').style.display=fbv?'':'none';
@@ -1248,8 +1530,9 @@ $('#gtmview').style.display=gtm?'':'none';
 $('#ga4view').style.display=ga4?'':'none';
 $('#gscview').style.display=gsc?'':'none';
 $('#clarityview').style.display=clr?'':'none';
-document.querySelectorAll('#topnav .tab').forEach(t=>t.classList.toggle('on',t.dataset.view===(clr?'clarity':gsc?'gsc':ga4?'ga4':gtm?'gtm':reklam?'reklam':ig?'instagram':fbv?'facebook':'seo')));
-if(detail){SESS=sessionDaily();W=curWin();BK=W.bucket;renderDetail();}
+document.querySelectorAll('#topnav .tab').forEach(t=>t.classList.toggle('on',t.dataset.view===(clr?'clarity':gsc?'gsc':ga4?'ga4':gtm?'gtm':reklam?'reklam':ig?'instagram':fbv?'facebook':ozet?'ozet':'seo')));
+if(ozet){renderOzet();}
+else if(detail){SESS=sessionDaily();W=curWin();BK=W.bucket;renderDetail();}
 else if(ga4){renderGA4();}
 else if(gsc){renderGSC();}
 else if(clr){renderClarity();}
@@ -1270,12 +1553,18 @@ sub='Seçili dönem toplamı · gösterime göre sıralı'+(CURDETAIL==='ticari'
 let a=pageAgg(rangeRows(DB.pages),0);if(CURDETAIL==='ticari')a=a.filter(x=>x.comm);
 if(term)a=a.filter(x=>x.p.toLowerCase().includes(term));
 cols=['Sayfa','Tık','Gösterim','Poz.'];
-rows=a.map(x=>'<tr><td style="word-break:break-all">'+(x.comm?'<span class="chip b">ticari</span> ':'')+x.p+'</td><td class="num">'+fmt(x.c)+'</td><td class="num">'+fmt(x.i)+'</td><td class="num">'+x.pos.toFixed(1)+'</td></tr>');
+rows=a.map(x=>'<tr><td style="word-break:break-all">'+(x.comm?'<span class="chip b">ticari</span> ':'')+esc(x.p)+'</td><td class="num">'+fmt(x.c)+'</td><td class="num">'+fmt(x.i)+'</td><td class="num">'+x.pos.toFixed(1)+'</td></tr>');
 }else if(CURDETAIL==='sorgular'){
 head='Tüm sorgular — tam liste';sub='Seçili dönem · tıka göre sıralı';
 let a=queryAgg(rangeRows(DB.queries),0);if(term)a=a.filter(x=>x.q.toLowerCase().includes(term));
 cols=['Sorgu','Tık','Gösterim'];
-rows=a.map(x=>'<tr><td>'+x.q+' '+(x.b?'<span class="chip b">markalı</span>':'')+'</td><td class="num">'+fmt(x.c)+'</td><td class="num">'+fmt(x.i)+'</td></tr>');
+rows=a.map(x=>'<tr><td>'+esc(x.q)+' '+(x.b?'<span class="chip b">markalı</span>':'')+'</td><td class="num">'+fmt(x.c)+'</td><td class="num">'+fmt(x.i)+'</td></tr>');
+}else if(CURDETAIL==='firsat'){
+head='Sayfa sağlık & fırsat tablosu — tam liste';
+sub='Seçili dönem · potansiyel ek tıka göre sıralı · potansiyel = gösterim × (pozisyonun tipik CTR\'ı − gerçek CTR)';
+let a=oppRows(W.kpi.a,W.kpi.b);if(term)a=a.filter(x=>x.p.toLowerCase().includes(term));
+cols=['Sayfa','Gös.','Tık','CTR','Poz.','Oturum','Potansiyel','Isı'];
+rows=a.map(x=>'<tr>'+oppCell(x)+'</tr>');
 }else if(CURDETAIL==='dusen'){
 head='Trafik düşüşü — tüm sayfalar';sub='Zirve (2025 Şub-Nis) → Son (2026 Nis-Haz) · en çok düşen üstte';
 let a=declineData(0);if(term)a=a.filter(x=>x.p.toLowerCase().includes(term));
@@ -1317,6 +1606,12 @@ const p=b.dataset.p;
 if(p==='custom'){PERIOD='custom';$('#custombar').classList.add('on');prefillCustom();periodBoxes();if(CUSTOM)render();return;}
 PERIOD=p;$('#custombar').classList.remove('on');render();
 });
+$('#oz_periodrow').addEventListener('click',e=>{
+const b=e.target.closest('.pbox');if(!b)return;
+const p=b.dataset.p;
+if(p==='custom'){location.hash='#/seo';return;}
+PERIOD=p;renderOzet();
+});
 $('#fb_periodrow').addEventListener('click',e=>{
 const b=e.target.closest('.pbox');if(!b)return;
 PERIOD=b.dataset.p;renderFB();
@@ -1352,7 +1647,7 @@ function applyCustom(){
 const a=$('#c_a').value,b=$('#c_b').value;if(!a||!b)return;
 CUSTOM={a:a<b?a:b,b:a<b?b:a};PERIOD='custom';render();
 }
-addEventListener('resize',()=>{const h=location.hash;if(h.startsWith('#/detay/'))return;if(h.startsWith('#/ga4')){renderGA4();return;}if(h.startsWith('#/gsc')){renderGSC();return;}if(h.startsWith('#/clarity')){renderClarity();return;}if(h.startsWith('#/gtm')){renderGTM();return;}if(h.startsWith('#/reklam')){renderReklam();return;}if(h.startsWith('#/sosyal/instagram')){renderIG();return;}if(h.startsWith('#/sosyal/')){renderFB();return;}if(DB.site.length)render();});
+addEventListener('resize',()=>{const h=location.hash;if(h.startsWith('#/detay/'))return;if(h.startsWith('#/ga4')){renderGA4();return;}if(h.startsWith('#/gsc')){renderGSC();return;}if(h.startsWith('#/clarity')){renderClarity();return;}if(h.startsWith('#/gtm')){renderGTM();return;}if(h.startsWith('#/reklam')){renderReklam();return;}if(h.startsWith('#/sosyal/instagram')){renderIG();return;}if(h.startsWith('#/sosyal/')){renderFB();return;}if(!DB.site.length)return;if(h.startsWith('#/seo')){render();return;}renderOzet();});
 addEventListener('hashchange',route);
 
 /* ---------- Auth ---------- */

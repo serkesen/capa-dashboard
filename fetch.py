@@ -464,4 +464,77 @@ if _run_clarity:
 else:
     print('clarity skip (token yok / gun-ici)')
 
+# --- PageSpeed Insights (Core Web Vitals) — API anahtari GEREKMEZ ---
+# Clarity ile ayni ritim: yalniz gece kosusunda (hour<6) ya da manuel dispatch'te.
+# Yanit semasi ilk gercek kosuda psi_daily.raw ile dogrulanacak (Clarity parser deseni).
+PSI_URLS = [
+    'https://capaortodonti.com/',
+    'https://capaortodonti.com/online-randevu/',
+    'https://capaortodonti.com/ortodonti/',
+    'https://capaortodonti.com/dis-teli-fiyatlari/',
+    'https://capaortodonti.com/iletisim/',
+]
+_run_psi = (os.environ.get('PSI_RUN') == '1') or (dt.datetime.utcnow().hour < 6)
+
+def _num(v):
+    try:
+        return None if v is None else float(v)
+    except Exception:
+        return None
+
+if _run_psi:
+    psi_rows = []
+    for _u in PSI_URLS:
+        try:
+            r = requests.get('https://www.googleapis.com/pagespeedonline/v5/runPagespeed',
+                             params={'url': _u, 'strategy': 'mobile', 'category': 'performance'},
+                             timeout=120)
+            if r.status_code != 200:
+                print('psi HTTP', r.status_code, _u, r.text[:160])
+                continue
+            j = r.json()
+            lh = j.get('lighthouseResult') or {}
+            au = lh.get('audits') or {}
+            cat = (lh.get('categories') or {}).get('performance') or {}
+
+            def _a(key):
+                return _num((au.get(key) or {}).get('numericValue'))
+
+            # alan (CrUX) verisi: sayfa bazinda yoksa origin'e dus
+            le = j.get('loadingExperience') or {}
+            src = 'page'
+            if not (le.get('metrics') or {}):
+                le = j.get('originLoadingExperience') or {}
+                src = 'origin' if (le.get('metrics') or {}) else None
+            fm = le.get('metrics') or {}
+
+            def _f(k):
+                return _num((fm.get(k) or {}).get('percentile'))
+
+            _sc = _num(cat.get('score'))
+            psi_rows.append({
+                'date': end, 'url': _u, 'strategy': 'mobile',
+                'perf_score': None if _sc is None else round(_sc * 100),
+                'lcp_ms': _a('largest-contentful-paint'),
+                'cls': _a('cumulative-layout-shift'),
+                'tbt_ms': _a('total-blocking-time'),
+                'fcp_ms': _a('first-contentful-paint'),
+                'si_ms': _a('speed-index'),
+                'field_lcp_ms': _f('LARGEST_CONTENTFUL_PAINT_MS'),
+                'field_inp_ms': _f('INTERACTION_TO_NEXT_PAINT'),
+                'field_cls': _f('CUMULATIVE_LAYOUT_SHIFT_SCORE'),
+                'field_source': src,
+                'raw': {'categories': lh.get('categories'),
+                        'loadingExperience': le,
+                        'audit_keys': sorted(list(au.keys()))[:60]},
+            })
+            print('psi OK', _u, 'score', psi_rows[-1]['perf_score'],
+                  'lcp', psi_rows[-1]['lcp_ms'], 'field', src)
+        except Exception as e:
+            print('psi ERR', _u, repr(e))
+    if psi_rows:
+        upsert('psi_daily', psi_rows, 'date,url,strategy')
+else:
+    print('psi skip (gun-ici)')
+
 print('OK')
