@@ -464,7 +464,7 @@ if _run_clarity:
 else:
     print('clarity skip (token yok / gun-ici)')
 
-# --- PageSpeed Insights (Core Web Vitals) — API anahtari GEREKMEZ ---
+# --- PageSpeed Insights (Core Web Vitals) — PSI_KEY secret GEREKIR ---
 # Clarity ile ayni ritim: yalniz gece kosusunda (hour<6) ya da manuel dispatch'te.
 # Yanit semasi ilk gercek kosuda psi_daily.raw ile dogrulanacak (Clarity parser deseni).
 PSI_URLS = [
@@ -475,6 +475,10 @@ PSI_URLS = [
     'https://capaortodonti.com/iletisim/',
 ]
 _run_psi = (os.environ.get('PSI_RUN') == '1') or (dt.datetime.utcnow().hour < 6)
+# ANAHTARSIZ CAGRI CALISMIYOR: GitHub Actions paylasimli IP'lerinden gunluk kota
+# dolu geldigi icin her istek HTTP 429 doner (26 Tem canli test). PSI_KEY secret'i
+# tanimlaninca istekler projeye sayilir ve calisir. Anahtar yoksa blok atlanir.
+PSI_KEY = os.environ.get('PSI_KEY', '').strip()
 
 def _num(v):
     try:
@@ -482,13 +486,15 @@ def _num(v):
     except Exception:
         return None
 
-if _run_psi:
+if _run_psi and not PSI_KEY:
+    print('psi skip (PSI_KEY yok — anahtarsiz cagri Actions IP kotasinda 429 doner)')
+elif _run_psi:
     psi_rows = []
     for _u in PSI_URLS:
         try:
+            _p = {'url': _u, 'strategy': 'mobile', 'category': 'performance', 'key': PSI_KEY}
             r = requests.get('https://www.googleapis.com/pagespeedonline/v5/runPagespeed',
-                             params={'url': _u, 'strategy': 'mobile', 'category': 'performance'},
-                             timeout=120)
+                             params=_p, timeout=120)
             if r.status_code != 200:
                 print('psi HTTP', r.status_code, _u, r.text[:160])
                 continue
