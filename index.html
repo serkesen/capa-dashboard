@@ -1397,7 +1397,7 @@ return '<tr><td style="word-break:break-all">'+esc(shortUrl(r.url))+'</td>'+
 }
 
 /* --- DentSoft gercek randevu (KVKK: yalniz sayim) --- */
-var DS_ST={pending:'Bekliyor',confirmed:'Onaylandı',completed:'Tamamlandı',cancelled:'İptal'};
+var DS_ST={pending:'Bekliyor',confirmed:'Onaylandı',completed:'Tamamlandı',cancelled:'İptal',talep:'Talep'};
 var DS_OK={confirmed:1,completed:1};
 function dsAgg(a,b){
 var o={total:0,ok:0,ip:0,bek:0,st:{},dr:{},ln:0,ld:0,lead:null,has:false};
@@ -1413,6 +1413,8 @@ if(r.lead_days!=null){o.ln+=(+r.lead_days)*c;o.ld+=c;}
 });
 o.lead=o.ld>0?o.ln/o.ld:null;
 o.ipOran=o.total>0?o.ip/o.total*100:0;
+var ks=Object.keys(o.st);
+o.sadeceTalep=ks.length>0&&ks.every(function(k){return k==='talep';});
 return o;
 }
 function renderDentsoft(a,b,pa,pb){
@@ -1420,30 +1422,45 @@ var el=$('#oz_ds_kpi');if(!el)return null;
 var bd=$('#b_ds');
 if(!(DB.ds||[]).length){
 if(bd){bd.className='badge flat';bd.textContent='bağlı değil';}
-el.innerHTML='<div class="tile" style="grid-column:1/-1"><div class="l">DentSoft bağlantısı kurulmadı</div><div class="exp" style="margin-top:6px">WordPress tarafındaki <b>/wp-json/capa/v1/randevu-ozet</b> uç noktası canlıya alınıp <b>CAPA_RANDEVU_KEY</b> (wp-config.php) ve <b>DENTSOFT_KEY</b> (GitHub Secret) tanımlanınca gerçek randevu sayıları burada belirir. Kişisel veri aktarılmaz.</div></div>';
+el.innerHTML='<div class="tile" style="grid-column:1/-1"><div class="l">Henüz randevu sayılmadı</div><div class="exp" style="margin-top:6px">Randevu bilgileri KVKK gereği siteye kaydedilmiyor, doğrudan DentSoft\'a akıyor. Bu blok, site sunucusundaki <b>anonim sayaçtan</b> beslenir — hasta verisi taşımaz, randevu başına kayıt oluşturmaz. İlk online randevu tamamlandığında sayaç kendiliğinden oluşur ve rakamlar burada belirir.</div></div>';
 $('#oz_ds_cmp').textContent='';$('#oz_ds').innerHTML='';
 return null;
 }
 var cur=dsAgg(a,b),prev=dsAgg(pa,pb),hasPrev=prev.has;
 if(bd){bd.className='badge flat';bd.textContent=fmt(cur.total)+' talep · seçili dönem';}
 var ipF=function(v){return '%'+(Math.round(v*10)/10).toLocaleString('tr-TR',{maximumFractionDigits:1});};
-var leadTxt=cur.lead!=null?(' · ort. bekleme '+(Math.round(cur.lead*10)/10).toLocaleString('tr-TR',{maximumFractionDigits:1})+' gün'):'';
+var d1=function(v){return v==null?'—':(Math.round(v*10)/10).toLocaleString('tr-TR',{maximumFractionDigits:1});};
+var leadTxt=cur.lead!=null?(' · ort. bekleme '+d1(cur.lead)+' gün'):'';
+var ga=evCountRange('randevu_tamamlandi',a,b);
+if(cur.sadeceTalep){
+var sap=ga>0?(cur.total-ga)/ga*100:null;
+el.innerHTML=
+tile('Talep (sunucu sayacı)',cur.total,fmt,{prev:hasPrev?prev.total:null,star:1,exp:'Kendi sunucumuzdaki anonim sayaç — reklam engelleyiciden etkilenmez'})+
+tile('GA4 farkı',sap==null?0:sap,function(v){return sap==null?'—':((v>0?'+':'')+Math.round(v)+'%');},{exp:'GA4 '+fmt(ga)+' saydı · sayaç '+fmt(cur.total)+'. Pozitif = GA4 eksik sayıyor.'})+
+tile('Ortalama bekleme',cur.lead==null?0:cur.lead,function(){return d1(cur.lead);},{exp:'Talep ile randevu günü arasındaki gün farkı'});
+}else{
 el.innerHTML=
 tile('Talep (gerçek kayıt)',cur.total,fmt,{prev:hasPrev?prev.total:null,star:1,exp:'DentSoft tablosuna düşen randevu kaydı'})+
 tile('Onaylanan',cur.ok,fmt,{prev:hasPrev?prev.ok:null,exp:'confirmed + completed'})+
 tile('İptal oranı',cur.ipOran,ipF,{exp:fmt(cur.ip)+' iptal / '+fmt(cur.total)+' talep'+leadTxt});
-var ga=evCountRange('randevu_tamamlandi',a,b);
+}
 var cmp='';
 if(ga>0||cur.total>0){
 var fark=ga>0?Math.round(Math.abs(cur.total-ga)/ga*100):null;
 cmp='<b>Ölçüm karşılaştırması:</b> GA4 randevu_tamamlandi = <b>'+fmt(ga)+'</b> · DentSoft gerçek kayıt = <b>'+fmt(cur.total)+'</b>'+
 (fark!=null?' · fark <b>%'+fark+'</b>':'')+
-'. Küçük fark normaldir (reklam engelleyici, çerez reddi, bot). Büyük ve sürekli fark ölçüm sorununa işaret eder.';
+'. Küçük fark normaldir (reklam engelleyici, çerez reddi, bot). Büyük ve sürekli fark ölçüm sorununa işaret eder.'+
+(cur.sadeceTalep?' <b>Not:</b> onay ve iptal DentSoft tarafında kaldığı için buradan görünmez — sayaç yalnızca <b>talep</b> anını ölçer.':'');
 }
 $('#oz_ds_cmp').innerHTML=cmp;
 var drs=Object.keys(cur.dr).map(function(k){var d=cur.dr[k];return {k:k,c:d.c,ok:d.ok,ip:d.ip};}).sort(function(x,y){return y.c-x.c;});
+if(cur.sadeceTalep){
+renderExpTable('#oz_ds','<tr><th>Hekim</th><th class="num">Talep</th><th class="num">Pay</th></tr>',
+drs.map(function(r){return '<td>'+esc(r.k)+'</td><td class="num">'+fmt(r.c)+'</td><td class="num">'+(cur.total>0?'%'+Math.round(r.c/cur.total*100):'—')+'</td>';}),3);
+}else{
 renderExpTable('#oz_ds','<tr><th>Hekim</th><th class="num">Talep</th><th class="num">Onay</th><th class="num">İptal</th><th class="num">İptal or.</th></tr>',
 drs.map(function(r){return '<td>'+esc(r.k)+'</td><td class="num">'+fmt(r.c)+'</td><td class="num">'+fmt(r.ok)+'</td><td class="num">'+fmt(r.ip)+'</td><td class="num">'+(r.c>0?'%'+Math.round(r.ip/r.c*100):'—')+'</td>';}),5);
+}
 return cur;
 }
 
@@ -1531,7 +1548,7 @@ if(fr>=25)A.push({sev:2,i:'😤',t:'Frustrasyon yüksek: 100 oturumda '+Math.rou
 if(p.pacePct<70)A.push({sev:2,i:'🎯',t:p.n+' hedef temposu %'+p.pacePct,d:'Ay içinde <b>'+fmt(p.act)+'/'+fmt(p.target)+'</b>. Bu hızla ay sonu ≈ <b>'+fmt(p.proj)+'</b>.'});
 });
 if(ds&&ds.total>=10){
-if(ds.ipOran>=25)A.push({sev:2,i:'🚫',t:'Randevu iptal oranı %'+Math.round(ds.ipOran),d:fmt(ds.ip)+' iptal / '+fmt(ds.total)+' talep. Sorun trafikte değil randevu deneyiminde veya hatırlatmada — hekim kırılımına bak.'});
+if(!ds.sadeceTalep&&ds.ipOran>=25)A.push({sev:2,i:'🚫',t:'Randevu iptal oranı %'+Math.round(ds.ipOran),d:fmt(ds.ip)+' iptal / '+fmt(ds.total)+' talep. Sorun trafikte değil randevu deneyiminde veya hatırlatmada — hekim kırılımına bak.'});
 var _ga=evCountRange('randevu_tamamlandi',W.kpi.a,W.kpi.b);
 if(_ga>=5){var _f=Math.abs(ds.total-_ga)/_ga*100;
 if(_f>=40)A.push({sev:2,i:'📐',t:'GA4 ile gerçek randevu arasında %'+Math.round(_f)+' fark',d:'GA4 <b>'+fmt(_ga)+'</b>, DentSoft <b>'+fmt(ds.total)+'</b>. Bu büyüklükte sürekli fark ölçüm sorununa işaret eder (event tetiklenmiyor ya da çift sayılıyor).'});}
