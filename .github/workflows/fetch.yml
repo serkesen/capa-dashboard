@@ -27,6 +27,7 @@ jobs:
           CLARITY_TOKEN: ${{ secrets.CLARITY_TOKEN }}
           CLARITY_RUN: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
           PSI_RUN: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
+          PSI_KEY: ${{ secrets.PSI_KEY }}
       - run: python fetch_ig.py
         if: always()
         env:
