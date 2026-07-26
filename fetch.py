@@ -543,4 +543,52 @@ elif _run_psi:
 else:
     print('psi skip (gun-ici)')
 
+# --- DentSoft gercek randevu OZETI (KVKK: yalniz sayim, kisisel veri YOK) ---
+# WP tarafi: site-customizations.php -> /wp-json/capa/v1/randevu-ozet
+# Yetki: X-Capa-Key header. Anahtar yoksa blok atlanir (fetcher bozulmaz).
+DENTSOFT_URL = os.environ.get('DENTSOFT_URL', 'https://capaortodonti.com/wp-json/capa/v1/randevu-ozet')
+DENTSOFT_KEY = os.environ.get('DENTSOFT_KEY', '').strip()
+DENTSOFT_DAYS = int(os.environ.get('DENTSOFT_DAYS', '180'))
+
+if not DENTSOFT_KEY:
+    print('dentsoft skip (DENTSOFT_KEY yok)')
+else:
+    try:
+        _df = (today - dt.timedelta(days=DENTSOFT_DAYS)).isoformat()
+        r = requests.get(DENTSOFT_URL, params={'from': _df, 'to': end},
+                         headers={'X-Capa-Key': DENTSOFT_KEY}, timeout=60)
+        if r.status_code != 200:
+            print('dentsoft HTTP', r.status_code, r.text[:200])
+        else:
+            j = r.json()
+            if not j.get('ok'):
+                print('dentsoft not ok:', str(j.get('note'))[:200])
+            else:
+                ds = []
+                for x in (j.get('rows') or []):
+                    d, st = x.get('date'), x.get('status')
+                    if not d or not st:
+                        continue
+                    ds.append({
+                        'date': d,
+                        'status': str(st),
+                        'doctor': str(x.get('doctor') or '(yok)'),
+                        'count': int(x.get('count') or 0),
+                        'lead_days': x.get('lead_days'),
+                    })
+                # ayni (date,status,doctor) tekrarlarsa topla (PostgREST ON CONFLICT kurali)
+                _u = {}
+                for _r in ds:
+                    _k = (_r['date'], _r['status'], _r['doctor'])
+                    if _k in _u:
+                        _u[_k]['count'] += _r['count']
+                    else:
+                        _u[_k] = _r
+                ds = list(_u.values())
+                if ds:
+                    upsert('dentsoft_daily', ds, 'date,status,doctor')
+                print('dentsoft OK', len(ds), 'satir', j.get('from'), '->', j.get('to'))
+    except Exception as e:
+        print('dentsoft ERR', repr(e))
+
 print('OK')

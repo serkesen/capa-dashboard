@@ -230,21 +230,30 @@ body.locked .wrap,body.locked #tt,body.locked #topnav{display:none}
 <div class="mgrid" id="oz_kpicharts"></div>
 </div>
 
-<div class="stage"><span class="n">2</span><div><div class="st">Dikkat gerektirenler</div><div class="sq">Kural tabanlı kontroller — tahmin değil, eşik. Bir şey yoksa "belirgin sapma yok" yazar; o zaman bu sekmede işin bitmiştir.</div></div></div>
+<div class="stage"><span class="n">2</span><div><div class="st">Gerçek randevu — DentSoft kaydı</div><div class="sq">GA4 event'i "form gönderildi" der; burası kliniğin defterindeki <b>gerçek kayıt</b>. İkisi arasındaki fark ölçüm sağlığını, iptal oranı ise randevu kalitesini gösterir.</div></div></div>
+<div class="card">
+<h2>Talep, onay ve iptal <span class="badge flat" id="b_ds"></span></h2>
+<div class="ch"><b>Ne:</b> DentSoft randevu tablosundan gelen sayımlar — <b>tarih = talep günü</b> (GA4 event'iyle aynı gün, karşılaştırılabilir). <b>Oku:</b> iptal oranı yükseliyorsa sorun trafikte değil randevu deneyiminde/hatırlatmada. <b>Bekleme</b> = talep ile randevu günü arasındaki ortalama gün. <b>KVKK:</b> buraya yalnız sayı gelir, hasta bilgisi asla.</div>
+<div class="kpis3" id="oz_ds_kpi"></div>
+<div class="note" id="oz_ds_cmp"></div>
+<div class="tscroll"><table id="oz_ds"></table></div>
+</div>
+
+<div class="stage"><span class="n">3</span><div><div class="st">Dikkat gerektirenler</div><div class="sq">Kural tabanlı kontroller — tahmin değil, eşik. Bir şey yoksa "belirgin sapma yok" yazar; o zaman bu sekmede işin bitmiştir.</div></div></div>
 <div class="card">
 <h2>Uyarılar</h2>
 <div class="ch"><b>Ne:</b> dönüşüm düşüşü, pozisyon kaybı, frustrasyon eşiği, hedef temposu ve veri akışı kontrolü. <b>Not:</b> eşikler veri biriktikçe kalibre edilecek; kırmızı bir uyarı tek başına kanıt değil, bakılacak yeri gösterir.</div>
 <div class="alerts" id="oz_alerts"></div>
 </div>
 
-<div class="stage"><span class="n">3</span><div><div class="st">Hedef temposu</div><div class="sq">Aylık hedefe göre nerede olmalıydık, neredeyiz. Hedefleri SEO Analiz sekmesindeki 🎯 Hedefler panelinden girersin.</div></div></div>
+<div class="stage"><span class="n">4</span><div><div class="st">Hedef temposu</div><div class="sq">Aylık hedefe göre nerede olmalıydık, neredeyiz. Hedefleri SEO Analiz sekmesindeki 🎯 Hedefler panelinden girersin.</div></div></div>
 <div class="card">
 <h2>Ay sonu projeksiyonu</h2>
 <div class="ch"><b>Ne:</b> içinde bulunulan ayın gerçekleşeni + bugüne kadarki hıza göre ay sonu tahmini. <b>Oku:</b> çubuk = ay hedefinin yüzde kaçı tamamlandı; altındaki satır bugün itibarıyla olması gereken tempoyu söyler.</div>
 <div class="pacewrap" id="oz_pace"></div>
 </div>
 
-<div class="stage"><span class="n">4</span><div><div class="st">Sıradaki iş</div><div class="sq">Fırsat skoruna göre en yüksek kazanç potansiyeli olan 3 sayfa. Tam liste SEO Analiz sekmesinde.</div></div></div>
+<div class="stage"><span class="n">5</span><div><div class="st">Sıradaki iş</div><div class="sq">Fırsat skoruna göre en yüksek kazanç potansiyeli olan 3 sayfa. Tam liste SEO Analiz sekmesinde.</div></div></div>
 <div class="card">
 <h2>En hızlı kazanç — ilk 3 sayfa</h2>
 <div class="ch"><b>Ne:</b> aramada çok görünen ama hak ettiği tıkı alamayan sayfalar. <b>Potansiyel</b> = mevcut pozisyonun tipik CTR'ına ulaşılsa kazanılacak ek aylık tık. <b>Oku:</b> üstteki satır bu haftanın işidir. 🔥 = o sayfanın Clarity ısı haritası.</div>
@@ -533,7 +542,7 @@ const col=v=>CS.getPropertyValue(v).trim();
 const CUTOVER='2026-07-14';
 const AYK=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
 const COMMERCIAL=/(dis-teli|invisalign|seffaf-plak|bonding|implant|ortodonti|gulus|beyazlat|protez|kanal-ted|pedodont|zirkon|periodont|estetik|dolgu|dis-cek|kaplama|apare|braket)/i;
-let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[],fb:[],ig:[],ads:[],convsrc:[],funnel:[],gaev:[],ov:[],brk:[],land:[],demo:[],dev:[],ctry:[],clar:[],clarb:[],psi:[]};
+let DB={site:[],chan:[],ev:[],cl:[],pages:[],queries:[],base:[],pagecmp:[],fb:[],ig:[],ads:[],convsrc:[],funnel:[],gaev:[],ov:[],brk:[],land:[],demo:[],dev:[],ctry:[],clar:[],clarb:[],psi:[],ds:[]};
 let GOALS={};
 
 /* dönemler: days = KPI penceresi (gün), chartDays = grafik penceresi, bucket = granülarite */
@@ -566,7 +575,7 @@ return all;
 }
 async function load(){
 try{
-const [site,chan,ev,cl,pages,queries,base,targets,pagecmp,fb,ig,ads,convsrc,funnel,gaev,ov,brk,land,demo,dev,ctry,clar,clarb,psi]=await Promise.all([
+const [site,chan,ev,cl,pages,queries,base,targets,pagecmp,fb,ig,ads,convsrc,funnel,gaev,ov,brk,land,demo,dev,ctry,clar,clarb,psi,ds]=await Promise.all([
 q('gsc_site_daily?order=date'),
 q('ga4_channel_daily?order=date'),
 q('ga4_event_daily?order=date'),
@@ -590,9 +599,10 @@ q('gsc_device_daily?select=date,device,clicks,impressions,ctr,position&order=dat
 q('gsc_country_daily?select=date,country,clicks,impressions,ctr,position&order=date').catch(()=>[]),
 q('clarity_daily?select=date,sessions,bot_sessions,distinct_users,pages_per_session,scroll_depth,engage_active,engage_total,dead_clicks,rage_clicks,quickbacks,excessive_scroll,script_errors,error_clicks&order=date').catch(()=>[]),
 q('clarity_breakdown_daily?select=date,kind,label,sessions&order=date').catch(()=>[]),
-q('psi_daily?select=date,url,strategy,perf_score,lcp_ms,cls,tbt_ms,fcp_ms,si_ms,field_lcp_ms,field_inp_ms,field_cls,field_source&order=date').catch(()=>[])
+q('psi_daily?select=date,url,strategy,perf_score,lcp_ms,cls,tbt_ms,fcp_ms,si_ms,field_lcp_ms,field_inp_ms,field_cls,field_source&order=date').catch(()=>[]),
+q('dentsoft_daily?select=date,status,doctor,count,lead_days&order=date').catch(()=>[])
 ]);
-DB={site,chan,ev,cl,pages,queries,base,pagecmp,fb,ig,ads,convsrc,funnel,gaev,ov,brk,land,demo,dev,ctry,clar,clarb,psi};
+DB={site,chan,ev,cl,pages,queries,base,pagecmp,fb,ig,ads,convsrc,funnel,gaev,ov,brk,land,demo,dev,ctry,clar,clarb,psi,ds};
 GOALS={};(targets||[]).forEach(t=>GOALS[t.metric_key]=+t.monthly_target);
 route();
 }catch(e){
@@ -1386,6 +1396,57 @@ return '<tr><td style="word-break:break-all">'+esc(shortUrl(r.url))+'</td>'+
 }).join('')+(origin?'<tr><td colspan="6" style="color:var(--muted);font-size:11px">* sayfa bazında gerçek kullanıcı verisi yok — site geneli (origin) değeri gösteriliyor.</td></tr>':'');
 }
 
+/* --- DentSoft gercek randevu (KVKK: yalniz sayim) --- */
+var DS_ST={pending:'Bekliyor',confirmed:'Onaylandı',completed:'Tamamlandı',cancelled:'İptal'};
+var DS_OK={confirmed:1,completed:1};
+function dsAgg(a,b){
+var o={total:0,ok:0,ip:0,bek:0,st:{},dr:{},ln:0,ld:0,lead:null,has:false};
+(DB.ds||[]).forEach(function(r){
+if(r.date<a||r.date>b)return;
+var c=+r.count||0;if(!c)return;
+o.has=true;o.total+=c;
+o.st[r.status]=(o.st[r.status]||0)+c;
+if(DS_OK[r.status])o.ok+=c;else if(r.status==='cancelled')o.ip+=c;else o.bek+=c;
+var d=o.dr[r.doctor]=o.dr[r.doctor]||{c:0,ok:0,ip:0};
+d.c+=c;if(DS_OK[r.status])d.ok+=c;if(r.status==='cancelled')d.ip+=c;
+if(r.lead_days!=null){o.ln+=(+r.lead_days)*c;o.ld+=c;}
+});
+o.lead=o.ld>0?o.ln/o.ld:null;
+o.ipOran=o.total>0?o.ip/o.total*100:0;
+return o;
+}
+function renderDentsoft(a,b,pa,pb){
+var el=$('#oz_ds_kpi');if(!el)return null;
+var bd=$('#b_ds');
+if(!(DB.ds||[]).length){
+if(bd){bd.className='badge flat';bd.textContent='bağlı değil';}
+el.innerHTML='<div class="tile" style="grid-column:1/-1"><div class="l">DentSoft bağlantısı kurulmadı</div><div class="exp" style="margin-top:6px">WordPress tarafındaki <b>/wp-json/capa/v1/randevu-ozet</b> uç noktası canlıya alınıp <b>CAPA_RANDEVU_KEY</b> (wp-config.php) ve <b>DENTSOFT_KEY</b> (GitHub Secret) tanımlanınca gerçek randevu sayıları burada belirir. Kişisel veri aktarılmaz.</div></div>';
+$('#oz_ds_cmp').textContent='';$('#oz_ds').innerHTML='';
+return null;
+}
+var cur=dsAgg(a,b),prev=dsAgg(pa,pb),hasPrev=prev.has;
+if(bd){bd.className='badge flat';bd.textContent=fmt(cur.total)+' talep · seçili dönem';}
+var ipF=function(v){return '%'+(Math.round(v*10)/10).toLocaleString('tr-TR',{maximumFractionDigits:1});};
+var leadTxt=cur.lead!=null?(' · ort. bekleme '+(Math.round(cur.lead*10)/10).toLocaleString('tr-TR',{maximumFractionDigits:1})+' gün'):'';
+el.innerHTML=
+tile('Talep (gerçek kayıt)',cur.total,fmt,{prev:hasPrev?prev.total:null,star:1,exp:'DentSoft tablosuna düşen randevu kaydı'})+
+tile('Onaylanan',cur.ok,fmt,{prev:hasPrev?prev.ok:null,exp:'confirmed + completed'})+
+tile('İptal oranı',cur.ipOran,ipF,{exp:fmt(cur.ip)+' iptal / '+fmt(cur.total)+' talep'+leadTxt});
+var ga=evCountRange('randevu_tamamlandi',a,b);
+var cmp='';
+if(ga>0||cur.total>0){
+var fark=ga>0?Math.round(Math.abs(cur.total-ga)/ga*100):null;
+cmp='<b>Ölçüm karşılaştırması:</b> GA4 randevu_tamamlandi = <b>'+fmt(ga)+'</b> · DentSoft gerçek kayıt = <b>'+fmt(cur.total)+'</b>'+
+(fark!=null?' · fark <b>%'+fark+'</b>':'')+
+'. Küçük fark normaldir (reklam engelleyici, çerez reddi, bot). Büyük ve sürekli fark ölçüm sorununa işaret eder.';
+}
+$('#oz_ds_cmp').innerHTML=cmp;
+var drs=Object.keys(cur.dr).map(function(k){var d=cur.dr[k];return {k:k,c:d.c,ok:d.ok,ip:d.ip};}).sort(function(x,y){return y.c-x.c;});
+renderExpTable('#oz_ds','<tr><th>Hekim</th><th class="num">Talep</th><th class="num">Onay</th><th class="num">İptal</th><th class="num">İptal or.</th></tr>',
+drs.map(function(r){return '<td>'+esc(r.k)+'</td><td class="num">'+fmt(r.c)+'</td><td class="num">'+fmt(r.ok)+'</td><td class="num">'+fmt(r.ip)+'</td><td class="num">'+(r.c>0?'%'+Math.round(r.ip/r.c*100):'—')+'</td>';}),5);
+return cur;
+}
+
 function ozWin(){return curWin(lastDataDate());}
 function ozPeriodBoxes(){
 var end=lastDataDate();
@@ -1438,7 +1499,7 @@ return '<div class="pace"><div class="ph"><span>'+d.n+'</span><b>'+fmt(act)+' / 
 }).join('');
 return out;
 }
-function ozAlerts(fresh,pace,opp){
+function ozAlerts(fresh,pace,opp,ds){
 var A=[],t=todayStr(),end=lastDataDate();
 (fresh||[]).forEach(function(s){
 if(!s.d){A.push({sev:1,i:'🛑',t:s.n+' verisi hiç gelmemiş',d:'Tabloda kayıt yok — GitHub Actions → fetch log\'una bak.'});return;}
@@ -1469,6 +1530,12 @@ if(fr>=25)A.push({sev:2,i:'😤',t:'Frustrasyon yüksek: 100 oturumda '+Math.rou
 (pace||[]).forEach(function(p){
 if(p.pacePct<70)A.push({sev:2,i:'🎯',t:p.n+' hedef temposu %'+p.pacePct,d:'Ay içinde <b>'+fmt(p.act)+'/'+fmt(p.target)+'</b>. Bu hızla ay sonu ≈ <b>'+fmt(p.proj)+'</b>.'});
 });
+if(ds&&ds.total>=10){
+if(ds.ipOran>=25)A.push({sev:2,i:'🚫',t:'Randevu iptal oranı %'+Math.round(ds.ipOran),d:fmt(ds.ip)+' iptal / '+fmt(ds.total)+' talep. Sorun trafikte değil randevu deneyiminde veya hatırlatmada — hekim kırılımına bak.'});
+var _ga=evCountRange('randevu_tamamlandi',W.kpi.a,W.kpi.b);
+if(_ga>=5){var _f=Math.abs(ds.total-_ga)/_ga*100;
+if(_f>=40)A.push({sev:2,i:'📐',t:'GA4 ile gerçek randevu arasında %'+Math.round(_f)+' fark',d:'GA4 <b>'+fmt(_ga)+'</b>, DentSoft <b>'+fmt(ds.total)+'</b>. Bu büyüklükte sürekli fark ölçüm sorununa işaret eder (event tetiklenmiyor ya da çift sayılıyor).'});}
+}
 var ps=psiLatest();
 if(ps.length){
 var bad=ps.filter(function(r){return r.perf_score!=null&&+r.perf_score<50;});
@@ -1508,11 +1575,12 @@ var cards=[
 {id:'ozc_fr',name:'Frustrasyon / 100 oturum',cur:frCur,prev:frPrev,f:dec1,ser:derivedSeriesR(DB.clar,frN,frD,100),ov:prevDerivedSeriesR(DB.clar,frN,frD,100),col:col('--s3'),invert:true}
 ];
 renderKcards('#oz_kpicharts',cards,hasPrev);
+var ds=renderDentsoft(a,b,pa,pb);
 var pace=ozPace();
 var opp=oppRows(a,b),top=opp.filter(function(r){return r.gain>0;}).slice(0,3);
 renderExpTable('#oz_next','<tr><th>Sayfa</th><th class="num">Gös.</th><th class="num">CTR</th><th class="num">Poz.</th><th class="num">Potansiyel</th><th class="num">Isı</th></tr>',
 top.map(function(r){return '<td style="word-break:break-all">'+(isComm(r.p)?'<span class="chip b">ticari</span> ':'')+esc(shortUrl(r.p))+'</td><td class="num">'+fmt(r.i)+'</td><td class="num">%'+(r.ctr*100).toFixed(1)+'</td><td class="num">'+r.pos.toFixed(1)+'</td><td class="num oppgain">+'+fmt(r.gain)+'</td><td class="num"><a class="hml" href="'+esc(clrHeatUrl(fullUrl(r.p)))+'" target="_blank" rel="noopener" title="Clarity ısı haritası">🔥</a></td>';}),6);
-ozAlerts(fresh,pace,opp);
+ozAlerts(fresh,pace,opp,ds);
 }
 
 /* ---------- drill-down ---------- */
