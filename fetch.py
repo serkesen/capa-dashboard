@@ -9,7 +9,22 @@ SB_URL = os.environ['SUPABASE_URL'].rstrip('/')
 SB_KEY = os.environ['SUPABASE_SERVICE_KEY']
 BACKFILL = int(os.environ.get('BACKFILL_DAYS', '4'))
 BASELINE_DAYS = int(os.environ.get('BASELINE_DAYS', '540'))
-BRAND = ('capa', 'çapa')
+# Sorgu grubu (28 Tem 2026 duzeltmesi)
+# Eski mantik: icinde "capa/çapa" gecen HER sorgu markali sayiliyordu. Yanlis:
+# "çapa diş", "çapa diş randevu", "çapa diş hastanesi" aramalarinin buyuk kismi
+# Istanbul Universitesi Çapa Dis Hekimligi Fakultesi (devlet hastanesi) arayanlar.
+# Bizim markamiz degil; markali trafigi ~23 kat sisiriyordu.
+#   marka    -> bizim marka ("çapa ortodonti" ailesi)
+#   fakulte  -> Çapa dis fakultesi/hastanesi karisikligi (komsu talep, bizim degil)
+#   markasiz -> jenerik arama
+CAPA = ('capa', 'çapa')
+MARKA_IZ = ('ortodonti', 'capaortodonti')
+
+def sorgu_grubu(q):
+    s = (q or '').lower()
+    if not any(c in s for c in CAPA):
+        return 'markasiz'
+    return 'marka' if any(m in s for m in MARKA_IZ) else 'fakulte'
 
 creds = service_account.Credentials.from_service_account_info(
     json.loads(os.environ['GOOGLE_CREDENTIALS']),
@@ -59,7 +74,8 @@ upsert('gsc_page_daily', [{'date': r['keys'][0], 'page': r['keys'][1],
 upsert('gsc_query_daily', [{'date': r['keys'][0], 'query': r['keys'][1],
     'clicks': r['clicks'], 'impressions': r['impressions'], 'ctr': round(r['ctr'], 4),
     'position': round(r['position'], 2),
-    'branded': any(b in r['keys'][1].lower() for b in BRAND)}
+    'grup': sorgu_grubu(r['keys'][1]),
+    'branded': sorgu_grubu(r['keys'][1]) == 'marka'}
     for r in gsc(['date', 'query'])], 'date,query')
 
 upsert('gsc_device_daily', [{'date': r['keys'][0], 'device': r['keys'][1],
