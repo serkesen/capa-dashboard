@@ -43,6 +43,25 @@ def upsert(table, rows, conflict):
         r.raise_for_status()
     print(table, len(rows))
 
+def sb_var_mi(table, tarih):
+    """3 Agu 2026: saat tabanli kapi yerine IDEMPOTAN kontrol.
+    Eski mantik `utcnow().hour < 6` idi; cron 03:30 UTC olmasina ragmen GitHub
+    zamanlanmis kosulari saatlerce geciktiriyor (gozlenen: 06:43 / 12:41 /
+    17:24 / 22:26 UTC), dolayisiyla kapi bir daha hic acilmadi ve Clarity + PSI
+    26 Temmuz'dan 3 Agustos'a kadar sessizce durdu. Artik soru sorulan sey saat
+    degil, verinin kendisi: bugunun satiri zaten varsa tekrar cekme.
+    Kontrol basarisiz olursa (ag/PostgREST hatasi) True doner -> blok atlanir,
+    boylece hata durumunda kotayi tuketmeyiz."""
+    try:
+        r = requests.get(SB_URL + '/rest/v1/' + table,
+            headers={'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY},
+            params={'select': 'date', 'date': 'eq.' + tarih, 'limit': 1}, timeout=30)
+        r.raise_for_status()
+        return len(r.json()) > 0
+    except Exception as e:
+        print('sb_var_mi ERR', table, repr(e))
+        return True
+
 today = dt.date.today()
 start = (today - dt.timedelta(days=BACKFILL)).isoformat()
 end = today.isoformat()
@@ -358,7 +377,7 @@ else:
 
 # --- MS Clarity (Data Export API) — token varsa, gunde ~1 kez (rate-limit 10/gun) ---
 CLARITY_TOKEN = os.environ.get('CLARITY_TOKEN', '')
-_run_clarity = bool(CLARITY_TOKEN) and (os.environ.get('CLARITY_RUN') == '1' or dt.datetime.utcnow().hour < 6)
+_run_clarity = bool(CLARITY_TOKEN) and (os.environ.get('CLARITY_RUN') == '1' or not sb_var_mi('clarity_daily', end))
 if _run_clarity:
     try:
         def clarity(dims=None):
@@ -478,7 +497,7 @@ if _run_clarity:
     except Exception as e:
         print('clarity ERR', repr(e))
 else:
-    print('clarity skip (token yok / gun-ici)')
+    print('clarity skip (token yok / bugunun satiri zaten var)')
 
 # --- PageSpeed Insights (Core Web Vitals) — PSI_KEY secret GEREKIR ---
 # Clarity ile ayni ritim: yalniz gece kosusunda (hour<6) ya da manuel dispatch'te.
@@ -490,7 +509,7 @@ PSI_URLS = [
     'https://capaortodonti.com/dis-teli-fiyatlari/',
     'https://capaortodonti.com/iletisim/',
 ]
-_run_psi = (os.environ.get('PSI_RUN') == '1') or (dt.datetime.utcnow().hour < 6)
+_run_psi = (os.environ.get('PSI_RUN') == '1') or (not sb_var_mi('psi_daily', end))
 # ANAHTARSIZ CAGRI CALISMIYOR: GitHub Actions paylasimli IP'lerinden gunluk kota
 # dolu geldigi icin her istek HTTP 429 doner (26 Tem canli test). PSI_KEY secret'i
 # tanimlaninca istekler projeye sayilir ve calisir. Anahtar yoksa blok atlanir.
@@ -562,7 +581,7 @@ elif _run_psi:
     if psi_rows:
         upsert('psi_daily', psi_rows, 'date,url,strategy')
 else:
-    print('psi skip (gun-ici)')
+    print('psi skip (bugunun satiri zaten var)')
 
 # --- DentSoft gercek randevu OZETI (KVKK: yalniz sayim, kisisel veri YOK) ---
 # WP tarafi: site-customizations.php -> /wp-json/capa/v1/randevu-ozet
