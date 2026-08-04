@@ -639,3 +639,66 @@ else:
         print('dentsoft ERR', repr(e))
 
 print('OK')
+
+# ============================================================================
+# BEKCI (3 Agu 2026) — sessiz veri kaybina karsi.
+# 28 Tem – 3 Agu arasinda uc veri kaynagi olduyken bu is her kosuda "Success"
+# dedi ve kimse fark etmedi. Artik kritik bir kaynak bayatsa kosu KIRMIZI
+# biter; GitHub basarisiz kosuda repo sahibine e-posta atar. Teslim kanali bu.
+# ============================================================================
+def sb_son_tarih(table):
+    try:
+        r = requests.get(SB_URL + '/rest/v1/' + table,
+            headers={'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY},
+            params={'select': 'date', 'order': 'date.desc', 'limit': 1}, timeout=30)
+        r.raise_for_status()
+        j = r.json()
+        return j[0]['date'] if j else None
+    except Exception as e:
+        print('bekci okuma ERR', table, repr(e))
+        return None
+
+def sb_sayi(table, params):
+    try:
+        p = dict(params); p['select'] = 'count'
+        r = requests.get(SB_URL + '/rest/v1/' + table,
+            headers={'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY},
+            params=p, timeout=30)
+        r.raise_for_status()
+        return sum(int(x.get('count') or 0) for x in r.json())
+    except Exception as e:
+        print('bekci okuma ERR', table, repr(e))
+        return None
+
+_sorun = []
+
+# 1) Gunluk yazilmasi beklenen kaynaklar: bayatlik kontrolu.
+#    ⚠ dentsoft_daily bu listede DEGIL — randevu gelmeyen gunde satir olusmaz,
+#    sessizlik normaldir. Onun kontrolu asagida GA4 ile capraz yapilir.
+for _t, _lim in (('ga4_event_daily', 3), ('gsc_site_daily', 6),
+                 ('clarity_daily', 3), ('psi_daily', 3), ('meta_social_daily', 3)):
+    _d = sb_son_tarih(_t)
+    if _d is None:
+        print('bekci atla', _t, '(okunamadi)')
+        continue
+    _g = (today - dt.date.fromisoformat(_d)).days
+    print('bekci', _t, 'son', _d, '(' + str(_g) + ' gun)')
+    if _g > _lim:
+        _sorun.append(_t + ' ' + str(_g) + ' gundur bayat (son ' + _d + ', sinir ' + str(_lim) + ')')
+
+# 2) Randevu sayaci: sessiz gun normal, ama GA4 randevu sayarken sayacin
+#    sifir olmasi normal DEGIL. 3 Agu 2026 arizasinin imzasi tam olarak buydu.
+_p7 = (today - dt.timedelta(days=7)).isoformat()
+_ga7 = sb_sayi('ga4_event_daily', {'event_name': 'eq.randevu_tamamlandi',
+                                   'date': 'gte.' + _p7})
+_ds7 = sb_sayi('dentsoft_daily', {'date': 'gte.' + _p7})
+print('bekci sayac 7g: GA4', _ga7, '/ sayac', _ds7)
+if _ga7 is not None and _ds7 is not None and _ga7 >= 3 and _ds7 == 0:
+    _sorun.append('sayac sustu: son 7 gunde GA4 ' + str(_ga7) + ' randevu gordu, dentsoft_daily 0')
+
+if _sorun:
+    print('BEKCI KIRMIZI:')
+    for _x in _sorun:
+        print(' -', _x)
+    raise SystemExit(1)
+print('bekci temiz')

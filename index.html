@@ -1480,7 +1480,11 @@ var src=[
 {n:'GA4',d:maxDate(DB.ov)||maxDate(DB.chan),lim:3},
 {n:'GSC',d:maxDate(DB.site),lim:6},
 {n:'Clarity',d:maxDate(DB.clar),lim:3},
-{n:'Meta',d:maxDate(DB.fb),lim:3}
+{n:'Meta',d:maxDate(DB.fb),lim:3},
+/* 3 Agu 2026: sayac ve PSI bu listede YOKTU. Sayac dashboard'in cekirdek
+   metrigi oldugu halde 6 gun sessizce oldu ve hicbir uyari ates almadi. */
+{n:'Randevu sayaci',d:maxDate(DB.ds),lim:3},
+{n:'PageSpeed',d:maxDate(DB.psi),lim:3}
 ];
 $('#oz_fresh').innerHTML=src.map(function(s){
 if(!s.d)return '<span class="fresh stale">'+s.n+': <b>veri yok</b></span>';
@@ -1547,6 +1551,11 @@ if(fr>=25)A.push({sev:2,i:'😤',t:'Frustrasyon yüksek: 100 oturumda '+Math.rou
 (pace||[]).forEach(function(p){
 if(p.pacePct<70)A.push({sev:2,i:'🎯',t:p.n+' hedef temposu %'+p.pacePct,d:'Ay içinde <b>'+fmt(p.act)+'/'+fmt(p.target)+'</b>. Bu hızla ay sonu ≈ <b>'+fmt(p.proj)+'</b>.'});
 });
+/* 3 Agu 2026: asagidaki blok ds.total>=10 kapisinin arkasindaydi; sayac
+   TAMAMEN susunca (total=0) sapma uyarisi da susuyordu. Gurultu filtresi tam
+   ariza vakasini da eliyordu. Once o vakayi ayri ele al. */
+var _gaK=evCountRange('randevu_tamamlandi',W.kpi.a,W.kpi.b);
+if(_gaK>=5&&(!ds||!ds.total))A.push({sev:1,i:'🛑',t:'GA4 randevu sayiyor ama sayac sifir',d:'Bu donemde GA4 <b>'+fmt(_gaK)+'</b> randevu gordu, anonim sayac <b>0</b>. Sayac hatti kirik ya da kayitlar yanlis etiketle yaziliyor — 3 Agu 2026 arizasinin aynisi.'});
 if(ds&&ds.total>=10){
 if(!ds.sadeceTalep&&ds.ipOran>=25)A.push({sev:2,i:'🚫',t:'Randevu iptal oranı %'+Math.round(ds.ipOran),d:fmt(ds.ip)+' iptal / '+fmt(ds.total)+' talep. Sorun trafikte değil randevu deneyiminde veya hatırlatmada — hekim kırılımına bak.'});
 var _ga=evCountRange('randevu_tamamlandi',W.kpi.a,W.kpi.b);
